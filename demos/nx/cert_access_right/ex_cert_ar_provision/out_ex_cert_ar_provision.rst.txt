@@ -1,0 +1,14 @@
+App   :INFO :NX_PKG_v01.01.01_20230804
+App   :INFO :Running ex_cert_ar_provision.exe
+App   :INFO :Using PortName='COM10' (ENV: EX_SSS_BOOT_SSS_PORT=COM10)
+App   :INFO :Using default PCDCap2. You can use PCDCap2 from file using ENV=EX_SSS_BOOT_PCDCAP2_PATH
+App   :INFO :Using default appkey. You can use appkeys from file using ENV=EX_SSS_BOOT_APPKEY_PATH
+Opening COM Port '\\.\COM10'
+sss   :INFO :atr (Len=22)
+      01 04 63 07    00 93 02 08    00 02 03 E8    00 01 00 64
+      04 03 E8 00    FE 00
+sss   :INFO :Session Open Succeed
+App   :INFO :Running Provision For Certificate Access Right Example ex_cert_ar_provision.c
+App   :INFO :Create Standard Data File With ReadWriteAccess 0x1 !!!
+App   :INFO :ex_cert_ar_provision Example Success !!!...
+App   :INFO :ex_sss Finished

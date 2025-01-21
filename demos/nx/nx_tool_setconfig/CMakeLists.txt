@@ -1,0 +1,39 @@
+# Copyright 2022-2023 NXP
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#
+
+PROJECT(nx_tool_setconfig)
+
+ADD_EXECUTABLE(
+    ${PROJECT_NAME}
+    ${KSDK_STARTUP_FILE} ${PROJECT_NAME}.c
+)
+
+TARGET_INCLUDE_DIRECTORIES(
+    ${PROJECT_NAME}
+    PRIVATE .
+)
+
+TARGET_LINK_LIBRARIES(
+    ${PROJECT_NAME}
+    ex_common
+    SSS_APIs
+)
+
+IF(
+    CMAKE_BUILD_TYPE
+    STREQUAL
+    "Release"
+)
+    IF(SSS_HAVE_AUTH_SIGMA_I_VERIFIER OR SSS_HAVE_AUTH_SIGMA_I_PROVER)
+        COPY_TO_SOURCEDIR(${PROJECT_NAME} binaries/PCWindows/nxp ${NXMW_SMCOM}_EV2_${NXMW_Auth_Asymm_Host_Curve})
+    ENDIF()
+    IF(SSS_HAVE_AUTH_SYMM_AUTH)
+        COPY_TO_SOURCEDIR(${PROJECT_NAME} binaries/PCWindows/nxp ${NXMW_SMCOM}_Symm)
+    ENDIF()
+ENDIF()
+
+
+CREATE_BINARY(${PROJECT_NAME})

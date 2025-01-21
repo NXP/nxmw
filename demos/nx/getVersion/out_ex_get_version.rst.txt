@@ -1,0 +1,38 @@
+nx_mw :INFO :NX_PKG_v02.03.00_20240902
+nx_mw :INFO :Running ex_get_version.exe
+nx_mw :INFO :Using PortName='COM5' (ENV: EX_SSS_BOOT_SSS_PORT=COM5)
+nx_mw :INFO :Using PCDCap from (EX_SYMM_AUTH_PCDCCAP2) from file - lib/sss/inc/fsl_sss_nx_auth_keys.h. (You can use PCDCap2 from file by setting ENV=EX_SSS_BOOT_PCDCAP2_PATH to its path)
+nx_mw :INFO :Using appkey (EX_SYMM_AUTH_AES*_KEY) from file - lib/sss/inc/fsl_sss_nx_auth_keys.h. (You can use appkeys from file by setting ENV=EX_SSS_BOOT_APPKEY_PATH to its path)
+Opening COM Port '\\.\COM5'
+nx_mw :INFO :cip (Len=22)
+      01 04 63 07    00 93 02 08    00 02 03 E8    00 01 00 64
+      04 03 E8 00    FE 00
+nx_mw :INFO :Session Open Succeed
+nx_mw :INFO :Running Get Card Version Example ex_sss_get_version.c
+nx_mw :INFO :Get Card Version
+nx_mw :INFO :Successful !!!
+nx_mw :INFO :HW Vendor ID: NXP Semiconductors
+nx_mw :INFO :HW type: IoT
+nx_mw :INFO :HW subtype: 17 pF, Tag Tamper
+nx_mw :INFO :HW major version: NX (Zen-V)
+nx_mw :INFO :HW minor version 0x0
+nx_mw :INFO :HW storage size: 16 kB
+nx_mw :INFO :HW protocol type: I2C and ISO/IEC 14443-4 support with Silent Mode support
+nx_mw :INFO :SW Vendor ID: NXP Semiconductors
+nx_mw :INFO :SW type: IoT
+nx_mw :INFO :SW subtype: Standalone
+nx_mw :INFO :SW major version: EV0
+nx_mw :INFO :SW minor version 0xec
+nx_mw :INFO :SW storage size: 16 kB
+nx_mw :INFO :SW protocol type: I2C and ISO/IEC 14443-4 support with Silent Mode support
+nx_mw :INFO :UIDFormat: 0x0
+nx_mw :INFO :UIDLength: 0xa
+nx_mw :INFO :Card UID (Len=10)
+      00 01 02 2C    41 01 01 07    08 09
+nx_mw :INFO :BatchNo: 0x0
+nx_mw :INFO :FabKey identifier: 0x0
+nx_mw :INFO :Calendar week of card production in BCD coding: 0x31
+nx_mw :INFO :The year of production in BCD coding: 0x22
+nx_mw :INFO :Fab Identifier: 0x32
+nx_mw :INFO :ex_sss_get_version Example Success !!!...
+nx_mw :INFO :ex_sss Finished

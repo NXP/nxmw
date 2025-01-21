@@ -1,0 +1,15 @@
+# Copyright 2023-2024 NXP
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5.0)
+
+
+IF(SSS_HAVE_HOSTCRYPTO_OPENSSL AND SSS_HAVE_NX_TYPE)
+    IF(SSS_HAVE_OPENSSL_1_1_1)
+        ADD_SUBDIRECTORY(openssl)
+    ELSE()
+        ADD_SUBDIRECTORY(openssl_provider)
+    ENDIF()
+ENDIF()

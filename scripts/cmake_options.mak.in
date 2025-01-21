@@ -1,0 +1,421 @@
+# Copyright 2023-2024 NXP
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# #############################################################
+# This file is generated using a script
+# #############################################################
+#
+
+# The NX Secure Authenticator Type
+# You can compile host library for different OS Applications of NX Secure Authenticator listed below.
+SSS_HAVE_NX_TYPE_NONE := ${SSS_HAVE_NX_TYPE_NONE}
+SSS_HAVE_NX_TYPE_NX_R_DA := ${SSS_HAVE_NX_TYPE_NX_R_DA}
+SSS_HAVE_NX_TYPE_NX_PICC := ${SSS_HAVE_NX_TYPE_NX_PICC}
+
+# Host where the software stack is running
+# 
+# e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
+SSS_HAVE_HOST_PCWINDOWS := ${SSS_HAVE_HOST_PCWINDOWS}
+SSS_HAVE_HOST_PCLINUX64 := ${SSS_HAVE_HOST_PCLINUX64}
+SSS_HAVE_HOST_FRDMK64F := ${SSS_HAVE_HOST_FRDMK64F}
+SSS_HAVE_HOST_LPCXPRESSO55S := ${SSS_HAVE_HOST_LPCXPRESSO55S}
+SSS_HAVE_HOST_RASPBIAN := ${SSS_HAVE_HOST_RASPBIAN}
+
+# Communication Interface
+# 
+# How the host library communicates to the Secure Authenticator.
+# This may be directly over an I2C interface on embedded platform.
+# Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
+SSS_HAVE_SMCOM_NONE := ${SSS_HAVE_SMCOM_NONE}
+SSS_HAVE_SMCOM_VCOM := ${SSS_HAVE_SMCOM_VCOM}
+SSS_HAVE_SMCOM_T1OI2C_GP1_0 := ${SSS_HAVE_SMCOM_T1OI2C_GP1_0}
+SSS_HAVE_SMCOM_PCSC := ${SSS_HAVE_SMCOM_PCSC}
+SSS_HAVE_SMCOM_JRCP_V1_AM := ${SSS_HAVE_SMCOM_JRCP_V1_AM}
+
+# Counterpart Crypto on Host
+# 
+# What is being used as a cryptographic library on the host.
+# As of now only OpenSSL / mbedTLS is supported
+SSS_HAVE_HOSTCRYPTO_MBEDTLS := ${SSS_HAVE_HOSTCRYPTO_MBEDTLS}
+SSS_HAVE_HOSTCRYPTO_OPENSSL := ${SSS_HAVE_HOSTCRYPTO_OPENSSL}
+SSS_HAVE_HOSTCRYPTO_NONE := ${SSS_HAVE_HOSTCRYPTO_NONE}
+
+# Choice of Operating system
+# 
+# Default would mean nothing special.
+# i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
+SSS_HAVE_RTOS_DEFAULT := ${SSS_HAVE_RTOS_DEFAULT}
+SSS_HAVE_RTOS_FREERTOS := ${SSS_HAVE_RTOS_FREERTOS}
+
+# NX Authentication
+# 
+# This settings is used by examples to connect using various options
+# to authenticate with the Nx SE.
+# Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for the combinations of session auth and secure tunneling modes.
+SSS_HAVE_AUTH_NONE := ${SSS_HAVE_AUTH_NONE}
+SSS_HAVE_AUTH_SIGMA_I_VERIFIER := ${SSS_HAVE_AUTH_SIGMA_I_VERIFIER}
+SSS_HAVE_AUTH_SIGMA_I_PROVER := ${SSS_HAVE_AUTH_SIGMA_I_PROVER}
+SSS_HAVE_AUTH_SYMM_AUTH := ${SSS_HAVE_AUTH_SYMM_AUTH}
+
+# Logging
+SSS_HAVE_LOG_DEFAULT := ${SSS_HAVE_LOG_DEFAULT}
+SSS_HAVE_LOG_VERBOSE := ${SSS_HAVE_LOG_VERBOSE}
+SSS_HAVE_LOG_SILENT := ${SSS_HAVE_LOG_SILENT}
+SSS_HAVE_LOG_SEGGERRTT := ${SSS_HAVE_LOG_SEGGERRTT}
+
+# See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
+# 
+# For embedded builds, this choices sets optimization levels.
+# For MSVC builds, build type is selected from IDE As well
+SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG := ${SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG}
+SSS_HAVE_CMAKE_BUILD_TYPE_RELEASE := ${SSS_HAVE_CMAKE_BUILD_TYPE_RELEASE}
+SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHDEBINFO := ${SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHDEBINFO}
+SSS_HAVE_CMAKE_BUILD_TYPE_ := ${SSS_HAVE_CMAKE_BUILD_TYPE_}
+
+# Secure Tunneling(Secure Messaging)
+# 
+# Successful Symmetric authentication and SIGMA-I mutual authentication results in the establishment of
+# session keys and session IVs.
+# These are used to encrypt and integrity protect the payloads to be exchanged.
+# Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for the combinations of session auth and secure tunneling modes.
+SSS_HAVE_SECURE_TUNNELING_NONE := ${SSS_HAVE_SECURE_TUNNELING_NONE}
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_AES256_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_AES256_EV2}
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_EV2}
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2}
+
+# Host public key cache
+# 
+# Support a cache of validated public keys and parent certificates on host.
+# This is utilized to accelerate protocol execution time by removing the need 
+# to validate public key and certificates that have been previously verified. Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for more information.
+# 
+# Secure authenticator cache is enabled by Cmd.SetConfiguration. Ref to section 4.6.2 for more information.
+SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED}
+SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED}
+
+# Certificate Repository Id
+# 
+# Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication. 
+# In personalization, it indicates repository to be initialized. In demos, it indicates repository to be used for Sigma-I authentication
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_2}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_3}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_4}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_5 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_5}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6}
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7}
+
+# Certificate Private Key Id
+# 
+# Id of ECC private key associated with this 
+# repository. Used in personalization for Sigma-I.
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0}
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1}
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_2}
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3}
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4}
+
+# Key ID of CA Root Public Key
+# 
+# Id of CA root public key associated with this 
+# repository. Used in personalization for Sigma-I.
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0}
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1}
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_2}
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3}
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4}
+
+# application Key ID
+# 
+# Indicate application key which is used in symmetric authentication.
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0}
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1}
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_2 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_2}
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3}
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4}
+
+# Host EC domain curve type
+# 
+# EC domain curve used for session key generation and 
+# session signature. Used in demos with Sigma-I authentication.
+SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P}
+SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL}
+
+# For PC, which OpenSSL to pick up
+# 
+# On Linux based builds, this option has no impact, because the build system
+# picks up the default available/installed OpenSSL from the system directly.
+SSS_HAVE_OPENSSL_1_1_1 := ${SSS_HAVE_OPENSSL_1_1_1}
+SSS_HAVE_OPENSSL_3_0 := ${SSS_HAVE_OPENSSL_3_0}
+
+# Which MBedTLS version to choose
+SSS_HAVE_MBEDTLS_2_X := ${SSS_HAVE_MBEDTLS_2_X}
+SSS_HAVE_MBEDTLS_3_X := ${SSS_HAVE_MBEDTLS_3_X}
+
+# Diversification of symmetric authentication key
+# 
+# When enabled, key used for symmetric authentication is diversification key derived from master key.
+# 
+# Otherwise master key is used.
+SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED}
+SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED}
+
+# Enable all authentication code
+# When enabled, all the authentication code is enabled in nx library.
+SSS_HAVE_ALL_AUTH_CODE_DISABLED := ${SSS_HAVE_ALL_AUTH_CODE_DISABLED}
+SSS_HAVE_ALL_AUTH_CODE_ENABLED := ${SSS_HAVE_ALL_AUTH_CODE_ENABLED}
+
+# ALT Engine implementation for mbedTLS
+# 
+# When set to None, mbedTLS would not use ALT Implementation to connect to / use Secure Authenticator.
+# This needs to be set to PSA for PSA example over SSS APIs
+SSS_HAVE_MBEDTLS_ALT_SSS := ${SSS_HAVE_MBEDTLS_ALT_SSS}
+SSS_HAVE_MBEDTLS_ALT_PSA := ${SSS_HAVE_MBEDTLS_ALT_PSA}
+SSS_HAVE_MBEDTLS_ALT_NONE := ${SSS_HAVE_MBEDTLS_ALT_NONE}
+
+# Enable host certificates of A30 for sigma-I Authentication
+# When Secure Authenticator type is selected, respective host certificates are enabled in nx library.
+SSS_HAVE_SA_TYPE_A30 := ${SSS_HAVE_SA_TYPE_A30}
+SSS_HAVE_SA_TYPE_NTAG_X_DNA := ${SSS_HAVE_SA_TYPE_NTAG_X_DNA}
+SSS_HAVE_SA_TYPE_NXP_INT_CONFIG := ${SSS_HAVE_SA_TYPE_NXP_INT_CONFIG}
+SSS_HAVE_SA_TYPE_OTHER := ${SSS_HAVE_SA_TYPE_OTHER}
+
+# Compiling without any NX Type Support
+SSS_HAVE_NX_TYPE_NONE := ${SSS_HAVE_NX_TYPE_NONE}
+
+# Application (DF name 0xD2760000850101)
+SSS_HAVE_NX_TYPE_NX_R_DA := ${SSS_HAVE_NX_TYPE_NX_R_DA}
+
+# MF (DF name 0xD2760000850100)
+SSS_HAVE_NX_TYPE_NX_PICC := ${SSS_HAVE_NX_TYPE_NX_PICC}
+
+# PC/Laptop Windows
+SSS_HAVE_HOST_PCWINDOWS := ${SSS_HAVE_HOST_PCWINDOWS}
+
+# PC/Laptop Linux64
+SSS_HAVE_HOST_PCLINUX64 := ${SSS_HAVE_HOST_PCLINUX64}
+
+# Embedded Kinetis Freedom K64F
+SSS_HAVE_HOST_FRDMK64F := ${SSS_HAVE_HOST_FRDMK64F}
+
+# Embedded LPCXpresso55s
+SSS_HAVE_HOST_LPCXPRESSO55S := ${SSS_HAVE_HOST_LPCXPRESSO55S}
+
+# Embedded Linux on RaspBerry PI
+SSS_HAVE_HOST_RASPBIAN := ${SSS_HAVE_HOST_RASPBIAN}
+
+# Not using any Communication layer
+SSS_HAVE_SMCOM_NONE := ${SSS_HAVE_SMCOM_NONE}
+
+# Virtual COM Port
+SSS_HAVE_SMCOM_VCOM := ${SSS_HAVE_SMCOM_VCOM}
+
+# GP Spec
+SSS_HAVE_SMCOM_T1OI2C_GP1_0 := ${SSS_HAVE_SMCOM_T1OI2C_GP1_0}
+
+# CCID PC/SC reader interface
+SSS_HAVE_SMCOM_PCSC := ${SSS_HAVE_SMCOM_PCSC}
+
+# Socket Interface Old Implementation.
+# This is the interface used from Host PC when when we run jrcpv1_server
+# from the linux PC.
+SSS_HAVE_SMCOM_JRCP_V1_AM := ${SSS_HAVE_SMCOM_JRCP_V1_AM}
+
+# Use mbedTLS as host crypto
+SSS_HAVE_HOSTCRYPTO_MBEDTLS := ${SSS_HAVE_HOSTCRYPTO_MBEDTLS}
+
+# Use OpenSSL as host crypto
+SSS_HAVE_HOSTCRYPTO_OPENSSL := ${SSS_HAVE_HOSTCRYPTO_OPENSSL}
+
+# NO Host Crypto
+# Note,  the security of configuring Nx to be used without HostCrypto
+# needs to be assessed from system security point of view
+SSS_HAVE_HOSTCRYPTO_NONE := ${SSS_HAVE_HOSTCRYPTO_NONE}
+
+# No specific RTOS. Either bare matal on embedded system or native linux or Windows OS
+SSS_HAVE_RTOS_DEFAULT := ${SSS_HAVE_RTOS_DEFAULT}
+
+# Free RTOS for embedded systems
+SSS_HAVE_RTOS_FREERTOS := ${SSS_HAVE_RTOS_FREERTOS}
+
+# Use the default session (i.e. session less) login
+SSS_HAVE_AUTH_NONE := ${SSS_HAVE_AUTH_NONE}
+
+# SIGMA I Verifier
+SSS_HAVE_AUTH_SIGMA_I_VERIFIER := ${SSS_HAVE_AUTH_SIGMA_I_VERIFIER}
+
+# SIGMA I Prover
+SSS_HAVE_AUTH_SIGMA_I_PROVER := ${SSS_HAVE_AUTH_SIGMA_I_PROVER}
+
+# Symmetric Authentication
+SSS_HAVE_AUTH_SYMM_AUTH := ${SSS_HAVE_AUTH_SYMM_AUTH}
+
+# Default Logging
+SSS_HAVE_LOG_DEFAULT := ${SSS_HAVE_LOG_DEFAULT}
+
+# Very Verbose logging
+SSS_HAVE_LOG_VERBOSE := ${SSS_HAVE_LOG_VERBOSE}
+
+# Totally silent logging
+SSS_HAVE_LOG_SILENT := ${SSS_HAVE_LOG_SILENT}
+
+# Segger Real Time Transfer (For Test Automation, NXP Internal)
+SSS_HAVE_LOG_SEGGERRTT := ${SSS_HAVE_LOG_SEGGERRTT}
+
+# For developer
+SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG := ${SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG}
+
+# Optimization enabled and debug symbols removed
+SSS_HAVE_CMAKE_BUILD_TYPE_RELEASE := ${SSS_HAVE_CMAKE_BUILD_TYPE_RELEASE}
+
+# Optimization enabled but with debug symbols
+SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHDEBINFO := ${SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHDEBINFO}
+
+# Empty Allowed
+
+# Plain Text
+SSS_HAVE_SECURE_TUNNELING_NONE := ${SSS_HAVE_SECURE_TUNNELING_NONE}
+
+# NTAG AES-128 or AES-256 (EV2) Secure Channel. Only valid for Sigma-I. Host supports both AES-128 and AES-256. The secure channel security strength is selected based on the SE configuration.
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_AES256_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_AES256_EV2}
+
+# Only NTAG AES-128 (EV2) Secure Channel
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_EV2}
+
+# Only NTAG AES-256 (EV2) Secure Channel
+SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2}
+
+# Host's Public Key And Parent Certificates Cache Disabled
+SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED}
+
+# Host's Public Key And Parent Certificates Cache Enabled
+SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED}
+
+# Certificate Repository 0
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0}
+
+# Certificate Repository 1
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1}
+
+# Certificate Repository 2
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_2}
+
+# Certificate Repository 3
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_3}
+
+# Certificate Repository 4
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_4}
+
+# Certificate Repository 5
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_5 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_5}
+
+# Certificate Repository 6
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6}
+
+# Certificate Repository 7
+SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7}
+
+# Certificate Private KeyId 0
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0}
+
+# Certificate Private KeyId 1
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1}
+
+# Certificate Private KeyId 2
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_2}
+
+# Certificate Private KeyId 3
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3}
+
+# Certificate Private KeyId 4
+SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4}
+
+# CA Root KeyId 0
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0}
+
+# CA Root KeyId 1
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1}
+
+# CA Root KeyId 2
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_2 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_2}
+
+# CA Root KeyId 3
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3}
+
+# CA Root KeyId 4
+SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4}
+
+# Application KeyId 0
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0}
+
+# Application KeyId 1
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1}
+
+# Application KeyId 2
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_2 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_2}
+
+# Application KeyId 3
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3}
+
+# Application KeyId 4
+SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4}
+
+# EC Curve NIST-P
+SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P}
+
+# EC Curve Brainpool
+SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL}
+
+# Use latest 1.1.1 version (Only applicable on PC)
+SSS_HAVE_OPENSSL_1_1_1 := ${SSS_HAVE_OPENSSL_1_1_1}
+
+# Use 3.0 version (Only applicable on PC)
+SSS_HAVE_OPENSSL_3_0 := ${SSS_HAVE_OPENSSL_3_0}
+
+# Use 2.X version
+SSS_HAVE_MBEDTLS_2_X := ${SSS_HAVE_MBEDTLS_2_X}
+
+# Use 3.X version
+SSS_HAVE_MBEDTLS_3_X := ${SSS_HAVE_MBEDTLS_3_X}
+
+# Symm Auth Key Diversification Disabled
+SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED}
+
+# Symm Auth Key Diversification Enabled
+SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED}
+
+# Enable only required authentication code (Based on NXMW_Auth Cmake option)
+SSS_HAVE_ALL_AUTH_CODE_DISABLED := ${SSS_HAVE_ALL_AUTH_CODE_DISABLED}
+
+# Enable all authentication code
+SSS_HAVE_ALL_AUTH_CODE_ENABLED := ${SSS_HAVE_ALL_AUTH_CODE_ENABLED}
+
+# Use SSS Layer ALT implementation
+SSS_HAVE_MBEDTLS_ALT_SSS := ${SSS_HAVE_MBEDTLS_ALT_SSS}
+
+# Enable TF-M based on PSA as ALT
+SSS_HAVE_MBEDTLS_ALT_PSA := ${SSS_HAVE_MBEDTLS_ALT_PSA}
+
+# Not using any mbedTLS_ALT
+# 
+# When this is selected, cloud demos can not work with mbedTLS
+SSS_HAVE_MBEDTLS_ALT_NONE := ${SSS_HAVE_MBEDTLS_ALT_NONE}
+
+# Enable A30 host cert for sigma-I authentication
+SSS_HAVE_SA_TYPE_A30 := ${SSS_HAVE_SA_TYPE_A30}
+
+# Enable NTAG_X_DNA host cert for sigma-I authentication
+SSS_HAVE_SA_TYPE_NTAG_X_DNA := ${SSS_HAVE_SA_TYPE_NTAG_X_DNA}
+
+# Enable NXP_INT_CONFIG host cert for sigma-I authentication
+SSS_HAVE_SA_TYPE_NXP_INT_CONFIG := ${SSS_HAVE_SA_TYPE_NXP_INT_CONFIG}
+
+# Enable Other host cert for sigma-I authentication
+SSS_HAVE_SA_TYPE_OTHER := ${SSS_HAVE_SA_TYPE_OTHER}
+
+
+
+# Deprecated items. Used here for backwards compatibility.
+

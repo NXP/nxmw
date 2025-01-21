@@ -1,0 +1,3 @@
+[ ca ]
+# X509 extensions for a ca
+basicConstraints        = CA:FALSE

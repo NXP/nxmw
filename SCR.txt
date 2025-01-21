@@ -1,0 +1,12 @@
+----------------------------------
+NXP Software Content Register
+Release:  nxmw-github
+Version: 02.04.00
+Outgoing License: BSD 3-Clause "New" or "Revised" License
+License File: LICENSE.txt
+Description and comments: NX Middleware
+Release Location: TBU
+Origin: NXP
+            OpenSSL 1.1 (OpenSSL License) - https://github.com/openssl/openssl/tree/OpenSSL_1_1_1-stable
+            openssl-3.0 (Apache 2.0) Version: OpenSSL 3.0.14 - https://github.com/openssl/openssl/tree/openssl-3.0.14
+-----------------------------------

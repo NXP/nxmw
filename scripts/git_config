@@ -1,0 +1,96 @@
+
+###### Purnank Specific region... To be Changed
+[user]
+    name = Purnank G
+    email = purnank.ghumalia@nxp.com
+
+###### Linux Specific region... To be Only inside Linux file.
+###### To be changed for user. Atlest the ing05193 part.
+# Linux:
+[core]
+    autocrlf = input
+    whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+    excludesfile = /home/ing05193/.gitignore
+
+###### Windows Specific region... To be Only inside Windows file.
+###### To be changed for user. Atlest the ing05193 part.
+# Windows:
+[core]
+    autocrlf = true
+    excludesfile = C:/Users/ing05193/.gitignore
+    whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+    safecrlf = false
+
+[alias]
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    ci = commit
+    st = status
+    br = branch
+    vbr = branch -a -vv
+    co = checkout
+    hist = log --pretty=format:'%h %ad | %s%d [%an]' --date=short
+    h = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)[%an]%Creset' --abbrev-commit --
+    amend = commit --amend
+    remove-last = reset --soft HEAD~1
+    remove-last-hard = reset --hard HEAD~1
+
+    # Fetch new branches, and delete old
+    gofetch = !git fetch --prune&&git submodule foreach git fetch --prune
+
+    # Move all submodules to develop branch
+    sdev = !git fetch --prune&&git submodule foreach git co develop
+
+    # Pull, merge origin/develop and push
+    pmp = !git pull --prune&&git merge origin/develop&&git push
+    # Switch do develop. Recommended to use: git godev;git gopull
+    godev   = !git checkout develop&&git submodule foreach git checkout develop
+
+    # Pull in all repos. And swich to letest on that branch
+    gopull  = !"git pull --prune&&git submodule foreach \"git pull --prune&\""
+
+    # Check Status
+    gost    = !git status&&git submodule foreach git status
+
+    # Check branch name
+    gobr    = !git branch&&git submodule foreach git branch
+
+    # Get URL
+    url = !git remote get-url --all origin
+
+    # will put a file into gitignore
+    ignore=!([ ! -e .gitignore ] && touch .gitignore) | echo $1 >>.gitignore
+
+    # Will start a repo in this directory
+    this = !git init && git add . && git commit -m \"initial commit\"
+
+    # list aliases
+    alias = !git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\t=> \\2/' | sort
+
+[grep]
+    lineNumber = true        # always show line numbers
+    extendRegexp = true      # allow extended regexes
+
+[color]
+    branch = auto
+    diff = auto
+    interactive = auto
+    status = auto
+
+[push]
+    default = simple
+
+
+# For Windows
+[guitool "Sublime"]
+    cmd = "subl.exe $FILENAME"
+    noconsole = yes
+
+# For Windows
+[guitool "npp"]
+    cmd = "/c/Program\\ Files/Notepad++/notepad++.exe $FILENAME"
+    noconsole = yes
+
+[gui]
+    tabsize = 4
+

@@ -1,0 +1,49 @@
+#
+# Copyright 2022-2023 NXP
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+PROJECT(usb_c_auth)
+
+FILE(
+    GLOB
+    files
+    *.c
+)
+
+ADD_EXECUTABLE(
+    ${PROJECT_NAME}
+    ${KSDK_STARTUP_FILE} ${files}
+)
+
+TARGET_INCLUDE_DIRECTORIES(
+    ${PROJECT_NAME}
+    PRIVATE .
+    PRIVATE ..
+)
+
+TARGET_LINK_LIBRARIES(
+    ${PROJECT_NAME}
+    ex_common
+    SSS_APIs
+    usb_c_initiator_auth
+    usb_c_responder_auth
+)
+
+IF(SSS_HAVE_HOSTCRYPTO_MBEDTLS)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} mbedtls)
+ENDIF()
+
+IF(SSS_HAVE_HOSTCRYPTO_OPENSSL)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
+ENDIF()
+
+IF(NXPInternal)
+    TARGET_COMPILE_DEFINITIONS(
+        ${PROJECT_NAME}
+        PRIVATE
+        USE_ROOT_USBIF=0
+    )
+ENDIF()
+
+CREATE_BINARY(${PROJECT_NAME})

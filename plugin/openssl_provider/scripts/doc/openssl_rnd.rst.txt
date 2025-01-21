@@ -1,0 +1,9 @@
+Generate random number from the Secure Authenticator
+
+Arguments:
+   --connection_data CONNECTION_DATA
+
+                     CONNECTION_DATA ``COM3``, ``NXP Semiconductors P71 T=0, T=1 Driver 0``, ``none``. Default: ``none``
+
+Example:
+   python openssl_rand.py --connection_data ``NXP Semiconductors P71 T=0, T=1 Driver 0``
