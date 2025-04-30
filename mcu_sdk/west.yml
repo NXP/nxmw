@@ -1,0 +1,226 @@
+manifest:
+  remotes:
+    - name: nxproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+    - name: nxp-mcuxpresso
+      url-base: https://github.com/nxp-mcuxpresso
+    - name: nxp_zephyr
+      url-base: https://github.com/nxp-zephyr
+    - name: nxp
+      url-base: https://github.com/NXP
+  defaults:
+    remote: nxp-mcuxpresso
+  group-filter:
+  - -optional
+  projects:
+    - name: core
+      path: mcuxsdk/
+      repo-path: mcuxsdk-core
+      revision: 84547d55114471cd361e32559db1c4ecb3a32815
+      west-commands: scripts/west_commands.yml
+      groups:
+      - core
+      userdata:
+        track_branch: release/24.12.00
+    - name: MIR
+      path: mcuxsdk/MIR
+      revision: 8f8440e2bebcd5f7f78fbcd0db26460aca904064
+      url: ssh://git@bitbucket.sw.nxp.com/mcucore/mcu-mir-export.git
+      west-commands: scripts/west_commands.yml
+      userdata:
+        track_branch: release/24.12.00
+    - name: CMSIS
+      repo-path: mcu-sdk-cmsis
+      path: mcuxsdk/arch/arm/CMSIS
+      revision: c3319a16588d05036a9e08cf59a92634a5a0e5dd
+      groups:
+      - core
+      userdata:
+        track_branch: mcux_main
+    - name: mcux-soc-svd
+      path: mcuxsdk/svd
+      revision: main
+      groups:
+      - optional
+      userdata:
+        track_branch: main
+    - name: mcu-sdk-components
+      repo-path: mcux-component
+      revision: 0a95c0536c168a97e1caac0bc41898c3cf9f75a8
+      path: mcuxsdk/components
+      groups:
+      - components
+      userdata:
+        track_branch: release/24.12.00
+    - name: els_pkc
+      userdata:
+        owner: vit.chmelar@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/components/els_pkc
+      revision: b7d6a0e7462863e2c14ee526b870c3b1a0f6b220
+      url: https://github.com/NXP/els_pkc
+      groups:
+      - security
+      - els_pkc
+    - name: freertos-kernel
+      path: mcuxsdk/rtos/freertos/freertos-kernel
+      revision: 8bc484d29d7352c5ccd8caa0fc7e9a803c7c7029
+      groups:
+      - freertos-kernel
+      - rtos
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+    - name: mcux-freertos-drivers
+      userdata:
+        owner: david.jurajda@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/freertos-drivers
+      revision: 7ec5840cbc58be80fec92a2d5d8ccd4f064741fb
+      groups:
+      - rtos
+      - freertos
+    - name: corepkcs11
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/corepkcs11
+      revision: 60cfafe379011fc3f6d8e50d18098d0febdc64ee
+      groups:
+      - freertos
+      - aws_iot
+    - name: coremqtt
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/coremqtt
+      revision: 22a21dae0cf083e0c54f1762a4a95f3f7abbe60e
+      groups:
+      - freertos
+      - aws_iot
+    - name: corejson
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/corejson
+      revision: 87afed15ed319663e27fe269d8ffdc39b6bc1df9
+      groups:
+      - freertos
+      - aws_iot
+    - name: corehttp
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/corehttp
+      revision: a8f5481b503ad5f5325a71ccdc29cf8095376077
+      groups:
+      - freertos
+      - aws_iot
+    - name: backoffalgorithm
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/backoffalgorithm
+      revision: c449dc1eb8a82f3c50fb327cadd97954224f2553
+      groups:
+      - freertos
+      - aws_iot
+    - name: freertos-plus-tcp
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/freertos-plus-tcp
+      revision: 3fbb5ebc315ad8dd9b622878a44b3d8cf21565bf
+      groups:
+      - freertos
+    - name: coremqtt-agent
+      userdata:
+        owner: michal.princ@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/rtos/freertos/coremqtt-agent
+      revision: 223e80a64f706e9a8018a65e2bf9b245bd27b7ad
+      groups:
+      - freertos
+      - aws_iot
+    - name: mcux-devices-lpc
+      revision: 4671b7f19480417fefb23eb8c6e71a2bc9f2d9f1
+      path: mcuxsdk/devices/LPC
+      groups:
+      - core
+      userdata:
+        track_branch: release/24.12.00
+    - name: mcux-devices-mcx
+      revision: 3ff51c8cf729c59918e96f4ce33b37c3e93ffc74
+      path: mcuxsdk/devices/MCX
+      groups:
+      - core
+      userdata:
+        track_branch: release/24.12.00
+    - name: mbedtls
+      userdata:
+        owner: vit.chmelar@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/middleware/mbedtls
+      revision: c344c3373c1c50a79c1add0ab14df2591d0bf8be
+      groups:
+      - mbedtls
+      - security
+    - name: mbedtls3x
+      userdata:
+        owner: ruchika.gupta_1@nxp.com
+        dev_branch: mcux_main
+        track_branch: release/24.12.00_mbedtls3x
+      path: mcuxsdk/middleware/mbedtls3x
+      remote: nxp
+      repo-path: nxp_mbedtls
+      revision: 55d97ccc8db9f3ec9b4fb2809649e4f83343fdf0
+      groups:
+      - mbedtls3x
+      - security
+    - name: usb
+      userdata:
+        owner: yichang.wang@nxp.com
+        track_branch: release/24.12.00
+      revision: ff4c277499155029637526e0bf7ad7fa4c875e48
+      path: mcuxsdk/middleware/usb
+      repo-path: mcux-sdk-middleware-usb
+      groups:
+      - usb
+      - middleware
+    - name: fatfs
+      revision: 1f95e20405b53c512ad28455f3a401359f6809e8
+      path: mcuxsdk/middleware/fatfs
+      groups:
+      - fatfs
+      - middleware
+      userdata:
+        track_branch: release/24.12.00
+    - name: mcux-sdk-middleware-sdmmc
+      userdata:
+        owner: yangbo.lu@nxp.com
+        track_branch: release/24.12.00
+      revision: dd59aeea7adb6ac14a2cca6619cd4ffe0d6d1bad
+      path: mcuxsdk/middleware/sdmmc
+      groups:
+      - sdmmc
+      - middleware
+    - name: pkcs11
+      userdata:
+        owner: michal.chromec@nxp.com
+        track_branch: release/24.12.00
+      path: mcuxsdk/middleware/pkcs11
+      revision: 7e42bd48bbf02ad4a85010309919ac176373f4b4
+      groups:
+      - pkcs11
+      - aws_iot
+    - name: lwip
+      revision: 8afac2ed7f21a0bfac268ab06b59141aaac1b88f
+      path: mcuxsdk/middleware/lwip
+      groups:
+      - lwip
+      - middleware
+      userdata:
+        track_branch: release/24.12.00
+        branch_flow: false
+  self:
+    path: nxmw
