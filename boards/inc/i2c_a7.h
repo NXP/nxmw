@@ -61,36 +61,33 @@
 #include "fsl_sss_ftr_default.h"
 #endif
 
-#define SCI2C_T_CMDG 180 //!< Minimum delay between stop of Wakeup command and start of subsequent command (Value in micro seconds)
+#define SCI2C_T_CMDG \
+    180 //!< Minimum delay between stop of Wakeup command and start of subsequent command (Value in micro seconds)
 
-#define I2C_IDLE              0
-#define I2C_STARTED           1
-#define I2C_RESTARTED         2
-#define I2C_REPEATED_START    3
-#define DATA_ACK              4
-#define DATA_NACK             5
-#define I2C_BUSY              6
-#define I2C_NO_DATA           7
-#define I2C_NACK_ON_ADDRESS   8
-#define I2C_NACK_ON_DATA      9
-#define I2C_ARBITRATION_LOST  10
-#define I2C_TIME_OUT          11
-#define I2C_OK                12
-#define I2C_FAILED            13
+#define I2C_IDLE 0
+#define I2C_STARTED 1
+#define I2C_RESTARTED 2
+#define I2C_REPEATED_START 3
+#define DATA_ACK 4
+#define DATA_NACK 5
+#define I2C_BUSY 6
+#define I2C_NO_DATA 7
+#define I2C_NACK_ON_ADDRESS 8
+#define I2C_NACK_ON_DATA 9
+#define I2C_ARBITRATION_LOST 10
+#define I2C_TIME_OUT 11
+#define I2C_OK 12
+#define I2C_FAILED 13
+#define I2C_BUS_0 (0)
 
 typedef unsigned int i2c_error_t;
-#define I2C_BUS_0   (0)
 
 #if defined(__cplusplus)
-extern "C"{
+extern "C" {
 #endif
-/** Initialize the I2C platform HW/Driver*/
 
 /* MAX data supported by respective protocol in single read/write*/
-#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0)
-#define MAX_DATA_LEN      260
-#endif
-
+#define MAX_DATA_LEN 260
 
 i2c_error_t axI2CInit(void **conn_ctx, const char *pDevName);
 
@@ -108,29 +105,26 @@ i2c_error_t axI2CInit(void **conn_ctx, const char *pDevName);
  *
  *
  */
-void axI2CTerm(void* conn_ctx, int mode);
+void axI2CTerm(void *conn_ctx, int mode);
 
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
 /** Smarter handling of back off logic
  *
  *  When we get a NAK from SE, we back off and keep on increasing the delay for next I2C Read/Write.
  *
  *  When we get an ACK from SE, we reset this back off delay.
  */
-void axI2CResetBackoffDelay( void );
-#endif /* SSS_HAVE_HOST_FRDMK64F */
+void axI2CResetBackoffDelay(void);
 
-#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0)
 /** Write a frame.
  *
  * Needed for SCI2C and T=1 over I2C */
-i2c_error_t axI2CWrite(void* conn_ctx, unsigned char bus, unsigned char addr, unsigned char * pTx, unsigned short txLen);
+i2c_error_t axI2CWrite(void *conn_ctx, unsigned char bus, unsigned char addr, unsigned char *pTx, unsigned short txLen);
 
 /** Read a byte.
  *
  * Needed only for T=1 over I2C */
-i2c_error_t axI2CRead(void* conn_ctx, unsigned char bus, unsigned char addr, unsigned char * pRx, unsigned short rxLen);
-#endif /* SSS_HAVE_SMCOM_T1OI2C_GP1_0 */
+i2c_error_t axI2CRead(void *conn_ctx, unsigned char bus, unsigned char addr, unsigned char *pRx, unsigned short rxLen);
+
 #if defined(__cplusplus)
 }
 #endif

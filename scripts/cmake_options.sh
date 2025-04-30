@@ -26,11 +26,13 @@ doNXMW_Host_PCWindows_ON="-DNXMW_Host=PCWindows" #PC/Laptop Windows
 
 doNXMW_Host_PCLinux64_ON="-DNXMW_Host=PCLinux64" #PC/Laptop Linux64
 
-doNXMW_Host_frdmk64f_ON="-DNXMW_Host=frdmk64f" #Embedded Kinetis Freedom K64F
-
 doNXMW_Host_lpcxpresso55s_ON="-DNXMW_Host=lpcxpresso55s" #Embedded LPCXpresso55s
 
 doNXMW_Host_Raspbian_ON="-DNXMW_Host=Raspbian" #Embedded Linux on RaspBerry PI
+
+doNXMW_Host_frdmmcxa153_ON="-DNXMW_Host=frdmmcxa153" #Embedded frdmmcxa153
+
+doNXMW_Host_frdmmcxn947_ON="-DNXMW_Host=frdmmcxn947" #Embedded frdmmcxn947
 
 
 ### NXMW_SMCOM : Communication Interface

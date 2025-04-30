@@ -424,8 +424,9 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
         arm = gc.generate_eclipse("eclipse_arm", {
             "CMAKE_TOOLCHAIN_FILE": root_dir + "/scripts/armgcc_force_cpp.cmake",
             "NXMW_NX_Type": "NX_R_DA",
-            "NXMW_Host": "frdmk64f",
-            "NXMW_SMCOM": "T1oI2C_GP1_0"
+            "NXMW_Host": "lpcxpresso55s",
+            "NXMW_SMCOM": "T1oI2C_GP1_0",
+            "NXMW_MBedTLS" : "2_X",
         }, "Cross compilation setup with Eclipse")
 
     if "linux" in sys.platform:

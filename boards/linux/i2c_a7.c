@@ -31,8 +31,8 @@
 
 #include "nxLog_msg.h"
 
-static char* default_axSmDevice_name = "/dev/i2c-1";
-static int default_axSmDevice_addr = 0x20;      // 7-bit address
+static char *default_axSmDevice_name = "/dev/i2c-1";
+static int default_axSmDevice_addr   = 0x20; // 7-bit address
 
 #define DEV_NAME_BUFFER_SIZE 64
 
@@ -42,38 +42,34 @@ i2c_error_t i2c_level_shifter()
     int axSmDevice = 0;
     U32 dev_addr   = 0x20;
     unsigned long funcs;
-    int nrWritten = -1;
+    int nrWritten    = -1;
     uint8_t txBuf[8] = {0};
     int txBufLen     = 0;
 
     // edit i2c bus level_shifter if different address
-    static char* default_level_shifter_device = "/dev/i2c-11";
+    static char *default_level_shifter_device = "/dev/i2c-11";
 
     // i2c file descriptor for second channel (DAC and IO expander).
-    if ((axSmDevice = open(default_level_shifter_device, O_RDWR)) < 0)
-    {
+    if ((axSmDevice = open(default_level_shifter_device, O_RDWR)) < 0) {
         LOG_E("failed to open i2c bus:%s\n", default_level_shifter_device);
         return I2C_FAILED;
     }
 
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0)
-    {
+    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
         LOG_E("I2C driver failed setting address\n");
         close(axSmDevice);
         return I2C_FAILED;
     }
 
     // clear PEC flag
-    if (ioctl(axSmDevice, I2C_PEC, 0) < 0)
-    {
+    if (ioctl(axSmDevice, I2C_PEC, 0) < 0) {
         LOG_E("I2C driver: PEC flag clear failed\n");
         close(axSmDevice);
         return I2C_FAILED;
     }
 
     // Query functional capacity of I2C driver
-    if (ioctl(axSmDevice, I2C_FUNCS, &funcs) < 0)
-    {
+    if (ioctl(axSmDevice, I2C_FUNCS, &funcs) < 0) {
         LOG_E("Cannot get i2c adapter functionality\n");
         close(axSmDevice);
         return I2C_FAILED;
@@ -84,8 +80,7 @@ i2c_error_t i2c_level_shifter()
     txBuf[1]  = 0x10;
     txBufLen  = 2;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
@@ -95,15 +90,13 @@ i2c_error_t i2c_level_shifter()
     txBuf[1]  = 0x88;
     txBufLen  = 2;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
 
     dev_addr = 0x21;
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0)
-    {
+    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
         LOG_E("I2C driver failed setting address\n");
         close(axSmDevice);
         return I2C_FAILED;
@@ -114,8 +107,7 @@ i2c_error_t i2c_level_shifter()
     txBuf[1]  = 0x7C;
     txBufLen  = 2;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
@@ -125,15 +117,13 @@ i2c_error_t i2c_level_shifter()
     txBuf[1]  = 0x03;
     txBufLen  = 2;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
 
     dev_addr = 0x61;
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0)
-    {
+    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
         LOG_E("I2C driver failed setting address\n");
         close(axSmDevice);
         return I2C_FAILED;
@@ -145,8 +135,7 @@ i2c_error_t i2c_level_shifter()
     txBuf[2]  = 0x33;
     txBufLen  = 3;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
@@ -157,8 +146,7 @@ i2c_error_t i2c_level_shifter()
     txBuf[2]  = 0x00;
     txBufLen  = 3;
     nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen))
-    {
+    if (nrWritten < 0 || (nrWritten != txBufLen)) {
         LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
         return I2C_FAILED;
     }
@@ -187,7 +175,7 @@ i2c_error_t i2c_level_shifter()
 */
 i2c_error_t axI2CInit(void **conn_ctx, const char *pDevName)
 {
-    unsigned long funcs = 0;
+    unsigned long funcs             = 0;
     int axSmDevice                  = 0;
     char *pdev_name                 = NULL;
     char *pdev_addr_str             = NULL;
@@ -197,15 +185,13 @@ i2c_error_t axI2CInit(void **conn_ctx, const char *pDevName)
     };
 
 #if NX_ENABLE_LEVEL_SHIFTER
-    if (I2C_OK != i2c_level_shifter())
-    {
+    if (I2C_OK != i2c_level_shifter()) {
         LOG_I("Error in i2c_level_shifter \n");
         return I2C_FAILED;
     }
 #endif
 
-    if (pDevName != NULL && (strcasecmp("none", pDevName) != 0))
-    {
+    if (pDevName != NULL && (strcasecmp("none", pDevName) != 0)) {
         if ((strlen(pDevName) + 1) < DEV_NAME_BUFFER_SIZE) {
             memcpy(temp, pDevName, strlen(pDevName));
             temp[strlen(pDevName)] = '\0';
@@ -346,7 +332,6 @@ i2c_error_t axI2CWrite(void *conn_ctx, unsigned char bus, unsigned char addr, un
 }
 #endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
 
-
 #if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
 i2c_error_t axI2CRead(void *conn_ctx, unsigned char bus, unsigned char addr, unsigned char *pRx, unsigned short rxLen)
 {
@@ -378,7 +363,7 @@ i2c_error_t axI2CRead(void *conn_ctx, unsigned char bus, unsigned char addr, uns
         }
     }
     LOG_D("Done with rv = %02x ", rv);
-    LOG_MAU8_D("RX (axI2CRead): ",pRx,rxLen);
+    LOG_MAU8_D("RX (axI2CRead): ", pRx, rxLen);
     return rv;
 }
 #endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0

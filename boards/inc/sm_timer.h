@@ -18,7 +18,7 @@ extern "C" {
 
 /* Change this value to tick rate used by the controller */
 #define TICK_RATE_HZ 1000
-#define MS_TO_TICKS(msec) (( (msec) * (TICK_RATE_HZ) ) / (1000))
+#define MS_TO_TICKS(msec) (((msec) * (TICK_RATE_HZ)) / (1000))
 
 /* function used for delay loops */
 uint32_t sm_initSleep(void);

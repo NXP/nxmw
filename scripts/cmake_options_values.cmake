@@ -44,14 +44,14 @@ IF(NXPInternal)
         CACHE NXMW_Host
         PROPERTY
             STRINGS
-            "PCWindows;PCLinux64;frdmk64f;lpcxpresso55s;Raspbian;"
+            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxn947;"
     )
 ELSE()
     SET_PROPERTY(
         CACHE NXMW_Host
         PROPERTY
             STRINGS
-            "PCWindows;PCLinux64;frdmk64f;lpcxpresso55s;Raspbian;"
+            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxn947;"
     )
 ENDIF()
 
@@ -483,7 +483,7 @@ ELSE()
         CACHE NXMW_mbedTLS_ALT
         PROPERTY
             STRINGS
-            "PSA;None;"
+            "SSS;PSA;None;"
     )
 ENDIF()
 
@@ -561,14 +561,6 @@ ELSE()
     SET(SSS_HAVE_HOST_PCLINUX64 "0")
 ENDIF()
 
-IF("${NXMW_Host}" STREQUAL "frdmk64f")
-    # SET(WithNXMW_Host_frdmk64f ON)
-    SET(SSS_HAVE_HOST_FRDMK64F "1")
-ELSE()
-    # SET(WithNXMW_Host_frdmk64f OFF)
-    SET(SSS_HAVE_HOST_FRDMK64F "0")
-ENDIF()
-
 IF("${NXMW_Host}" STREQUAL "lpcxpresso55s")
     # SET(WithNXMW_Host_lpcxpresso55s ON)
     SET(SSS_HAVE_HOST_LPCXPRESSO55S "1")
@@ -585,19 +577,37 @@ ELSE()
     SET(SSS_HAVE_HOST_RASPBIAN "0")
 ENDIF()
 
+IF("${NXMW_Host}" STREQUAL "frdmmcxa153")
+    # SET(WithNXMW_Host_frdmmcxa153 ON)
+    SET(SSS_HAVE_HOST_FRDMMCXA153 "1")
+ELSE()
+    # SET(WithNXMW_Host_frdmmcxa153 OFF)
+    SET(SSS_HAVE_HOST_FRDMMCXA153 "0")
+ENDIF()
+
+IF("${NXMW_Host}" STREQUAL "frdmmcxn947")
+    # SET(WithNXMW_Host_frdmmcxn947 ON)
+    SET(SSS_HAVE_HOST_FRDMMCXN947 "1")
+ELSE()
+    # SET(WithNXMW_Host_frdmmcxn947 OFF)
+    SET(SSS_HAVE_HOST_FRDMMCXN947 "0")
+ENDIF()
+
 IF("${NXMW_Host}" STREQUAL "PCWindows")
     # OK
 ELSEIF("${NXMW_Host}" STREQUAL "PCLinux64")
-    # OK
-ELSEIF("${NXMW_Host}" STREQUAL "frdmk64f")
     # OK
 ELSEIF("${NXMW_Host}" STREQUAL "lpcxpresso55s")
     # OK
 ELSEIF("${NXMW_Host}" STREQUAL "Raspbian")
     # OK
+ELSEIF("${NXMW_Host}" STREQUAL "frdmmcxa153")
+    # OK
+ELSEIF("${NXMW_Host}" STREQUAL "frdmmcxn947")
+    # OK
 ELSE()
     MESSAGE(SEND_ERROR "For 'NXMW_Host' '${NXMW_Host}' is invalid.")
-    MESSAGE(STATUS "Only supported values are 'PCWindows, PCLinux64, frdmk64f, lpcxpresso55s, Raspbian'")
+    MESSAGE(STATUS "Only supported values are 'PCWindows, PCLinux64, lpcxpresso55s, Raspbian, frdmmcxa153, frdmmcxn947'")
 ENDIF()
 
 IF("${NXMW_SMCOM}" STREQUAL "None")

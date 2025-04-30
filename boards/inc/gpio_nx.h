@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <time.h>
 
-
 unsigned int gpio_export(int pin);
 unsigned int gpio_unexport(int pin);
 unsigned int gpio_direction(int pin, int dir);

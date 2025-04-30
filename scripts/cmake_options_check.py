@@ -32,6 +32,13 @@ LIST_HOST_CRYPTO_ANY = [
 LIST_NX_VERSIONS_ALL = cmake_options.LIST_NX_VERSIONS_ALL
 
 
+LIST_EMBEDDED_PLATFORM = [
+    "LPCXPRESSO55S",
+    "FRDMMCXA153",
+    "FRDMMCXN947",
+]
+
+
 class WithCondition:
     """docstring for condition"""
 
@@ -117,6 +124,8 @@ class CMakeOptionsCheck:
         self.set_when_either_of("SSS_HAVE_NX_TYPE_", LIST_NX_TYPE, "SSS_HAVE_NX_TYPE")
         self.set_when_either_of("SSS_HAVE_MBEDTLS_ALT_", LIST_MBEDTLS_ALT, "SSS_HAVE_MBEDTLS_ALT")
         self.set_when_either_of("SSS_HAVE_HOSTCRYPTO_", LIST_HOST_CRYPTO_ANY, "SSS_HAVE_HOSTCRYPTO_ANY")
+
+        self.set_when_either_of("SSS_HAVE_HOST_", LIST_EMBEDDED_PLATFORM, "SSS_HAVE_HOST_EMBEDDED")
 
         with WithCondition(self, "SSS_HAVE_HOST_FRDMK64F AND SSS_HAVE_NX_TYPE") as emb:
             emb.either_of("SSS_HAVE_SMCOM_", LIST_SMCOM_EMBEDDED_K4F)  # pylint: disable=no-member

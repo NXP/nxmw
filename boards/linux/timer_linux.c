@@ -3,6 +3,7 @@
  */
 #include "sm_timer.h"
 
-void sm_usleep(uint32_t microsec) {
+void sm_usleep(uint32_t microsec)
+{
     usleep(microsec);
 }

@@ -33,8 +33,7 @@ uint32_t sm_initSleep()
 
 #if defined(USE_RTOS) && USE_RTOS == 1
 #ifndef MSEC_TO_TICK
-#define MSEC_TO_TICK(msec) \
-	((((uint32_t)configTICK_RATE_HZ * (uint32_t)(msec))) / 1000L)
+#define MSEC_TO_TICK(msec) ((((uint32_t)configTICK_RATE_HZ * (uint32_t)(msec))) / 1000L)
 #endif /* MSEC_TO_TICK */
 #endif /* USE_RTOS */
 
@@ -45,15 +44,17 @@ void sm_sleep(uint32_t msec)
 {
 #ifdef __OSX_AVAILABLE
     clock_t goal = msec + clock();
-    while (goal > clock());
+    while (goal > clock())
+        ;
 #elif defined(__gnu_linux__) || defined __clang__
-    useconds_t microsec = msec*1000;
+    useconds_t microsec = msec * 1000;
     usleep(microsec);
 #elif defined(USE_RTOS) && USE_RTOS == 1
     vTaskDelay(1 >= pdMS_TO_TICKS(msec) ? 1 : pdMS_TO_TICKS(msec));
 #else
     clock_t goal = msec + clock();
-    while (goal > clock());
+    while (goal > clock())
+        ;
 #endif
 }
 
@@ -65,12 +66,12 @@ void sm_usleep(uint32_t microsec)
 #ifdef __OSX_AVAILABLE
     // no usleep
 #elif defined(_WIN32)
-    #pragma message ( "No sm_usleep implemented" )
+#pragma message("No sm_usleep implemented")
 #elif defined(__gnu_linux__) || defined __clang__
     usleep(microsec);
 #elif defined(__OpenBSD__)
-	#warning "No sm_usleep implemented"
+#warning "No sm_usleep implemented"
 #else
-	//#warning "No sm_usleep implemented"
+    //#warning "No sm_usleep implemented"
 #endif
 }

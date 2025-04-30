@@ -1,0 +1,12 @@
+*.dylib
+*.dll
+*.so
+*.exe
+*.bin
+*.axf
+mbedtls_3x_client
+mbedtls_3x_server
+mbedtls_ex_orig_dtls_server
+mbedtls_ex_orig_ssl_server2
+mbedtls_ex_sss_dtls_client
+mbedtls_ex_sss_ssl2_client

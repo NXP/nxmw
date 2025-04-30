@@ -63,9 +63,10 @@ LIST_SMCOM = [
 LIST_HOST = [
     ("PCWindows", "PC/Laptop Windows", True),
     ("PCLinux64", "PC/Laptop Linux64", True),
-    ("frdmk64f", "Embedded Kinetis Freedom K64F", True),
     ("lpcxpresso55s", "Embedded LPCXpresso55s", True),
     ("Raspbian", "Embedded Linux on RaspBerry PI", True),
+    ("frdmmcxa153", "Embedded frdmmcxa153", True),
+    ("frdmmcxn947", "Embedded frdmmcxn947", True),
 ]
 
 LIST_RTOS = [
@@ -214,7 +215,7 @@ for e, _, _ in LIST_ENABLE_ALL_AUTH:
     pass
 
 LIST_MBEDTLS_ALT = [
-    ("SSS", "Use SSS Layer ALT implementation", False),
+    ("SSS", "Use SSS Layer ALT implementation", True),
     ("PSA", "Enable TF-M based on PSA as ALT", True),
     ("None", ("Not using any mbedTLS_ALT", "", "When this is selected, cloud demos can not work with mbedTLS"), True),
 ]
