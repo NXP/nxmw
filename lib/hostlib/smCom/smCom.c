@@ -21,19 +21,17 @@
 
 #if defined(USE_RTOS) && (USE_RTOS == 1)
 static SemaphoreHandle_t gSmComlock;
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
 #include <pthread.h>
 /* Only for base session with os */
 static pthread_mutex_t gSmComlock;
 #endif
 
-#if __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#if __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
 #define USE_LOCK 1
 #else
 #define USE_LOCK 0
@@ -44,9 +42,9 @@ static pthread_mutex_t gSmComlock;
 
 #if SMCOM_DEBUG_TIME
 #if ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
-    /* Non-embedded platforms */
+     (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+     (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+/* Non-embedded platforms */
 #include <time.h>
 #endif
 #endif // SMCOM_DEBUG_TIME
@@ -68,10 +66,9 @@ static pthread_mutex_t gSmComlock;
     else {                                      \
         LOG_D("LOCK Releasing failed");         \
     }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
 #define LOCK_TXN()                                               \
     LOG_D("Trying to Acquire Lock thread: %ld", pthread_self()); \
     if (0 != pthread_mutex_lock(&gSmComlock)) {                  \
@@ -109,10 +106,9 @@ U16 smCom_Init(ApduTransceiveFunction_t pTransceive, ApduTransceiveRawFunction_t
         LOG_E("\n xSemaphoreCreateMutex failed");
         goto exit;
     }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
     if (pthread_mutex_init(&gSmComlock, NULL) != 0) {
         LOG_E("\n mutex init has failed");
         goto exit;
@@ -132,10 +128,9 @@ void smCom_DeInit(void)
         vSemaphoreDelete(gSmComlock);
         gSmComlock = NULL;
     }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
     if (0 != pthread_mutex_destroy(&gSmComlock)) {
         LOG_E("pthread_mutex_destroy failed");
     }

@@ -46,7 +46,9 @@
 /* ************************************************************************** */
 static sss_status_t sss_mbedtls_drbg_seed(sss_mbedtls_session_t *pSession, const char *pers, size_t persLen);
 
-#if SSS_HAVE_MBEDTLS_3_X
+#if (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) || \
+    (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)) || \
+    (SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X)
 int mbedtls_entropy_func_3_X(void *data, unsigned char *output, size_t len);
 #endif
 
@@ -762,7 +764,7 @@ sss_status_t sss_mbedtls_asymmetric_sign_digest(
     ret = mbedtls_pk_sign(
         pKey, md_alg, digest, digestLen, signature, *signatureLen, signatureLen, mbedtls_ctr_drbg_random, pS->ctr_drbg);
 #else
-    ret = mbedtls_pk_sign(
+    ret    = mbedtls_pk_sign(
         pKey, md_alg, digest, digestLen, signature, signatureLen, mbedtls_ctr_drbg_random, pS->ctr_drbg);
 #endif
     ENSURE_OR_GO_EXIT(ret == 0);
@@ -1217,7 +1219,11 @@ sss_status_t sss_mbedtls_cipher_one_go(sss_mbedtls_symmetric_t *context,
             }
             break;
         case kAlgorithm_SSS_AES_CBC:
+#ifdef MBEDTLS_CIPHER_MODE_CBC
             mbedtls_ret = mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_ENCRYPT, dataLen, iv_copy, srcData, destData);
+#else
+            mbedtls_ret = -1;
+#endif
             break;
         default:
             break;
@@ -1226,7 +1232,11 @@ sss_status_t sss_mbedtls_cipher_one_go(sss_mbedtls_symmetric_t *context,
     else if (context->mode == kMode_SSS_Decrypt) {
         switch (context->algorithm) {
         case kAlgorithm_SSS_AES_CBC:
+#ifdef MBEDTLS_CIPHER_MODE_CBC
             mbedtls_ret = mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_DECRYPT, dataLen, iv_copy, srcData, destData);
+#else
+            mbedtls_ret = -1;
+#endif
             break;
         case kAlgorithm_SSS_AES_ECB:
             if (dataLen > NX_CIPHER_BLOCK_SIZE) {
@@ -1503,6 +1513,7 @@ sss_status_t sss_mbedtls_cipher_finish(
             context->cipher_ctx, srcdata_updated, cipherBlockSize, (destData + output_offset), &blockoutLen);
         ENSURE_OR_GO_EXIT(retMbedtlsVal == 0);
         *destLen = blockoutLen;
+        ENSURE_OR_GO_EXIT(outBuffSize >= blockoutLen);
         outBuffSize -= blockoutLen;
         output_offset += blockoutLen;
     }
@@ -2177,7 +2188,7 @@ sss_status_t sss_mbedtls_mac_one_go(
 #if SSS_HAVE_MBEDTLS_3_X
                                 *macLen = context->cipher_ctx->private_cipher_info->private_block_size;
 #else
-                                *macLen = context->cipher_ctx->cipher_info->block_size;
+                                *macLen     = context->cipher_ctx->cipher_info->block_size;
 #endif
                                 status = kStatus_SSS_Success;
                             }
@@ -2413,7 +2424,7 @@ sss_status_t sss_mbedtls_mac_finish(sss_mbedtls_mac_t *context, uint8_t *mac, si
 #if SSS_HAVE_MBEDTLS_3_X
                 *macLen = ctx->private_cipher_info->private_block_size;
 #else
-                *macLen = ctx->cipher_info->block_size;
+                *macLen     = ctx->cipher_info->block_size;
 #endif
                 status = kStatus_SSS_Success;
             }
@@ -2456,7 +2467,7 @@ sss_status_t sss_mbedtls_mac_finish(sss_mbedtls_mac_t *context, uint8_t *mac, si
 #if SSS_HAVE_MBEDTLS_3_X
                 *macLen = mbedtls_md_get_size(hmacctx->private_md_info);
 #else
-                *macLen = mbedtls_md_get_size(hmacctx->md_info);
+                *macLen     = mbedtls_md_get_size(hmacctx->md_info);
 #endif
                 status = kStatus_SSS_Success;
             }
@@ -2594,11 +2605,12 @@ sss_status_t sss_mbedtls_digest_init(sss_mbedtls_digest_t *context)
 
     mdinfo = mbedtls_md_info_from_type(md_type);
 
-#if SSS_HAVE_MBEDTLS_3_X
+    // TBD : CHECK IF REQUIRED
+    //#if SSS_HAVE_MBEDTLS_3_X
     ret = mbedtls_md_setup(&context->md_ctx, mdinfo, 0);
-#else
-    ret = mbedtls_md_init_ctx(&context->md_ctx, mdinfo);
-#endif
+    //#else
+    //    ret = mbedtls_md_init_ctx(&context->md_ctx, mdinfo);
+    //#endif
     ENSURE_OR_GO_EXIT(ret == 0);
 
     ret = 1;
@@ -2759,8 +2771,10 @@ exit:
 static sss_status_t sss_mbedtls_set_key(
     sss_mbedtls_object_t *keyObject, const uint8_t *data, size_t dataLen, size_t keyBitLen)
 {
-    sss_status_t retval  = kStatus_SSS_Fail;
-    size_t base64_olen   = 0;
+    sss_status_t retval = kStatus_SSS_Fail;
+#ifdef MBEDTLS_BASE64_C
+    size_t base64_olen = 0;
+#endif
     int ret              = 1;
     char pem_format[512] = {0};
 
@@ -2789,7 +2803,12 @@ static sss_status_t sss_mbedtls_set_key(
         uint8_t base64_format[256] = {0};
         mbedtls_pk_context *pk     = (mbedtls_pk_context *)keyObject->contents;
 
+#ifdef MBEDTLS_BASE64_C
         ret = mbedtls_base64_encode(base64_format, sizeof(base64_format), &base64_olen, data, dataLen);
+#else
+        ret = -1;
+        LOG_E("MBEDTLS_BASE64_C is disabled in mbedtls config file");
+#endif
         if (ret != 0) {
             goto exit;
         }
@@ -2810,7 +2829,9 @@ exit:
     return retval;
 }
 
-#if SSS_HAVE_MBEDTLS_3_X
+#if (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) || \
+    (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)) || \
+    (SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X)
 int mbedtls_entropy_func_3_X(void *data, unsigned char *output, size_t len)
 {
     LOG_W(
@@ -2830,7 +2851,9 @@ static sss_status_t sss_mbedtls_drbg_seed(sss_mbedtls_session_t *pSession, const
     int ret             = 1;
     sss_status_t retval = kStatus_SSS_Fail;
 
-#if (SSS_HAVE_HOST_FRDMK64F || SSS_HAVE_HOST_LPCXPRESSO55S) && SSS_HAVE_MBEDTLS_3_X
+#if ((SSS_HAVE_HOST_LPCXPRESSO55S) && SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X) || \
+    (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) ||                    \
+    (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947))
     ret = mbedtls_ctr_drbg_seed(
         pSession->ctr_drbg, &mbedtls_entropy_func_3_X, pSession->entropy, (const unsigned char *)pers, persLen);
 #else

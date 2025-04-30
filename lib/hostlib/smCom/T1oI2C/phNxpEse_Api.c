@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014, 2018-2020, 2023-2024 NXP
+ * Copyright 2012-2014, 2018-2020, 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "phEseTypes.h"
@@ -16,10 +16,10 @@
 #include "FreeRTOS.h"
 #endif
 
-#define RECIEVE_PACKET_SOF      0x12
-#define CHAINED_PACKET_WITHSEQN      0x60
-#define CHAINED_PACKET_WITHOUTSEQN      0x20
-static int phNxpEse_readPacket(void* conn_ctx, void *pDevHandle, uint8_t * pBuffer, int nNbBytesToRead);
+#define RECIEVE_PACKET_SOF 0x12
+#define CHAINED_PACKET_WITHSEQN 0x60
+#define CHAINED_PACKET_WITHOUTSEQN 0x20
+static int phNxpEse_readPacket(void *conn_ctx, void *pDevHandle, uint8_t *pBuffer, int nNbBytesToRead);
 static int poll_sof_chained_delay = 0;
 
 /*********************** Global Variables *************************************/
@@ -43,9 +43,9 @@ phNxpEse_Context_t gnxpese_ctxt;
  ******************************************************************************/
 ESESTATUS phNxpEse_init(void *conn_ctx, phNxpEse_initParams initParams, phNxpEse_data *AtrRsp)
 {
-    ESESTATUS wConfigStatus = ESESTATUS_FAILED;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
-    bool_t status = FALSE;
+    ESESTATUS wConfigStatus         = ESESTATUS_FAILED;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
+    bool_t status                   = FALSE;
     phNxpEseProto7816InitParam_t protoInitParam;
     phNxpEse_memset(&protoInitParam, 0x00, sizeof(phNxpEseProto7816InitParam_t));
     protoInitParam.rnack_retry_limit = MAX_RNACK_RETRY_LIMIT;
@@ -55,21 +55,18 @@ ESESTATUS phNxpEse_init(void *conn_ctx, phNxpEse_initParams initParams, phNxpEse
     {
         protoInitParam.interfaceReset = TRUE;
     }
-    else if (ESE_MODE_RESUME == initParams.initMode)
-    {
+    else if (ESE_MODE_RESUME == initParams.initMode) {
         /* To skip GetAtr command */
         protoInitParam.interfaceReset = FALSE;
     }
-    else
-    {
+    else {
         protoInitParam.interfaceReset = FALSE;
         /*RFU*/
     }
 
     /* T=1 Protocol layer open */
-    status = phNxpEseProto7816_Open((void*)nxpese_ctxt, protoInitParam , AtrRsp);
-    if (FALSE == status)
-    {
+    status = phNxpEseProto7816_Open((void *)nxpese_ctxt, protoInitParam, AtrRsp);
+    if (FALSE == status) {
         LOG_E("phNxpEseProto7816_Open failed ");
         goto exit;
     }
@@ -99,56 +96,58 @@ ESESTATUS phNxpEse_open(void **conn_ctx, phNxpEse_initParams initParams, const c
     phPalEse_Config_t tPalConfig     = {0};
     phNxpEse_Context_t *pnxpese_ctxt = NULL;
 
-    if (conn_ctx == NULL) {
+    if ((conn_ctx != NULL) && (((phNxpEse_Context_t *)conn_ctx)->pDevHandle != NULL)) {
+        pnxpese_ctxt = (phNxpEse_Context_t *)conn_ctx;
+    }
+    else if (conn_ctx == NULL) {
         pnxpese_ctxt = &gnxpese_ctxt;
     }
     else {
-        pnxpese_ctxt = (phNxpEse_Context_t*)phNxpEse_memalloc(sizeof(phNxpEse_Context_t));
-        if(pnxpese_ctxt != NULL){
+        pnxpese_ctxt = (phNxpEse_Context_t *)phNxpEse_memalloc(sizeof(phNxpEse_Context_t));
+        if (pnxpese_ctxt != NULL) {
             phNxpEse_memset(pnxpese_ctxt, 0, sizeof(phNxpEse_Context_t));
             *conn_ctx = pnxpese_ctxt;
         }
-        else{
+        else {
             wConfigStatus = ESESTATUS_FAILED;
             goto exit;
         }
     }
 
     /*When I2C channel is already opened return status as FAILED*/
-    if (pnxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE)
-    {
+    if (pnxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE) {
         LOG_E(" Session already opened");
         wConfigStatus = ESESTATUS_BUSY;
         goto exit;
     }
 
-    phNxpEse_memset(pnxpese_ctxt, 0x00, sizeof(phNxpEse_Context_t));
-    phNxpEse_memset(&tPalConfig, 0x00, sizeof(tPalConfig));
-
     tPalConfig.pDevName = (int8_t *)pConnString; //"/dev/p73"; /*RFU*/
+    if (pnxpese_ctxt->pDevHandle) {
+        tPalConfig.pDevHandle = pnxpese_ctxt->pDevHandle;
+    }
     /* Initialize PAL layer */
     wConfigStatus = phPalEse_i2c_open_and_configure(&tPalConfig);
-    if (wConfigStatus != ESESTATUS_SUCCESS)
-    {
+    if (wConfigStatus != ESESTATUS_SUCCESS) {
         LOG_E("phPalEse_i2c_open_and_configure Failed");
-        if (NULL != pnxpese_ctxt->pDevHandle)
-        {
+        if (NULL != pnxpese_ctxt->pDevHandle) {
             phPalEse_i2c_close(pnxpese_ctxt->pDevHandle);
-            phNxpEse_memset (pnxpese_ctxt, 0x00, sizeof (phNxpEse_Context_t));
+            phNxpEse_memset(pnxpese_ctxt, 0x00, sizeof(phNxpEse_Context_t));
         }
         pnxpese_ctxt->EseLibStatus = ESE_STATUS_CLOSE;
-        wConfigStatus = ESESTATUS_FAILED;
+        wConfigStatus              = ESESTATUS_FAILED;
         goto exit;
     }
     /* Copying device handle to ESE Lib context*/
-    pnxpese_ctxt->pDevHandle = tPalConfig.pDevHandle;
+    if (!pnxpese_ctxt->pDevHandle) {
+        pnxpese_ctxt->pDevHandle = tPalConfig.pDevHandle;
+    }
     /* STATUS_OPEN */
     pnxpese_ctxt->EseLibStatus = ESE_STATUS_OPEN;
     phNxpEse_memcpy(&pnxpese_ctxt->initParams, &initParams, sizeof(phNxpEse_initParams));
     wConfigStatus = ESESTATUS_SUCCESS;
 
 exit:
-    if (wConfigStatus != ESESTATUS_SUCCESS){
+    if (wConfigStatus != ESESTATUS_SUCCESS) {
         if (conn_ctx != NULL) {
             phNxpEse_free(pnxpese_ctxt);
             *conn_ctx = NULL;
@@ -170,50 +169,43 @@ exit:
  * Returns          On Success ESESTATUS_SUCCESS else proper error code
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_Transceive(void* conn_ctx, phNxpEse_data *pCmd, phNxpEse_data *pRsp)
+ESESTATUS phNxpEse_Transceive(void *conn_ctx, phNxpEse_data *pCmd, phNxpEse_data *pRsp)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    bool_t bStatus = FALSE;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    ESESTATUS status                = ESESTATUS_FAILED;
+    bool_t bStatus                  = FALSE;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
-    if((NULL == pCmd) || (NULL == pRsp)) {
+    if ((NULL == pCmd) || (NULL == pRsp)) {
         status = ESESTATUS_INVALID_PARAMETER;
         goto exit;
     }
 
-    if ((pCmd->len == 0) || pCmd->p_data == NULL )
-    {
+    if ((pCmd->len == 0) || pCmd->p_data == NULL) {
         LOG_E(" phNxpEse_Transceive - Invalid Parameter no data");
         status = ESESTATUS_INVALID_PARAMETER;
         goto exit;
     }
-    else if ((ESE_STATUS_CLOSE == nxpese_ctxt->EseLibStatus))
-    {
+    else if ((ESE_STATUS_CLOSE == nxpese_ctxt->EseLibStatus)) {
         LOG_E(" %s ESE Not Initialized ", __FUNCTION__);
         status = ESESTATUS_NOT_INITIALISED;
         goto exit;
     }
-    else if ((ESE_STATUS_BUSY == nxpese_ctxt->EseLibStatus))
-    {
+    else if ((ESE_STATUS_BUSY == nxpese_ctxt->EseLibStatus)) {
         LOG_E(" %s ESE - BUSY ", __FUNCTION__);
         status = ESESTATUS_BUSY;
         goto exit;
     }
-    else
-    {
+    else {
         nxpese_ctxt->EseLibStatus = ESE_STATUS_BUSY;
-        bStatus = phNxpEseProto7816_Transceive((void*)nxpese_ctxt, pCmd, pRsp);
-        if(TRUE == bStatus)
-        {
+        bStatus                   = phNxpEseProto7816_Transceive((void *)nxpese_ctxt, pCmd, pRsp);
+        if (TRUE == bStatus) {
             status = ESESTATUS_SUCCESS;
         }
-        else
-        {
+        else {
             status = ESESTATUS_FAILED;
         }
 
-        if (ESESTATUS_SUCCESS != status)
-        {
+        if (ESESTATUS_SUCCESS != status) {
             LOG_E(" %s phNxpEseProto7816_Transceive- Failed ", __FUNCTION__);
         }
         if (nxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE) {
@@ -237,13 +229,12 @@ exit:
  * Returns          It returns ESESTATUS_SUCCESS (0) if the operation is successful else
  *                  ESESTATUS_FAILED(1)
  ******************************************************************************/
-ESESTATUS phNxpEse_reset(void* conn_ctx)
+ESESTATUS phNxpEse_reset(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
-    status = phNxpEse_chipReset((void*)nxpese_ctxt);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    ESESTATUS status                = ESESTATUS_FAILED;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
+    status                          = phNxpEse_chipReset((void *)nxpese_ctxt);
+    if (status != ESESTATUS_SUCCESS) {
         LOG_E("phNxpEse_reset Failed");
     }
     return status;
@@ -260,17 +251,16 @@ ESESTATUS phNxpEse_reset(void* conn_ctx)
  *                  ESESTATUS_FAILED(1)
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_EndOfApdu(void* conn_ctx)
+ESESTATUS phNxpEse_EndOfApdu(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
-    bool_t bStatus = phNxpEseProto7816_Close((void*)nxpese_ctxt);
+    ESESTATUS status                = ESESTATUS_FAILED;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
+    bool_t bStatus                  = phNxpEseProto7816_Close((void *)nxpese_ctxt);
     if (TRUE == bStatus) {
         status = ESESTATUS_SUCCESS;
     }
     return status;
 }
-
 
 /******************************************************************************
  * Function         phNxpEse_chipReset
@@ -282,22 +272,20 @@ ESESTATUS phNxpEse_EndOfApdu(void* conn_ctx)
  * Returns          On Success ESESTATUS_SUCCESS (0) else ESESTATUS_FAILED (1).
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_chipReset(void* conn_ctx)
+ESESTATUS phNxpEse_chipReset(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_SUCCESS;
-    bool_t bStatus = FALSE;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
-    bStatus = phNxpEseProto7816_Reset();
-    if(!bStatus)
-    {
+    ESESTATUS status                = ESESTATUS_SUCCESS;
+    bool_t bStatus                  = FALSE;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
+    bStatus                         = phNxpEseProto7816_Reset();
+    if (!bStatus) {
         LOG_E("phNxpEseProto7816_Reset Failed");
         return ESESTATUS_FAILED;
     }
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
-    bStatus = phNxpEseProto7816_ColdReset((void*)nxpese_ctxt);
+    bStatus = phNxpEseProto7816_ColdReset((void *)nxpese_ctxt);
 #endif
-    if (bStatus != TRUE)
-    {
+    if (bStatus != TRUE) {
         status = ESESTATUS_FAILED;
         LOG_E("phNxpEse_chipReset  Failed");
     }
@@ -314,18 +302,18 @@ ESESTATUS phNxpEse_chipReset(void* conn_ctx)
  * Returns          On Success ESESTATUS_SUCCESS (0) else ESESTATUS_FAILED (1).
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_deInit(void* conn_ctx)
+ESESTATUS phNxpEse_deInit(void *conn_ctx)
 {
     ESESTATUS status = ESESTATUS_SUCCESS;
     //bool_t bStatus = FALSE;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
     /*bStatus = phNxpEseProto7816_ResetProtoParams();
     if(!bStatus)
     {
         status = ESESTATUS_FAILED;
     }*/
     phPalEse_i2c_close(nxpese_ctxt->pDevHandle);
-    phNxpEse_memset (nxpese_ctxt, 0x00, sizeof (*nxpese_ctxt));
+    phNxpEse_memset(nxpese_ctxt, 0x00, sizeof(*nxpese_ctxt));
     //status= phNxpEse_close();
     return status;
 }
@@ -341,23 +329,22 @@ ESESTATUS phNxpEse_deInit(void* conn_ctx)
  * Returns          On Success ESESTATUS_SUCCESS else proper error code.
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_close(void* conn_ctx)
+ESESTATUS phNxpEse_close(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    ESESTATUS status                = ESESTATUS_FAILED;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
-    if ((ESE_STATUS_CLOSE == nxpese_ctxt->EseLibStatus))
-    {
+    if ((ESE_STATUS_CLOSE == nxpese_ctxt->EseLibStatus)) {
         LOG_E(" %s ESE Not Initialized previously ", __FUNCTION__);
         status = ESESTATUS_NOT_INITIALISED;
         goto exit;
     }
 
     phPalEse_i2c_close(nxpese_ctxt->pDevHandle);
-    phNxpEse_memset (nxpese_ctxt, 0x00, sizeof (*nxpese_ctxt));
+    phNxpEse_memset(nxpese_ctxt, 0x00, sizeof(*nxpese_ctxt));
     LOG_D("phNxpEse_close - ESE Context deinit completed");
     /* Return success always */
-    if((conn_ctx != NULL) &&(conn_ctx != &gnxpese_ctxt)){
+    if ((conn_ctx != NULL) && (conn_ctx != &gnxpese_ctxt)) {
         /*free the memory allocated during phNxpEse_open*/
         phNxpEse_free(conn_ctx);
     }
@@ -379,27 +366,24 @@ exit:
  * Returns          void
  *
  ******************************************************************************/
-void phNxpEse_clearReadBuffer(void* conn_ctx)
+void phNxpEse_clearReadBuffer(void *conn_ctx)
 {
-    int ret = -1;
-    uint8_t readBuf[MAX_DATA_LEN] = {0};
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    int ret                         = -1;
+    uint8_t readBuf[MAX_DATA_LEN]   = {0};
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
     LOG_D("%s Enter ..", __FUNCTION__);
 
     ret = phPalEse_i2c_read(nxpese_ctxt->pDevHandle, readBuf, MAX_DATA_LEN);
-    if (ret < 0)
-    {
+    if (ret < 0) {
         /* Do nothing as nothing to read*/
     }
-    else
-    {
+    else {
         LOG_W("Previous transaction buffer is now cleard");
-        LOG_MAU8_D("RAW Rx<",readBuf,ret );
+        LOG_MAU8_D("RAW Rx<", readBuf, ret);
     }
     return;
 }
-
 
 /******************************************************************************
  * Function         phNxpEse_read
@@ -415,29 +399,27 @@ void phNxpEse_clearReadBuffer(void* conn_ctx)
  *                  ESESTATUS_FAILED(1)
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_read(void* conn_ctx, uint32_t *data_len, uint8_t **pp_data)
+ESESTATUS phNxpEse_read(void *conn_ctx, uint32_t *data_len, uint8_t **pp_data)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    int ret = -1;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    ESESTATUS status                = ESESTATUS_FAILED;
+    int ret                         = -1;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
     LOG_D("%s Enter ..", __FUNCTION__);
 
     ENSURE_OR_GO_EXIT(data_len != NULL);
     ENSURE_OR_GO_EXIT(pp_data != NULL);
 
-    ret = phNxpEse_readPacket((void*)nxpese_ctxt, nxpese_ctxt->pDevHandle, nxpese_ctxt->p_read_buff, MAX_DATA_LEN);
-    if(ret < 0)
-    {
+    ret = phNxpEse_readPacket((void *)nxpese_ctxt, nxpese_ctxt->pDevHandle, nxpese_ctxt->p_read_buff, MAX_DATA_LEN);
+    if (ret < 0) {
         LOG_E("PAL Read status error status = %x", status);
         status = ESESTATUS_FAILED;
     }
-    else
-    {
-        LOG_MAU8_D("RAW Rx<",nxpese_ctxt->p_read_buff,ret );
+    else {
+        LOG_MAU8_D("RAW Rx<", nxpese_ctxt->p_read_buff, ret);
         *data_len = ret;
-        *pp_data = nxpese_ctxt->p_read_buff;
-        status = ESESTATUS_SUCCESS;
+        *pp_data  = nxpese_ctxt->p_read_buff;
+        status    = ESESTATUS_SUCCESS;
     }
 exit:
     return status;
@@ -458,28 +440,25 @@ exit:
  *                  -1  - read operation failure
  *
  ******************************************************************************/
-static int phNxpEse_readPacket(void* conn_ctx, void *pDevHandle, uint8_t * pBuffer, int nNbBytesToRead)
+static int phNxpEse_readPacket(void *conn_ctx, void *pDevHandle, uint8_t *pBuffer, int nNbBytesToRead)
 {
-    int ret = -1;
-    int sof_counter = 0;/* one read may take 1 ms*/
-    int total_count = 0 ,numBytesToRead=0, headerIndex=0;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    int ret         = -1;
+    int sof_counter = 0; /* one read may take 1 ms*/
+    int total_count = 0, numBytesToRead = 0, headerIndex = 0;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
     ENSURE_OR_GO_EXIT(pBuffer != NULL);
-    memset(pBuffer,0,nNbBytesToRead);
-    do
-    {
+    memset(pBuffer, 0, nNbBytesToRead);
+    do {
         sof_counter++;
         ret = -1;
-        sm_sleep(ESE_POLL_DELAY_MS); /* 1ms delay to give ESE polling delay */
+        sm_sleep(ESE_POLL_DELAY_MS);                     /* 1ms delay to give ESE polling delay */
         ret = phPalEse_i2c_read(pDevHandle, pBuffer, 2); /*read NAD PCB byte first*/
-        if (ret < 0)
-        {
+        if (ret < 0) {
             /*Polling for read on i2c, hence Debug log*/
             LOG_D("_i2c_read() [HDR]errno : %x ret : %X", errno, ret);
         }
-        if(pBuffer[0] == RECIEVE_PACKET_SOF)
-        {
+        if (pBuffer[0] == RECIEVE_PACKET_SOF) {
             /* Read the HEADR of Two bytes*/
             LOG_D("%s Read HDR", __FUNCTION__);
             pBuffer[0] = RECIEVE_PACKET_SOF;
@@ -489,8 +468,7 @@ static int phNxpEse_readPacket(void* conn_ctx, void *pDevHandle, uint8_t * pBuff
             headerIndex = 1;
             break;
         }
-        if(pBuffer[1] == RECIEVE_PACKET_SOF)
-        {
+        if (pBuffer[1] == RECIEVE_PACKET_SOF) {
             /* Read the HEADR of Two bytes*/
             LOG_D("%s Read HDR", __FUNCTION__);
             pBuffer[0] = RECIEVE_PACKET_SOF;
@@ -501,93 +479,81 @@ static int phNxpEse_readPacket(void* conn_ctx, void *pDevHandle, uint8_t * pBuff
             break;
         }
         /*if host writes invalid frame and host and SE are out of sync*/
-        if((pBuffer[0] == 0x00)&&((pBuffer[1] == 0x82)||(pBuffer[1] == 0x92)))
-        {
-            LOG_W("%s Recieved NAD byte 0x%x ",__FUNCTION__,pBuffer[0]);
+        if ((pBuffer[0] == 0x00) && ((pBuffer[1] == 0x82) || (pBuffer[1] == 0x92))) {
+            LOG_W("%s Recieved NAD byte 0x%x ", __FUNCTION__, pBuffer[0]);
             LOG_W("%s NAD error, clearing the read buffer ", __FUNCTION__);
             /*retry to get all data*/
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
             numBytesToRead = 2;
 #endif
             headerIndex = 1;
-            ret = phPalEse_i2c_read(pDevHandle, &pBuffer[1+headerIndex], numBytesToRead);
-            if (ret < 0)
-            {
+            ret         = phPalEse_i2c_read(pDevHandle, &pBuffer[1 + headerIndex], numBytesToRead);
+            if (ret < 0) {
                 LOG_D("_i2c_read() [HDR]errno : %x ret : %X", errno, ret);
                 ret = -1;
             }
-            else
-            {
+            else {
                 ret = (total_count + (nNbBytesToRead + PH_PROTO_7816_CRC_LEN));
             }
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
-            total_count = 4;
-            nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF) ;
+            total_count    = 4;
+            nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF);
 #endif
             /* Read the Complete data + two byte CRC*/
-            ret = phPalEse_i2c_read(pDevHandle, &pBuffer[PH_PROTO_7816_HEADER_LEN], (nNbBytesToRead+PH_PROTO_7816_CRC_LEN));
-            if (ret < 0)
-            {
+            ret = phPalEse_i2c_read(
+                pDevHandle, &pBuffer[PH_PROTO_7816_HEADER_LEN], (nNbBytesToRead + PH_PROTO_7816_CRC_LEN));
+            if (ret < 0) {
                 LOG_D("_i2c_read() [HDR]errno : %x ret : %X", errno, ret);
                 ret = -1;
             }
-            else
-            {
+            else {
                 ret = (total_count + (nNbBytesToRead + PH_PROTO_7816_CRC_LEN));
             }
             break;
         }
         /*If it is Chained packet wait for 1 ms*/
-        if(poll_sof_chained_delay == 1)
-        {
-            LOG_D("%s Chained Pkt, delay read %dms",__FUNCTION__,ESE_POLL_DELAY_MS * CHAINED_PKT_SCALER);
+        if (poll_sof_chained_delay == 1) {
+            LOG_D("%s Chained Pkt, delay read %dms", __FUNCTION__, ESE_POLL_DELAY_MS * CHAINED_PKT_SCALER);
             sm_sleep(ESE_POLL_DELAY_MS);
         }
-        else
-        {
-            LOG_D("%s Normal Pkt, delay read %dms",__FUNCTION__,ESE_POLL_DELAY_MS * NAD_POLLING_SCALER);
+        else {
+            LOG_D("%s Normal Pkt, delay read %dms", __FUNCTION__, ESE_POLL_DELAY_MS * NAD_POLLING_SCALER);
             sm_sleep(ESE_POLL_DELAY_MS);
         }
-    } while ((sof_counter < ESE_NAD_POLLING_MAX) && (nxpese_ctxt->EseLibStatus!= ESE_STATUS_CLOSE));
-    if((pBuffer[0] == RECIEVE_PACKET_SOF) && (ret > 0))
-    {
+    } while ((sof_counter < ESE_NAD_POLLING_MAX) && (nxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE));
+    if ((pBuffer[0] == RECIEVE_PACKET_SOF) && (ret > 0)) {
         LOG_D("%s SOF FOUND", __FUNCTION__);
         /* Read the HEADR of one/Two bytes based on how two bytes read A5 PCB or 00 A5*/
-        ret = phPalEse_i2c_read(pDevHandle, &pBuffer[1+headerIndex], numBytesToRead);
-        if (ret < 0)
-        {
+        ret = phPalEse_i2c_read(pDevHandle, &pBuffer[1 + headerIndex], numBytesToRead);
+        if (ret < 0) {
             LOG_D("_i2c_read() [HDR]errno : %x ret : %X", errno, ret);
         }
-        if((pBuffer[1] == CHAINED_PACKET_WITHOUTSEQN) || (pBuffer[1] == CHAINED_PACKET_WITHSEQN))
-        {
+        if ((pBuffer[1] == CHAINED_PACKET_WITHOUTSEQN) || (pBuffer[1] == CHAINED_PACKET_WITHSEQN)) {
             poll_sof_chained_delay = 1;
             LOG_D("poll_sof_chained_delay value is %d ", poll_sof_chained_delay);
         }
-        else
-        {
+        else {
             poll_sof_chained_delay = 0;
             LOG_D("poll_sof_chained_delay value is %d ", poll_sof_chained_delay);
         }
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
-        total_count = 4;
-        nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF) ;
+        total_count    = 4;
+        nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF);
 #endif
         /* Read the Complete data + two byte CRC*/
-        ret = phPalEse_i2c_read(pDevHandle, &pBuffer[PH_PROTO_7816_HEADER_LEN], (nNbBytesToRead+PH_PROTO_7816_CRC_LEN));
-        if (ret < 0)
-        {
+        ret =
+            phPalEse_i2c_read(pDevHandle, &pBuffer[PH_PROTO_7816_HEADER_LEN], (nNbBytesToRead + PH_PROTO_7816_CRC_LEN));
+        if (ret < 0) {
             LOG_D("_i2c_read() [HDR]errno : %x ret : %X", errno, ret);
             ret = -1;
         }
-        else
-        {
-            ret = (total_count + (nNbBytesToRead+PH_PROTO_7816_CRC_LEN));
+        else {
+            ret = (total_count + (nNbBytesToRead + PH_PROTO_7816_CRC_LEN));
         }
-   }
-   else
-   {
-       ret=-1;
-   }
+    }
+    else {
+        ret = -1;
+    }
 exit:
     return ret;
 }
@@ -606,16 +572,16 @@ exit:
  *                  ESESTATUS_FAILED(1)
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_WriteFrame(void* conn_ctx, uint32_t data_len, const uint8_t *p_data)
+ESESTATUS phNxpEse_WriteFrame(void *conn_ctx, uint32_t data_len, const uint8_t *p_data)
 {
-    ESESTATUS status = ESESTATUS_INVALID_PARAMETER;
-    int32_t dwNoBytesWrRd = 0;
-    phNxpEse_Context_t* nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t*)conn_ctx;
+    ESESTATUS status                = ESESTATUS_INVALID_PARAMETER;
+    int32_t dwNoBytesWrRd           = 0;
+    phNxpEse_Context_t *nxpese_ctxt = (conn_ctx == NULL) ? &gnxpese_ctxt : (phNxpEse_Context_t *)conn_ctx;
 
     /* Create local copy of cmd_data */
     LOG_D("%s Enter ..", __FUNCTION__);
 
-    if (data_len > MAX_DATA_LEN){
+    if (data_len > MAX_DATA_LEN) {
         status = ESESTATUS_FAILED;
         goto exit;
     }
@@ -623,29 +589,21 @@ ESESTATUS phNxpEse_WriteFrame(void* conn_ctx, uint32_t data_len, const uint8_t *
     ENSURE_OR_GO_EXIT(NULL != p_data)
     phNxpEse_memcpy(nxpese_ctxt->p_cmd_data, p_data, data_len);
     nxpese_ctxt->cmd_len = data_len;
-    if(nxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE)
-    {
-        dwNoBytesWrRd = phPalEse_i2c_write(nxpese_ctxt->pDevHandle,
-                            nxpese_ctxt->p_cmd_data,
-                            nxpese_ctxt->cmd_len
-                            );
-        if (-1 == dwNoBytesWrRd)
-        {
+    if (nxpese_ctxt->EseLibStatus != ESE_STATUS_CLOSE) {
+        dwNoBytesWrRd = phPalEse_i2c_write(nxpese_ctxt->pDevHandle, nxpese_ctxt->p_cmd_data, nxpese_ctxt->cmd_len);
+        if (-1 == dwNoBytesWrRd) {
             LOG_E(" - Error in I2C Write.....");
             status = ESESTATUS_FAILED;
         }
-        else if (-2 == dwNoBytesWrRd)
-        {
+        else if (-2 == dwNoBytesWrRd) {
             status = ESESTATUS_INVALID_STATE;
         }
-        else
-        {
+        else {
             status = ESESTATUS_SUCCESS;
-            LOG_MAU8_D("RAW Tx>",nxpese_ctxt->p_cmd_data, nxpese_ctxt->cmd_len );
+            LOG_MAU8_D("RAW Tx>", nxpese_ctxt->p_cmd_data, nxpese_ctxt->cmd_len);
         }
     }
-    else
-    {
+    else {
         status = ESESTATUS_INVALID_STATE;
     }
 exit:
@@ -682,7 +640,7 @@ ESESTATUS phNxpEse_setIfsc(uint16_t IFSC_Size)
  * Returns          Always return ESESTATUS_SUCCESS (0).
  *
  ******************************************************************************/
-void* phNxpEse_memset(void *buff, int val, size_t len)
+void *phNxpEse_memset(void *buff, int val, size_t len)
 {
     return memset(buff, val, len);
 }
@@ -700,7 +658,7 @@ void* phNxpEse_memset(void *buff, int val, size_t len)
  * Returns          Return pointer to allocated memory location.
  *
  ******************************************************************************/
-void* phNxpEse_memcpy(void *dest, const void *src, size_t len)
+void *phNxpEse_memcpy(void *dest, const void *src, size_t len)
 {
     return memcpy(dest, src, len);
 }
@@ -720,7 +678,6 @@ void *phNxpEse_memalloc(uint32_t size)
     return SSS_MALLOC(size);
 }
 
-
 /******************************************************************************
  * Function         phNxpEse_free
  *
@@ -731,7 +688,7 @@ void *phNxpEse_memalloc(uint32_t size)
  * Returns          void.
  *
  ******************************************************************************/
-void phNxpEse_free(void* ptr)
+void phNxpEse_free(void *ptr)
 {
     ENSURE_OR_GO_EXIT(ptr != NULL);
     SSS_FREE(ptr);
@@ -750,18 +707,16 @@ exit:
  * Returns          On Success ESESTATUS_SUCCESS else ESESTATUS_FAILED.
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_getCip(void* conn_ctx, phNxpEse_data *pRsp)
+ESESTATUS phNxpEse_getCip(void *conn_ctx, phNxpEse_data *pRsp)
 {
     bool_t status = FALSE;
-    status =phNxpEseProto7816_GetCip(conn_ctx, pRsp);
-    if (status == FALSE)
-    {
+    status        = phNxpEseProto7816_GetCip(conn_ctx, pRsp);
+    if (status == FALSE) {
         LOG_E("%s Get CIP Failed ", __FUNCTION__);
         return ESESTATUS_FAILED;
     }
     return ESESTATUS_SUCCESS;
 }
-
 
 /******************************************************************************
  * Function         phNxpEse_ReleaseReq
@@ -773,18 +728,16 @@ ESESTATUS phNxpEse_getCip(void* conn_ctx, phNxpEse_data *pRsp)
  * Returns          On Success ESESTATUS_SUCCESS else ESESTATUS_FAILED.
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_ReleaseReq(void* conn_ctx)
+ESESTATUS phNxpEse_ReleaseReq(void *conn_ctx)
 {
     bool_t status = FALSE;
-    status =phNxpEseProto7816_Release_Req(conn_ctx);
-    if (status == FALSE)
-    {
+    status        = phNxpEseProto7816_Release_Req(conn_ctx);
+    if (status == FALSE) {
         LOG_E("%s phNxpEse_ReleaseReq Failed ", __FUNCTION__);
         return ESESTATUS_FAILED;
     }
     return ESESTATUS_SUCCESS;
 }
-
 
 /******************************************************************************
  * Function         phNxpEse_deepPwrDown
@@ -796,12 +749,11 @@ ESESTATUS phNxpEse_ReleaseReq(void* conn_ctx)
  * Returns          On Success ESESTATUS_SUCCESS else ESESTATUS_FAILED.
  *
  ******************************************************************************/
-ESESTATUS phNxpEse_deepPwrDown(void* conn_ctx)
+ESESTATUS phNxpEse_deepPwrDown(void *conn_ctx)
 {
     bool_t status = FALSE;
-    status =phNxpEseProto7816_Deep_Pwr_Down(conn_ctx);
-    if (status == FALSE)
-    {
+    status        = phNxpEseProto7816_Deep_Pwr_Down(conn_ctx);
+    if (status == FALSE) {
         LOG_E("%s Deep Pwr Down Failed ", __FUNCTION__);
         return ESESTATUS_FAILED;
     }

@@ -15,17 +15,17 @@
 
 int main()
 {
-    void *conn_ctx = NULL;
-    uint8_t cip[100] = {0};
-    uint16_t cipLen = sizeof(cip);
+    void *conn_ctx        = NULL;
+    uint8_t cip[100]      = {0};
+    uint16_t cipLen       = sizeof(cip);
     uint8_t freememBuf[3] = {0};
-    uint32_t freememsize = 0;
+    uint32_t freememsize  = 0;
 
-    ESESTATUS status = ESESTATUS_FAILED;
+    ESESTATUS status               = ESESTATUS_FAILED;
     phNxpEse_initParams initParams = {0};
-    initParams.initMode = ESE_MODE_NORMAL;
+    initParams.initMode            = ESE_MODE_NORMAL;
 
-    phNxpEse_data AtrRsp = {0};
+    phNxpEse_data AtrRsp    = {0};
     phNxpEse_data pCmdTrans = {0};
     phNxpEse_data pRspTrans = {0};
 
@@ -39,42 +39,38 @@ int main()
 
     /* T=1oi2c open session */
     status = phNxpEse_open(conn_ctx, initParams, NULL);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    if (status != ESESTATUS_SUCCESS) {
         printf("phNxpEse_open Failed\n");
         goto exit;
     }
 
-    AtrRsp.len = cipLen;
+    AtrRsp.len    = cipLen;
     AtrRsp.p_data = cip;
-    status = phNxpEse_init(conn_ctx, initParams, &AtrRsp);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    status        = phNxpEse_init(conn_ctx, initParams, &AtrRsp);
+    if (status != ESESTATUS_SUCCESS) {
         printf("phNxpEse_init failed\n");
         goto exit;
     }
 
     /* Send select file command */
-    pCmdTrans.len = sizeof(select_file);
+    pCmdTrans.len    = sizeof(select_file);
     pCmdTrans.p_data = select_file;
-    pRspTrans.len = sizeof(rx_buffer);
+    pRspTrans.len    = sizeof(rx_buffer);
     pRspTrans.p_data = rx_buffer;
-    status = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    status           = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
+    if (status != ESESTATUS_SUCCESS) {
         printf("phNxpEse_Transceive Failed\n");
         goto exit;
     }
 
     /* Send get free memory command */
-    pCmdTrans.len = sizeof(getFreeMem_cmd);
+    pCmdTrans.len    = sizeof(getFreeMem_cmd);
     pCmdTrans.p_data = getFreeMem_cmd;
-    pRspTrans.len = sizeof(rx_buffer);
+    pRspTrans.len    = sizeof(rx_buffer);
     pRspTrans.p_data = rx_buffer;
 
     status = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    if (status != ESESTATUS_SUCCESS) {
         printf("phNxpEse_Transceive Failed\n");
         goto exit;
     }

@@ -66,9 +66,9 @@ typedef unsigned char bool; // C++ and GCC has bool.
  */
 typedef enum
 {
-    ECCCurve_NIST_P192 = 0x01,
-    ECCCurve_NIST_P224 = 0x02,
-    ECCCurve_NIST_P256 = 0x03, /**< NIST Curve with 256 bits */
+    ECCCurve_NIST_P192       = 0x01,
+    ECCCurve_NIST_P224       = 0x02,
+    ECCCurve_NIST_P256       = 0x03, /**< NIST Curve with 256 bits */
     ECCCurve_BrainPoolP192r1 = 0x04,
     ECCCurve_BrainPoolP224r1 = 0x05,
     ECCCurve_BrainPoolP256r1 = 0x06
@@ -79,7 +79,7 @@ typedef enum
  */
 typedef enum
 {
-    HASHAlgo_SHA1 = 0x01,
+    HASHAlgo_SHA1   = 0x01,
     HASHAlgo_SHA256 = 0x02
 } HASHAlgo_t;
 
@@ -106,7 +106,7 @@ typedef U16 SM_Error_t;
 
 /* ------------------------------ */
 // Error/status word
-#define SW_OK (0x9000) //!< Operation successfull
+#define SW_OK (0x9000)     //!< Operation successfull
 #define SW_ALT_OK (0x9100) //!< Operation successfull
 
 #define ERR_CONNECT_LINK_FAILED (0x7001)

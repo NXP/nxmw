@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -60,21 +60,25 @@
 /** PC/Laptop Linux64 */
 #cmakedefine01 SSS_HAVE_HOST_PCLINUX64
 
-/** Embedded Kinetis Freedom K64F */
-#cmakedefine01 SSS_HAVE_HOST_FRDMK64F
-
 /** Embedded LPCXpresso55s */
 #cmakedefine01 SSS_HAVE_HOST_LPCXPRESSO55S
 
 /** Embedded Linux on RaspBerry PI */
 #cmakedefine01 SSS_HAVE_HOST_RASPBIAN
 
+/** Embedded frdmmcxa153 */
+#cmakedefine01 SSS_HAVE_HOST_FRDMMCXA153
+
+/** Embedded frdmmcxn947 */
+#cmakedefine01 SSS_HAVE_HOST_FRDMMCXN947
+
 #if (( 0                             \
     + SSS_HAVE_HOST_PCWINDOWS        \
     + SSS_HAVE_HOST_PCLINUX64        \
-    + SSS_HAVE_HOST_FRDMK64F         \
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
+    + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXN947      \
     ) > 1)
 #        error "Enable only one of 'NXMW_Host'"
 #endif
@@ -83,9 +87,10 @@
 #if (( 0                             \
     + SSS_HAVE_HOST_PCWINDOWS        \
     + SSS_HAVE_HOST_PCLINUX64        \
-    + SSS_HAVE_HOST_FRDMK64F         \
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
+    + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXN947      \
     ) == 0)
 #        error "Enable at-least one of 'NXMW_Host'"
 #endif
@@ -765,6 +770,9 @@
 
 #define SSS_HAVE_HOSTCRYPTO_ANY \
  (SSS_HAVE_HOSTCRYPTO_MBEDTLS | SSS_HAVE_HOSTCRYPTO_OPENSSL | SSS_HAVE_HOSTCRYPTO_USER)
+
+#define SSS_HAVE_HOST_EMBEDDED \
+ (SSS_HAVE_HOST_LPCXPRESSO55S | SSS_HAVE_HOST_FRDMMCXA153 | SSS_HAVE_HOST_FRDMMCXN947)
 
 /** Deprecated items. Used here for backwards compatibility. */
 

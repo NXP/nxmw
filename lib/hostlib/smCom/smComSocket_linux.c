@@ -33,23 +33,23 @@
 #include "nxLog_msg.h"
 #include "nxEnsure.h"
 
-#define REMOTE_JC_SHELL_HEADER_LEN             (4)
-#define REMOTE_JC_SHELL_MSG_TYPE_APDU_DATA  (0x01)
+#define REMOTE_JC_SHELL_HEADER_LEN (4)
+#define REMOTE_JC_SHELL_MSG_TYPE_APDU_DATA (0x01)
 
 #include "sm_apdu.h"
 
-#define MAX_BUF_SIZE                (MAX_APDU_BUF_LENGTH)
+#define MAX_BUF_SIZE (MAX_APDU_BUF_LENGTH)
 
 typedef struct
 {
     int sockfd;
-    char * ipString;
+    char *ipString;
 } socket_Context_t;
 
 static socket_Context_t sockCtx;
-static socket_Context_t* pSockCtx = (socket_Context_t *)&sockCtx;
+static socket_Context_t *pSockCtx = (socket_Context_t *)&sockCtx;
 
-static U32 smComSocket_GetCip(U8* pCip, U16* cipLen);
+static U32 smComSocket_GetCip(U8 *pCip, U16 *cipLen);
 
 U16 smComSocket_Close()
 {
@@ -60,7 +60,7 @@ U16 smComSocket_Close()
     return SW_OK;
 }
 
-U16 smComSocket_Open(void** conn_ctx, U8 *pIpAddrString, U16 portNo, U8* pCip, U16* cipLen)
+U16 smComSocket_Open(void **conn_ctx, U8 *pIpAddrString, U16 portNo, U8 *pCip, U16 *cipLen)
 {
     int portno;
     int nCip = 0;
@@ -76,12 +76,11 @@ U16 smComSocket_Open(void** conn_ctx, U8 *pIpAddrString, U16 portNo, U8* pCip, U
 
     portno = portNo;
 #ifdef ACCESS_MGR_UNIX_SOCKETS
-    pSockCtx->sockfd = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
+    pSockCtx->sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 #else
-    pSockCtx->sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    pSockCtx->sockfd   = socket(AF_INET, SOCK_STREAM, 0);
 #endif
-    if (pSockCtx->sockfd < 0)
-    {
+    if (pSockCtx->sockfd < 0) {
         printf("ERROR opening socket");
         return SMCOM_COM_FAILED;
     }
@@ -94,33 +93,29 @@ U16 smComSocket_Open(void** conn_ctx, U8 *pIpAddrString, U16 portNo, U8* pCip, U
     }
     strcpy(serv_addr.sun_path, pIpAddrString);
 #else
-    pSockCtx->ipString = malloc(strlen((char*)pIpAddrString)+1);
-    if(pSockCtx->ipString == NULL) {
+    pSockCtx->ipString = malloc(strlen((char *)pIpAddrString) + 1);
+    if (pSockCtx->ipString == NULL) {
         printf("ERROR, failed to allocate a memory\r\n");
         return SMCOM_COM_FAILED;
     }
-    strcpy(pSockCtx->ipString, (char*)pIpAddrString);
+    strcpy(pSockCtx->ipString, (char *)pIpAddrString);
 
     server = gethostbyname(pSockCtx->ipString);
-    if (server == NULL)
-    {
+    if (server == NULL) {
         printf("ERROR, no such host: %s\r\n", pSockCtx->ipString);
         return SMCOM_COM_FAILED;
     }
-    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    memset((char *)&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    if(server->h_length > 0) {
-        memcpy((char *)&serv_addr.sin_addr.s_addr,
-            (char *)server->h_addr,
-            (size_t)server->h_length);
+    if (server->h_length > 0) {
+        memcpy((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, (size_t)server->h_length);
     }
     else {
         return SMCOM_COM_FAILED;
     }
     serv_addr.sin_port = htons(portno);
 #endif
-    if (connect(pSockCtx->sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
-    {
+    if (connect(pSockCtx->sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         printf("ERROR connecting\r\n");
         return SMCOM_PROTOCOL_FAILED;
     }
@@ -133,8 +128,7 @@ U16 smComSocket_Open(void** conn_ctx, U8 *pIpAddrString, U16 portNo, U8* pCip, U
 #ifdef CHECK_ON_ATR
     // Be aware that the smart card server (java app on PC) does not return the ATR value
     // Do not enable this code when using the smart card server
-    if (nCip == 0)
-    {
+    if (nCip == 0) {
         sw = SMCOM_NO_ATR;
     }
 #endif
@@ -151,21 +145,20 @@ exit:
     The reply message contains the full ATR as payload.
     A reply message with 0 bytes length means that the terminal could not trigger an ATR (reason might be retrieved using MTY=3 or MTY=2.
 */
-static U32 smComSocket_GetCip(U8* pCip, U16* cipLen)
+static U32 smComSocket_GetCip(U8 *pCip, U16 *cipLen)
 {
     return smComSocket_GetCIPFD(sockCtx.sockfd, pCip, cipLen);
 }
 
-U32 smComSocket_Transceive(void* conn_ctx, apdu_t * pApdu)
+U32 smComSocket_Transceive(void *conn_ctx, apdu_t *pApdu)
 {
     return smComSocket_TransceiveFD(pSockCtx->sockfd, pApdu);
 }
 
-U32 smComSocket_TransceiveRaw(void* conn_ctx, U8 * pTx, U16 txLen, U8 * pRx, U32 * pRxLen)
+U32 smComSocket_TransceiveRaw(void *conn_ctx, U8 *pTx, U16 txLen, U8 *pRx, U32 *pRxLen)
 {
     return smComSocket_TransceiveRawFD(pSockCtx->sockfd, pTx, txLen, pRx, pRxLen);
 }
-
 
 U32 smComSocket_LockChannel()
 {

@@ -54,13 +54,12 @@
 #endif
 /// @endcond
 
-
-#define CLA_ISO7816                   (0x00)  //!< ISO7816-4 defined CLA byte
-#define INS_GP_INITIALIZE_UPDATE      (0x50)  //!< Global platform defined instruction
-#define INS_GP_EXTERNAL_AUTHENTICATE  (0x82)  //!< Global platform defined instruction
-#define INS_GP_SELECT                 (0xA4)  //!< Global platform defined instruction
-#define INS_GP_PUT_KEY                (0xD8)  //!< Global platform defined instruction
-#define P2_NO_FCI                     (0x0C)  //!< Global platform defined instruction
+#define CLA_ISO7816 (0x00)                  //!< ISO7816-4 defined CLA byte
+#define INS_GP_INITIALIZE_UPDATE (0x50)     //!< Global platform defined instruction
+#define INS_GP_EXTERNAL_AUTHENTICATE (0x82) //!< Global platform defined instruction
+#define INS_GP_SELECT (0xA4)                //!< Global platform defined instruction
+#define INS_GP_PUT_KEY (0xD8)               //!< Global platform defined instruction
+#define P2_NO_FCI (0x0C)                    //!< Global platform defined instruction
 
 U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen);
 
@@ -72,7 +71,6 @@ U16 SM_RjctConnectVCOM(void **conn_ctx, const char *connectString, SmCommState_t
     status = smComVCom_Open(conn_ctx, connectString);
 
     if (status == 0 || status == SMCOM_COM_ALREADY_OPEN) {
-
         if (conn_ctx == NULL) {
             status = smComVCom_GetCip(NULL, cip, cipLen);
             if (status == 0) {
@@ -86,7 +84,6 @@ U16 SM_RjctConnectVCOM(void **conn_ctx, const char *connectString, SmCommState_t
             }
         }
         else {
-
             status = smComVCom_GetCip(*conn_ctx, cip, cipLen);
             if (status == 0) {
                 status = (U16)SM_Connect(*conn_ctx, commState, cip, cipLen);
@@ -110,7 +107,7 @@ U16 SM_RjctConnectVCOM(void **conn_ctx, const char *connectString, SmCommState_t
 U16 SM_RjctConnectPCSC(void **conn_ctx, const char *connectString, SmCommState_t *commState, U8 *cip, U16 *cipLen)
 {
     U32 status = SMCOM_COM_FAILED;
-    status = smComPCSC_Open(connectString);
+    status     = smComPCSC_Open(connectString);
 
     if (status == SMCOM_OK) {
         if (conn_ctx == NULL) {
@@ -131,11 +128,12 @@ U16 SM_RjctConnectPCSC(void **conn_ctx, const char *connectString, SmCommState_t
 #endif // SSS_HAVE_SMCOM_PCSC
 
 #if (defined(SSS_HAVE_SMCOM_JRCP_V1_AM) && (SSS_HAVE_SMCOM_JRCP_V1_AM))
-U16 SM_RjctConnectJRCP_V1_AM(void **conn_ctx, const char *connectString, SmCommState_t *commState, U8 *cip, U16 *cipLen) {
-    U32 status = SMCOM_COM_FAILED;
+U16 SM_RjctConnectJRCP_V1_AM(void **conn_ctx, const char *connectString, SmCommState_t *commState, U8 *cip, U16 *cipLen)
+{
+    U32 status                        = SMCOM_COM_FAILED;
     U8 pIpAddrString[IP_ADDR_MAX_LEN] = {0};
-    U16 portNo = 0;
-    U8 i = 0;   // Index for traversing connectString
+    U16 portNo                        = 0;
+    U8 i                              = 0; // Index for traversing connectString
 
     if (connectString == NULL) {
         LOG_E("Please provide IP address to connect to the JRCP_V1_AM server");
@@ -143,11 +141,12 @@ U16 SM_RjctConnectJRCP_V1_AM(void **conn_ctx, const char *connectString, SmCommS
     }
 
     // Extract IP address and port number from the connect string
-    while(connectString[i] != '\0' && connectString[i] != ':') {
+    while (connectString[i] != '\0' && connectString[i] != ':') {
         i++;
     }
     if (connectString[i] != ':') {
-        LOG_E("Invalid IP address. Please provide IP address and port in the format <IP_ADDRESS>:<PORT_NO> as argument");
+        LOG_E(
+            "Invalid IP address. Please provide IP address and port in the format <IP_ADDRESS>:<PORT_NO> as argument");
         return status;
     }
 
@@ -209,7 +208,7 @@ U16 SM_RjctConnect(void **conn_ctx, const char *connectString, SmCommState_t *co
         return SM_RjctConnectVCOM(conn_ctx, connectString, commState, cip, cipLen);
     }
     else {
-        LOG_W("Build is compiled for VCOM. connectString='%s' does not look like COMPort",connectString);
+        LOG_W("Build is compiled for VCOM. connectString='%s' does not look like COMPort", connectString);
         LOG_W("e.g. connectString are COM3, \\\\.\\COM5, /dev/tty.usbmodem1432301, etc.");
     }
 #elif (defined(SSS_HAVE_SMCOM_PCSC) && (SSS_HAVE_SMCOM_PCSC))
@@ -229,13 +228,15 @@ U16 SM_RjctConnect(void **conn_ctx, const char *connectString, SmCommState_t *co
     return ERR_NO_VALID_IP_PORT_PATTERN;
 }
 
-#if ((defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)) || (defined(SSS_HAVE_SMCOM_PCSC) && (SSS_HAVE_SMCOM_PCSC)) || (defined(SSS_HAVE_SMCOM_JRCP_V1_AM) && (SSS_HAVE_SMCOM_JRCP_V1_AM)))
+#if ((defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)) || \
+     (defined(SSS_HAVE_SMCOM_PCSC) && (SSS_HAVE_SMCOM_PCSC)) || \
+     (defined(SSS_HAVE_SMCOM_JRCP_V1_AM) && (SSS_HAVE_SMCOM_JRCP_V1_AM)))
 #else
 U16 SM_I2CConnect(void **conn_ctx, SmCommState_t *commState, U8 *cip, U16 *cipLen, const char *pConnString)
 {
     U16 status = SMCOM_COM_FAILED;
 #if (defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0))
-    if(commState == NULL) {
+    if (commState == NULL) {
         return status;
     }
 
@@ -291,7 +292,7 @@ U16 SM_Connect(void *conn_ctx, SmCommState_t *commState, U8 *cip, U16 *cipLen)
     unsigned char appletName[] = APPLET_NAME;
 #endif // APPLET_NAME
     U16 uartBR = 0;
-    U16 t1BR = 0;
+    U16 t1BR   = 0;
 #endif
 
 #ifdef TDA8029_UART
@@ -319,15 +320,14 @@ U16 SM_Connect(void *conn_ctx, SmCommState_t *commState, U8 *cip, U16 *cipLen)
 #endif
 
 #if !defined(IPC)
-    commState->param1 = t1BR;
-    commState->param2 = uartBR;
+    commState->param1         = t1BR;
+    commState->param2         = uartBR;
     commState->hostLibVersion = (AX_HOST_LIB_MAJOR << 8) + AX_HOST_LIB_MINOR;
-    commState->appletVersion = 0xFFFF;
-    commState->sbVersion = 0xFFFF;
+    commState->appletVersion  = 0xFFFF;
+    commState->sbVersion      = 0xFFFF;
 
 #ifdef APPLET_NAME
-    if (sw == SMCOM_OK)
-    {
+    if (sw == SMCOM_OK) {
         sw = ERR_COMM_ERROR;
         /* Select the applet */
         if (commState->select == SELECT_APPLICATION) {
@@ -386,7 +386,6 @@ U16 SM_Close(void *conn_ctx, U8 mode)
     return sw;
 }
 
-
 /**
  * Send a select command to the card manager
  *
@@ -399,17 +398,17 @@ U16 SM_Close(void *conn_ctx, U8 mode)
  */
 U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen)
 {
-    U16 rv = ERR_COMM_ERROR;
+    U16 rv                              = ERR_COMM_ERROR;
+    U32 status                          = ERR_COMM_ERROR;
     uint8_t tx_buf[MAX_APDU_BUF_LENGTH] = {0};
     uint16_t tx_len;
     U8 responseData[256] = {0};
-    U32 responseDataLen = sizeof(responseData);;
-
+    U32 responseDataLen  = sizeof(responseData);
+    ;
 
     ENSURE_OR_GO_CLEANUP(appletNameLen < 255);
     /* cla+ins+p1+p2+lc+appletNameLen+le */
     ENSURE_OR_GO_CLEANUP(sizeof(tx_buf) > (6u + appletNameLen));
-
 
     tx_buf[0] = CLA_ISO7816;
     tx_buf[1] = INS_GP_SELECT;
@@ -423,7 +422,7 @@ U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen)
              + 1 /* P2 */;
     if (appletNameLen > 0) {
         tx_buf[4] = (uint8_t)appletNameLen; // We have done ENSURE_OR_GO_CLEANUP(appletNameLen < 255);
-        tx_len = tx_len + 1      /* Lc */
+        tx_len    = tx_len + 1              /* Lc */
                  + appletNameLen /* Payload */;
         memcpy(&tx_buf[5], appletName, appletNameLen);
         tx_buf[tx_len] = 0x0;
@@ -431,14 +430,14 @@ U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen)
     }
     else {
         tx_len = tx_len /* for indentation */
-                 + 0    /* No Lc */;
+                 + 0 /* No Lc */;
     }
 
-    rv = smCom_TransceiveRaw(conn_ctx, tx_buf, tx_len, responseData, &responseDataLen);
-    if (rv == SW_OK && responseDataLen == 2) {
-        rv = responseData[responseDataLen - 2];
+    status = smCom_TransceiveRaw(conn_ctx, tx_buf, tx_len, responseData, &responseDataLen);
+    if (status == SW_OK && responseDataLen == 2) {
+        rv = (U16)responseData[0];
         rv <<= 8;
-        rv |= responseData[responseDataLen - 1];
+        rv |= (U16)responseData[1];
     }
 
 cleanup:

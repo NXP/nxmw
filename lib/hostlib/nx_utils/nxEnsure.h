@@ -38,7 +38,11 @@
  *
  */
 #ifndef NX_ENSURE_DO_LOG_MESSAGE
+#if (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153))
+#define NX_ENSURE_DO_LOG_MESSAGE 0
+#else
 #define NX_ENSURE_DO_LOG_MESSAGE 1
+#endif // SSS_HAVE_HOST_FRDMMCXA153
 #endif /* NX_ENSURE_DO_LOG_MESSAGE */
 
 /**
@@ -49,25 +53,15 @@
  *
  */
 #if NX_ENSURE_DO_LOG_MESSAGE
-#   define NX_ENSURE_MESSAGE(strCONDITION)   \
-        LOG_W("nxEnsure:'" strCONDITION "' failed. At Line:%d Function:%s", __LINE__, __FUNCTION__)
-#else /* NX_ENSURE_DO_LOG_MESSAGE */
-#   define NX_ENSURE_MESSAGE(strCONDITION)  /* No Message */
-#endif /* NX_ENSURE_DO_LOG_MESSAGE */
-
-/**
- * @brief Waring print of the parameter ``strCONDITION``
- *
- * @warning NX_ENSURE_MESSAGE is an internal message/API to this file.
- *          Do not use directly.
- *
- */
-#if NX_ENSURE_DO_LOG_MESSAGE
-#   define NX_ENSURE_MESSAGE(strCONDITION)   \
-        LOG_W("nxEnsure:'" strCONDITION "' failed. At Line:%d Function:%s", __LINE__, __FUNCTION__)
-#else /* NX_ENSURE_DO_LOG_MESSAGE */
-#   define NX_ENSURE_MESSAGE(strCONDITION)  /* No Message */
-#endif /* NX_ENSURE_DO_LOG_MESSAGE */
+#if defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153) // To reduce code size
+#define NX_ENSURE_MESSAGE(strCONDITION) LOG_W("Condition failed. Line:%d Func:%s", __LINE__, __FUNCTION__)
+#else
+#define NX_ENSURE_MESSAGE(strCONDITION) \
+    LOG_W("nxEnsure:'" strCONDITION "' failed. At Line:%d Function:%s", __LINE__, __FUNCTION__)
+#endif                                  // SSS_HAVE_HOST_FRDMMCXA153
+#else                                   /* NX_ENSURE_DO_LOG_MESSAGE */
+#define NX_ENSURE_MESSAGE(strCONDITION) /* No Message */
+#endif                                  /* NX_ENSURE_DO_LOG_MESSAGE */
 
 /** If condition fails, goto :cleanup label
  *
@@ -92,9 +86,9 @@
  *
  */
 #define ENSURE_OR_GO_CLEANUP(CONDITION) \
-    if (!(CONDITION)) { \
-        NX_ENSURE_MESSAGE(#CONDITION); \
-        goto cleanup; \
+    if (!(CONDITION)) {                 \
+        NX_ENSURE_MESSAGE(#CONDITION);  \
+        goto cleanup;                   \
     }
 
 /** If condition fails, goto :exit label
@@ -119,10 +113,10 @@
  * @endcode
  *
  */
-#define ENSURE_OR_GO_EXIT(CONDITION) \
-    if (!(CONDITION)) { \
+#define ENSURE_OR_GO_EXIT(CONDITION)   \
+    if (!(CONDITION)) {                \
         NX_ENSURE_MESSAGE(#CONDITION); \
-        goto exit; \
+        goto exit;                     \
     }
 
 /** If condition fails, break.
@@ -152,10 +146,10 @@
  * @endcode
  *
  */
-#define ENSURE_OR_BREAK(CONDITION) \
-    if (!(CONDITION)) { \
+#define ENSURE_OR_BREAK(CONDITION)     \
+    if (!(CONDITION)) {                \
         NX_ENSURE_MESSAGE(#CONDITION); \
-        break; \
+        break;                         \
     }
 
 /** If condition fails, return
@@ -186,10 +180,10 @@
  *          not recommended.
  *
  */
-#define ENSURE_OR_RETURN(CONDITION) \
-    if (!(CONDITION)) { \
+#define ENSURE_OR_RETURN(CONDITION)    \
+    if (!(CONDITION)) {                \
         NX_ENSURE_MESSAGE(#CONDITION); \
-        return; \
+        return;                        \
     }
 
 /** If condition fails, return
@@ -221,9 +215,9 @@
  *
  */
 #define ENSURE_OR_RETURN_ON_ERROR(CONDITION, RETURN_VALUE) \
-    if (!(CONDITION)) { \
-        NX_ENSURE_MESSAGE(#CONDITION); \
-        return RETURN_VALUE; \
+    if (!(CONDITION)) {                                    \
+        NX_ENSURE_MESSAGE(#CONDITION);                     \
+        return RETURN_VALUE;                               \
     }
 
 /** If condition fails, goto quit with return value status updated.
@@ -256,10 +250,10 @@
  *
  */
 #define ENSURE_OR_EXIT_WITH_STATUS_ON_ERROR(CONDITION, STATUS, RETURN_VALUE) \
-    if (!(CONDITION)) { \
-        NX_ENSURE_MESSAGE(#CONDITION); \
-        STATUS = RETURN_VALUE; \
-        goto exit; \
+    if (!(CONDITION)) {                                                      \
+        NX_ENSURE_MESSAGE(#CONDITION);                                       \
+        STATUS = RETURN_VALUE;                                               \
+        goto exit;                                                           \
     }
 
 /** @} */

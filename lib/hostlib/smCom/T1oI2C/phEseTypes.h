@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef uint8_t             utf8_t;       /* UTF8 Character String */
-typedef uint8_t             bool_t;       /* boolean data type */
-typedef uint16_t        ESESTATUS;        /* Return values */
+typedef uint8_t utf8_t;     /* UTF8 Character String */
+typedef uint8_t bool_t;     /* boolean data type */
+typedef uint16_t ESESTATUS; /* Return values */
 #define STATIC static
 
 #define UNUSED(X) (void)X;

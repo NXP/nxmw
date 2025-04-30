@@ -17,16 +17,14 @@
 #include "semphr.h"
 #endif
 
-
-#if ((__GNUC__ && \
-    (defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))) \
-    || (USE_RTOS)
-    /* Non-Embdedded */
+#if ((__GNUC__ && (defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
+         (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) ||          \
+         (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))) ||          \
+    (USE_RTOS)
+/* Non-Embdedded */
 #define USE_LOCK 1
 #else
-    /* Embdedded */
+/* Embdedded */
 #define USE_LOCK 0
 #endif
 
@@ -59,10 +57,10 @@ static void ansi_reSetColor(void);
 #if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS) || \
     defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64) || \
     defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)
-    /* Non-Embedded platforms */
+/* Non-Embedded platforms */
 #define szEOL szLF
 #else
-    /* Embedded platforms */
+/* Embedded platforms */
 #define szEOL szCRLF
 #endif
 #endif /* __GNUC__ && !defined(__ARMCC_VERSION) */
@@ -106,19 +104,18 @@ static const char *szLevel[] = {"ERROR", "WARN ", "INFO ", "DEBUG"};
 #if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS) || \
     defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64) || \
     defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)
-    /* Non-Embedded */
+/* Non-Embedded */
 #define TAB_SEPRATOR "   "
 #else
-    /* Embedded */
+/* Embedded */
 #define TAB_SEPRATOR "\t"
 #endif
 
 #if USE_RTOS
 static SemaphoreHandle_t gLogginglock;
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
 #include <pthread.h>
 /* Only for base session with os */
 static pthread_mutex_t gLogginglock;
@@ -136,10 +133,9 @@ static void nLog_AcquireLock()
         if (xSemaphoreTake(gLogginglock, portMAX_DELAY) != pdTRUE) {
             PRINTF("Acquiring logging semaphore failed");
         }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
         if (pthread_mutex_lock(&gLogginglock) != 0) {
             PRINTF("Acquiring logging mutext failed");
         }
@@ -156,10 +152,9 @@ static void nLog_ReleaseLock()
         if (xSemaphoreGive(gLogginglock) != pdTRUE) {
             PRINTF("Releasing logging semaphore failed");
         }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
         if (pthread_mutex_unlock(&gLogginglock) != 0) {
             PRINTF("Releasing logging semaphore failed");
         }
@@ -177,10 +172,9 @@ uint8_t nLog_Init()
         PRINTF("xSemaphoreCreateMutex failed");
         return 1;
     }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
     if (pthread_mutex_init(&gLogginglock, NULL) != 0) {
         PRINTF("pthread_mutex_init failed");
         return 1;
@@ -199,10 +193,9 @@ void nLog_DeInit()
         vSemaphoreDelete(gLogginglock);
         gLogginglock = NULL;
     }
-#elif __GNUC__ && \
-    ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) || \
-    (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
-    (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
+#elif __GNUC__ && ((defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)) ||    \
+                      (defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64)) || \
+                      (defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)))
     if (0 != pthread_mutex_destroy(&gLogginglock)) {
         PRINTF("pthread_mutex_destroy failed");
     }

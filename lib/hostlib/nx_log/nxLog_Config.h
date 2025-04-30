@@ -7,7 +7,6 @@
 #ifndef NX_LOG_CONFIG_H
 #define NX_LOG_CONFIG_H
 
-
 /******** Default Logging ************/
 /*
  * - 1 => Enable Debug level logging - for all.
@@ -26,18 +25,14 @@
  * Ideally, this shoudl alwasy be kept enabled */
 #define NX_LOG_ENABLE_DEFAULT_ERROR 1
 
-
-
 /******** Verbose Logging ************/
 #if defined(SSS_HAVE_LOG_VERBOSE) && (SSS_HAVE_LOG_VERBOSE)
-	#define VERBOSE_APDU_LOGS 1
-	#ifdef NX_LOG_ENABLE_DEFAULT_DEBUG
-		#undef NX_LOG_ENABLE_DEFAULT_DEBUG
-		#define NX_LOG_ENABLE_DEFAULT_DEBUG 1
-	#endif
+#define VERBOSE_APDU_LOGS 1
+#ifdef NX_LOG_ENABLE_DEFAULT_DEBUG
+#undef NX_LOG_ENABLE_DEFAULT_DEBUG
+#define NX_LOG_ENABLE_DEFAULT_DEBUG 1
 #endif
-
-
+#endif
 
 /******** Silent Logging ************/
 #if defined(SSS_HAVE_LOG_SILENT) && (SSS_HAVE_LOG_SILENT)

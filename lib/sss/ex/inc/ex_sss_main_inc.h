@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2019-2020, 2024 NXP
+ * Copyright 2019-2020, 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -47,8 +47,7 @@
 #include "fsl_sss_ftr_default.h"
 #endif
 
-#if (defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)) || \
-    (defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S))
+#if (defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED))
 #include "platform.h"
 #endif
 
@@ -117,9 +116,8 @@ int main(int argc, const char *argv[])
     gex_sss_argv = argv;
 #endif // EX_SSS_BOOT_EXPOSE_ARGC_ARGV
 
-    /* Initalize the embedded (baremetal) platform */
-#if (defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)) || \
-    (defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S))
+    /* Initialize the embedded (baremetal) platform */
+#if (defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED))
     platform_boot_direct();
     platform_init_hardware();
 #endif
@@ -230,16 +228,14 @@ cleanup:
 #endif
     if (kStatus_SSS_Success == status) {
         ret = 0;
-#if (defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)) || \
-    (defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S))
+#if (defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED))
         platform_success_indicator();
 #endif
     }
     else {
         LOG_E("!ERROR! ret != 0.");
         ret = 1;
-#if (defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)) || \
-    (defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S))
+#if (defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED))
         platform_failure_indicator();
 #endif
     }

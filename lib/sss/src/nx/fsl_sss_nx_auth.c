@@ -141,7 +141,9 @@ static sss_status_t nx_verify_leaf_cert_hash_signature(nx_auth_sigma_ctx_t *pAut
     uint8_t *initEphemPubkey,
     uint8_t *respEphemPubkey,
     size_t pubkeyLen);
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
 static sss_status_t nx_leaf_cert_cache_insert(void *authCtx, uint8_t *pCertHashBuf, size_t certHashBufLen);
+#endif
 static sss_status_t nx_decode_ASN1_signature(uint8_t *asn1Sig, size_t asn1SigLen, uint8_t *sigBuf, size_t *sigBufLen);
 static sss_status_t nx_verifier_Tx_cert_hash_sig(pSeSession_t seSession,
     nx_auth_sigma_ctx_t *pAuthCtx,
@@ -218,11 +220,19 @@ sss_status_t nx_hostcrypto_push_intermediate_cert(nx_device_cert_ctx_host_t *dev
 void nx_hostcrypto_cert_free(nx_device_cert_ctx_host_t *deviceCertCtx);
 
 /* Function pointers relevant to caching operations */
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
 #define EX_SSS_CACHE_FUNC_FIND_HASH ex_find_hash_in_cache
 #define EX_SSS_CACHE_FUNC_GET_PUBLIC_KEY ex_get_pk_from_cache
 #define EX_SSS_CACHE_FUNC_INSERT_HASH_PK ex_insert_hash_pk_to_cache
 #define EX_SSS_CACHE_FUNC_GET_PARENT_CERT ex_get_parent_cert_from_cache
 #define EX_SSS_CACHE_FUNC_INSET_PUBLIC_KEY ex_parent_cert_cache_insert
+#else
+#define EX_SSS_CACHE_FUNC_FIND_HASH NULL
+#define EX_SSS_CACHE_FUNC_GET_PUBLIC_KEY NULL
+#define EX_SSS_CACHE_FUNC_INSERT_HASH_PK NULL
+#define EX_SSS_CACHE_FUNC_GET_PARENT_CERT NULL
+#define EX_SSS_CACHE_FUNC_INSET_PUBLIC_KEY NULL
+#endif
 
 /* **************************************************************************************************************** */
 /* Prototypes of caching functions                                                                                  */
@@ -259,6 +269,11 @@ static bool nx_dir_exists(const char *pathname);
 #if (defined(SSS_HAVE_AUTH_SIGMA_I_VERIFIER) && (SSS_HAVE_AUTH_SIGMA_I_VERIFIER)) || \
     (defined(SSS_HAVE_AUTH_SIGMA_I_PROVER) && (SSS_HAVE_AUTH_SIGMA_I_PROVER)) ||     \
     (defined(SSS_HAVE_ALL_AUTH_CODE_ENABLED) && (SSS_HAVE_ALL_AUTH_CODE_ENABLED))
+
+#if (defined SSS_HAVE_HOST_FRDMMCXA153 && SSS_HAVE_HOST_FRDMMCXA153)
+// Global buffer to store root certificate
+uint8_t seRootCert[NX_MAX_CERT_BUFFER_SIZE];
+#endif // SSS_HAVE_HOST_FRDMMCXA153
 
 #ifdef EX_SSS_SIGMA_I_CERT_INCLUDE_DIR
 static sss_status_t read_file_from_fs(char *fileName, uint8_t *buffer, size_t *bufferLen)
@@ -485,18 +500,24 @@ static sss_status_t nx_verifier_Tx_init_pub_key(pSeSession_t seSession,
     ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
     status = kStatus_SSS_Fail;
 
-    tlvRet = TLVSET_U8("msgPayload", &pMsgPayload, &msgPayloadLen, NX_TAG_KEY_SIZE, keySize);
+    tlvRet = TLVSET_U8("msgPayload", &pMsgPayload, &msgPayloadLen, NX_TAG_KEY_SIZE, keySize, sizeof(msgBuf) - 2);
     ENSURE_OR_GO_EXIT(0 == tlvRet);
 
     // message payload: 86 xx 04 <public key, 64 bytes>
     tlvRet = 1;
-    tlvRet =
-        TLVSET_u8buf("msgPayload", &pMsgPayload, &msgPayloadLen, NX_TAG_EPHEM_PUB_KEY, pEpemPubkeyBuf, ephemPubkeyLen);
+    tlvRet = TLVSET_u8buf("msgPayload",
+        &pMsgPayload,
+        &msgPayloadLen,
+        NX_TAG_EPHEM_PUB_KEY,
+        pEpemPubkeyBuf,
+        ephemPubkeyLen,
+        sizeof(msgBuf) - 2);
     ENSURE_OR_GO_EXIT(0 == tlvRet);
 
     // message: A0 xx <message payload>
     tlvRet = 1;
-    tlvRet = TLVSET_u8buf("message", &pMsg, &msgbufLen, NX_TAG_MSGI_PUBLIC_KEY, &msgBuf[2], msgPayloadLen);
+    tlvRet =
+        TLVSET_u8buf("message", &pMsg, &msgbufLen, NX_TAG_MSGI_PUBLIC_KEY, &msgBuf[2], msgPayloadLen, sizeof(msgBuf));
     ENSURE_OR_GO_EXIT(0 == tlvRet);
     ENSURE_OR_GO_EXIT(msgbufLen == sizeof(msgBuf));
 
@@ -1287,14 +1308,20 @@ static sss_status_t nx_Tx_cert_request(pSeSession_t seSession,
         pCmdbuf   = &cmdBuf[2];
         encMsgLen = 0;
         // encrpyted message: 87 xx <message payload>
-        tlvRet = TLVSET_u8buf(
-            "enc msg", &pCmdbuf, &encMsgLen, NX_TAG_ENCRYPTED_PAYLOAD, &cipherPayload[0], cipherPayloadLen);
+        tlvRet = TLVSET_u8buf("enc msg",
+            &pCmdbuf,
+            &encMsgLen,
+            NX_TAG_ENCRYPTED_PAYLOAD,
+            &cipherPayload[0],
+            cipherPayloadLen,
+            sizeof(cmdBuf) - 2);
         ENSURE_OR_GO_EXIT(0 == tlvRet)
 
         pCmdbuf    = &cmdBuf[0];
         certReqLen = 0;
         tlvRet     = 1;
-        tlvRet     = TLVSET_u8buf("cert req", &pCmdbuf, &certReqLen, NX_TAG_MSGI_CERT_REQUEST, &cmdBuf[2], encMsgLen);
+        tlvRet     = TLVSET_u8buf(
+            "cert req", &pCmdbuf, &certReqLen, NX_TAG_MSGI_CERT_REQUEST, &cmdBuf[2], encMsgLen, sizeof(cmdBuf));
         ENSURE_OR_GO_EXIT(0 == tlvRet)
     }
     else {
@@ -1303,14 +1330,20 @@ static sss_status_t nx_Tx_cert_request(pSeSession_t seSession,
         pCmdbuf   = &cmdBuf[2];
         encMsgLen = 0;
         // encrpyted message: 87 xx <message payload>
-        tlvRet = TLVSET_u8buf(
-            "enc msg", &pCmdbuf, &encMsgLen, NX_TAG_ENCRYPTED_PAYLOAD, &cipherPayload[0], cipherPayloadLen);
+        tlvRet = TLVSET_u8buf("enc msg",
+            &pCmdbuf,
+            &encMsgLen,
+            NX_TAG_ENCRYPTED_PAYLOAD,
+            &cipherPayload[0],
+            cipherPayloadLen,
+            sizeof(cmdBuf) - 2);
         ENSURE_OR_GO_EXIT(0 == tlvRet)
 
         pCmdbuf    = &cmdBuf[0];
         certReqLen = 0;
         tlvRet     = 1;
-        tlvRet     = TLVSET_u8buf("cert req", &pCmdbuf, &certReqLen, NX_TAG_MSGR_CERT_REQUEST, &cmdBuf[2], encMsgLen);
+        tlvRet     = TLVSET_u8buf(
+            "cert req", &pCmdbuf, &certReqLen, NX_TAG_MSGR_CERT_REQUEST, &cmdBuf[2], encMsgLen, sizeof(cmdBuf));
         ENSURE_OR_GO_EXIT(0 == tlvRet)
     }
 
@@ -1977,6 +2010,7 @@ exit:
     return status;
 }
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
 /**
  * @brief         Insert leaf cert into cache.
  *
@@ -2017,6 +2051,7 @@ static sss_status_t nx_leaf_cert_cache_insert(void *authCtx, uint8_t *pCertHashB
 exit:
     return status;
 }
+#endif
 
 /**
  * @brief         Decode ASN.1 Signature. (ASN.1 -> compact signature)
@@ -2205,8 +2240,13 @@ static sss_status_t nx_verifier_Tx_cert_hash_sig(pSeSession_t seSession,
     // encrpyted message: A1 xx <message payload>
     status = kStatus_SSS_Fail;
     ENSURE_OR_GO_EXIT((UINT_MAX - encbufLen) >= tagLen);
-    tlvRet = TLVSET_u8buf(
-        "Host hash and sig", &pCmdBuf, &cmdBufLen, NX_TAG_MSGI_HASH_AND_SIG, &cmdPayload[0], encbufLen + tagLen);
+    tlvRet = TLVSET_u8buf("Host hash and sig",
+        &pCmdBuf,
+        &cmdBufLen,
+        NX_TAG_MSGI_HASH_AND_SIG,
+        &cmdPayload[0],
+        encbufLen + tagLen,
+        sizeof(cmdBuf));
     ENSURE_OR_GO_EXIT(0 == tlvRet)
 
     retStatus = DoAPDUTxRx_s_Case4(seSession, &hdr, cmdBuf, cmdBufLen, NULL, 0, rspbuf, &rspbufLen, NULL);
@@ -2612,21 +2652,23 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
     size_t encbufLen                        = 0;
     uint8_t tagBuf[NX_AES256_CCM_TAG_LENGH] = {0};
     size_t tagLen                           = NX_AES256_CCM_TAG_LENGH;
-    uint8_t *cmdBuf                         = NULL;
-    size_t cmdBufLen                        = 0;
     uint8_t *pBuf;
     size_t bufLen = 0, certReplyLen = 0;
-    uint8_t *pCertBuf                   = NULL;
-    size_t certBufLen                   = 0;
-    int tlvRet                          = 0;
-    tlvHeader_t hdr                     = {{CLA_ISO7816, INS_GP_ISO_GENERAL_AUTHENTICATE, P1_SIGMA_I, 0}};
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    uint8_t *pRspbuf                    = &rspbuf[0];
-    size_t rspbufLen                    = sizeof(rspbuf);
-    smStatus_t retStatus                = SM_NOT_OK;
-    uint8_t *taggedCert                 = NULL;
-    size_t taggedCertLen                = 0;
+    uint8_t certBuf[NX_MAX_CERT_BUFFER_SIZE]       = {0};
+    uint8_t *pCertBuf                              = (uint8_t *)&certBuf;
+    size_t certBufLen                              = NX_MAX_CERT_BUFFER_SIZE;
+    int tlvRet                                     = 0;
+    tlvHeader_t hdr                                = {{CLA_ISO7816, INS_GP_ISO_GENERAL_AUTHENTICATE, P1_SIGMA_I, 0}};
+    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]            = {0};
+    uint8_t *pRspbuf                               = &rspbuf[0];
+    size_t rspbufLen                               = sizeof(rspbuf);
+    smStatus_t retStatus                           = SM_NOT_OK;
+    uint8_t taggedCertBuf[NX_MAX_CERT_BUFFER_SIZE] = {0};
+    uint8_t *taggedCert                            = (uint8_t *)&taggedCertBuf;
+    size_t taggedCertLen                           = NX_MAX_CERT_BUFFER_SIZE;
     uint8_t tagCertReply;
+    uint8_t cmdBuf[NX_MAX_CERT_BUFFER_SIZE] = {0};
+    size_t cmdBufLen                        = NX_MAX_CERT_BUFFER_SIZE;
 
     ENSURE_OR_GO_EXIT(seSession != NULL);
     ENSURE_OR_GO_EXIT(pAuthCtx != NULL);
@@ -2636,14 +2678,6 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
     ENSURE_OR_GO_EXIT(rxSeCertReqLen == 2); // Cert request can only be 2 bytes.
 
     hdr.hdr[3] = pAuthCtx->static_ctx.seCertRepoId; // P2 is cert repo id.
-
-    pCertBuf = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
-    ENSURE_OR_GO_EXIT(pCertBuf != NULL);
-    certBufLen = NX_MAX_CERT_BUFFER_SIZE;
-
-    taggedCert = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
-    ENSURE_OR_GO_EXIT(taggedCert != NULL);
-    taggedCertLen = NX_MAX_CERT_BUFFER_SIZE;
 
     if (((nx_cert_req_tag_t)rxSeCertReq[0] == NX_CERT_REQ_TAG_LEAF) && (rxSeCertReq[1] == 0X00)) {
         // Leaf cert request
@@ -2683,7 +2717,8 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
     pBuf   = &taggedCert[1];
     bufLen = 0;
     // uncompressed cert: 21 xx <cert>
-    tlvRet = TLVSET_u8buf("cert", &pBuf, &bufLen, NX_TAG_UNCOMPRESSED_CERT, pCertBuf, certBufLen);
+    tlvRet = TLVSET_u8buf(
+        "cert", &pBuf, &bufLen, NX_TAG_UNCOMPRESSED_CERT, pCertBuf, certBufLen, NX_MAX_CERT_BUFFER_SIZE - 1);
     if (0 != tlvRet) {
         goto exit;
     }
@@ -2705,9 +2740,7 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
         tagCertReply = NX_TAG_MSGR_CERT_REPLY;
     }
 
-    cmdBuf = (uint8_t *)SSS_MALLOC(NX_MAX_BUF_SIZE_CMD);
-    ENSURE_OR_GO_EXIT(cmdBuf != NULL);
-    cmdBufLen = NX_MAX_BUF_SIZE_CMD;
+    status = kStatus_SSS_Fail; // Reinitializing exit status
 
     // enc buffer reuse cmdBuf and reserve 10 bytes for Tag and length.
     pEncbuf   = &cmdBuf[10];
@@ -2726,7 +2759,8 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
     pBuf         = &cmdBuf[0];
     certReplyLen = 0;
     ENSURE_OR_GO_EXIT((UINT_MAX - encbufLen) >= tagLen);
-    tlvRet = TLVSET_u8buf("cert reply", &pBuf, &certReplyLen, tagCertReply, pEncbuf, encbufLen + tagLen);
+    tlvRet = TLVSET_u8buf(
+        "cert reply", &pBuf, &certReplyLen, tagCertReply, pEncbuf, encbufLen + tagLen, NX_MAX_BUF_SIZE_CMD);
     if (0 != tlvRet) {
         goto exit;
     }
@@ -2778,15 +2812,6 @@ static sss_status_t nx_Tx_cert_reply_sig(pSeSession_t seSession,
 
     status = kStatus_SSS_Success;
 exit:
-    if (pCertBuf != NULL) {
-        SSS_FREE(pCertBuf);
-    }
-    if (cmdBuf != NULL) {
-        SSS_FREE(cmdBuf);
-    }
-    if (taggedCert != NULL) {
-        SSS_FREE(taggedCert);
-    }
     return status;
 }
 
@@ -2868,7 +2893,8 @@ static sss_status_t nx_prover_Tx_control_transfer(
     // B0 00        - MSGR_START_PROTOCOL message
     pCmdBuf   = &cmdBuf[0];
     cmdBufLen = 0;
-    tlvRet    = TLVSET_u8buf("control transfer", &pCmdBuf, &cmdBufLen, NX_TAG_MSGR_START_PROTOCOL, &cmdBuf[0], 0);
+    tlvRet    = TLVSET_u8buf(
+        "control transfer", &pCmdBuf, &cmdBufLen, NX_TAG_MSGR_START_PROTOCOL, &cmdBuf[0], 0, sizeof(cmdBuf));
     if (0 != tlvRet) {
         goto exit;
     }
@@ -2946,30 +2972,31 @@ static sss_status_t nx_prepare_host_c_k_data(nx_auth_sigma_ctx_t *pAuthCtx,
     uint8_t *ckDataBuf,
     size_t *ckDataBufLen)
 {
-    sss_status_t status                         = kStatus_SSS_Fail;
-    uint8_t *pHostKeyData                       = NULL;
-    uint8_t *pSeKeyData                         = NULL;
-    sss_digest_t md                             = {0};
-    uint8_t *certHash                           = ckDataBuf;
-    size_t certHashLen                          = NX_SHA256_BYTE_LEN;
-    uint8_t cmacData[NX_SHA256_BYTE_LEN + 1]    = {0};
-    uint8_t sigDataBuf[1000]                    = {0}; // 0x01 || xP || yP || AES-CMAC_k_tr(leaf_cert_hash)
-    sss_mac_t macCtx                            = {0};
-    sss_session_t *pSession                     = NULL;
-    sss_object_t *pMacKey                       = NULL;
-    size_t leafCertHashCMacLen                  = 0;
-    uint8_t sigDataDigest[NX_SHA256_BYTE_LEN]   = {0};
-    size_t sigDataDigestLen                     = sizeof(sigDataDigest);
-    sss_asymmetric_t asym                       = {0};
-    uint8_t asn1Sig[NX_SIGNATURE_ASN1_BYTE_LEN] = {0};             // Signature in ASN.1 encoded
-    size_t asn1SigLen                           = sizeof(asn1Sig); // Signature in ASN.1 encoded
-    size_t compactSigLen                        = NX_ECDSA_P256_SIG_BUFFER_SIZE;
-    size_t asn1ECHdrLen                         = 0;
-    uint8_t prefix                              = 0;
-    uint8_t initKeySize                         = 0;
-    uint8_t respSelectedKeySize                 = 0;
-    uint8_t *leafCert                           = NULL;
-    size_t leafCertLen                          = 0;
+    sss_status_t status                          = kStatus_SSS_Fail;
+    uint8_t *pHostKeyData                        = NULL;
+    uint8_t *pSeKeyData                          = NULL;
+    sss_digest_t md                              = {0};
+    uint8_t *certHash                            = ckDataBuf;
+    size_t certHashLen                           = NX_SHA256_BYTE_LEN;
+    uint8_t cmacData[NX_SHA256_BYTE_LEN + 1]     = {0};
+    uint8_t sigDataBuf[1000]                     = {0}; // 0x01 || xP || yP || AES-CMAC_k_tr(leaf_cert_hash)
+    sss_mac_t macCtx                             = {0};
+    sss_session_t *pSession                      = NULL;
+    sss_object_t *pMacKey                        = NULL;
+    size_t leafCertHashCMacLen                   = 0;
+    uint8_t sigDataDigest[NX_SHA256_BYTE_LEN]    = {0};
+    size_t sigDataDigestLen                      = sizeof(sigDataDigest);
+    sss_asymmetric_t asym                        = {0};
+    uint8_t asn1Sig[NX_SIGNATURE_ASN1_BYTE_LEN]  = {0};             // Signature in ASN.1 encoded
+    size_t asn1SigLen                            = sizeof(asn1Sig); // Signature in ASN.1 encoded
+    size_t compactSigLen                         = NX_ECDSA_P256_SIG_BUFFER_SIZE;
+    size_t asn1ECHdrLen                          = 0;
+    uint8_t prefix                               = 0;
+    uint8_t initKeySize                          = 0;
+    uint8_t respSelectedKeySize                  = 0;
+    uint8_t leafCertBuf[NX_MAX_CERT_BUFFER_SIZE] = {0};
+    uint8_t *leafCert                            = (uint8_t *)&leafCertBuf;
+    size_t leafCertLen                           = NX_MAX_CERT_BUFFER_SIZE;
 
     ENSURE_OR_GO_EXIT(pAuthCtx != NULL);
     ENSURE_OR_GO_EXIT(hostEpemPubkeyBuf != NULL);
@@ -2991,11 +3018,6 @@ static sss_status_t nx_prepare_host_c_k_data(nx_auth_sigma_ctx_t *pAuthCtx,
 
     // Host as initiator C_k_r data = leaf_cert_hash || Resp_ECC_Sig
     // Host as responder C_k_i data = leaf_cert_hash || Init_ECC_Sig
-
-    // Get Leaf Cert
-    leafCert = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
-    ENSURE_OR_GO_EXIT(leafCert != NULL);
-    leafCertLen = NX_MAX_CERT_BUFFER_SIZE;
 
     status =
         nx_get_host_cert(NX_CERTIFICATE_LEVEL_LEAF, pAuthCtx->static_ctx.hostCertCurveType, leafCert, &leafCertLen);
@@ -3115,9 +3137,6 @@ static sss_status_t nx_prepare_host_c_k_data(nx_auth_sigma_ctx_t *pAuthCtx,
     *ckDataBufLen = NX_SHA256_BYTE_LEN + compactSigLen;
 
 exit:
-    if (leafCert != NULL) {
-        SSS_FREE(leafCert);
-    }
     if (md.session != NULL) {
         sss_host_digest_context_free(&md);
     }
@@ -3236,21 +3255,32 @@ static sss_status_t nx_prover_Tx_cert_hash_sig(pSeSession_t seSession,
     pCmdBuf      = &cmdBuf[3];
     tmpCmdBufLen = 0;
     // message: 83 xx <key size selected>
-    tlvRet = TLVSET_U8("Host hash and sig", &pCmdBuf, &tmpCmdBufLen, NX_TAG_KEY_SIZE, selectedKeySize);
+    tlvRet =
+        TLVSET_U8("Host hash and sig", &pCmdBuf, &tmpCmdBufLen, NX_TAG_KEY_SIZE, selectedKeySize, sizeof(cmdBuf) - 3);
     ENSURE_OR_GO_EXIT(0 == tlvRet)
     ENSURE_OR_GO_EXIT(tmpCmdBufLen == 3);
 
     // message: 86 41 04 <yP, public key, 64 bytes>
     tlvRet = 1;
-    tlvRet = TLVSET_u8buf(
-        "Host public key", &pCmdBuf, &tmpCmdBufLen, NX_TAG_EPHEM_PUB_KEY, &hostEpemPubkeyBuf[asn1ECHdrLen], 65);
+    tlvRet = TLVSET_u8buf("Host public key",
+        &pCmdBuf,
+        &tmpCmdBufLen,
+        NX_TAG_EPHEM_PUB_KEY,
+        &hostEpemPubkeyBuf[asn1ECHdrLen],
+        65,
+        sizeof(cmdBuf) - 3);
     ENSURE_OR_GO_EXIT(0 == tlvRet)
     ENSURE_OR_GO_EXIT(tmpCmdBufLen == (3 + 67));
 
     // message: 87 xx <c_k_r: encrypted hash and signature>
     tlvRet = 1;
-    tlvRet = TLVSET_u8buf(
-        "Host hash and sig", &pCmdBuf, &tmpCmdBufLen, NX_TAG_ENCRYPTED_PAYLOAD, &ckrValue[0], encbufLen + tagLen);
+    tlvRet = TLVSET_u8buf("Host hash and sig",
+        &pCmdBuf,
+        &tmpCmdBufLen,
+        NX_TAG_ENCRYPTED_PAYLOAD,
+        &ckrValue[0],
+        encbufLen + tagLen,
+        sizeof(cmdBuf) - 3);
     ENSURE_OR_GO_EXIT(0 == tlvRet)
     ENSURE_OR_GO_EXIT(tmpCmdBufLen == (3 + 67 + 106));
     cmdBufLen = tmpCmdBufLen;
@@ -3264,8 +3294,13 @@ static sss_status_t nx_prover_Tx_cert_hash_sig(pSeSession_t seSession,
     //     87 60 <C_k_r: encrypted hash and signature>
     ENSURE_OR_GO_EXIT((UINT_MAX - encbufLen) >= tagLen);
     tlvRet = 1;
-    tlvRet = TLVSET_u8buf(
-        "Host public key, hash and sig", &pCmdBuf, &tmpCmdBufLen, NX_TAG_MSGR_HASH_AND_SIG, &cmdBuf[3], cmdBufLen);
+    tlvRet = TLVSET_u8buf("Host public key, hash and sig",
+        &pCmdBuf,
+        &tmpCmdBufLen,
+        NX_TAG_MSGR_HASH_AND_SIG,
+        &cmdBuf[3],
+        cmdBufLen,
+        sizeof(cmdBuf));
     ENSURE_OR_GO_EXIT(0 == tlvRet)
     ENSURE_OR_GO_EXIT(tmpCmdBufLen == (3 + 3 + 67 + 106));
     cmdBufLen = tmpCmdBufLen;
@@ -3308,8 +3343,9 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
     size_t epemDERPubkeyLen                                                         = sizeof(epemDERPubkey);
     size_t epemPubkeyBitLen                                                         = 0;
     uint8_t *pEpemPubkeyBuf                                                         = NULL;
-    uint8_t *rxEncCertBuf                                                           = NULL;
-    size_t rxEncCertBufLen                                                          = 0;
+    uint8_t rxEncCertBuf[NX_MAX_CERT_BUFFER_SIZE]                                   = {0};
+    uint8_t *pRxEncCertBuf                                                          = (uint8_t *)&rxEncCertBuf;
+    size_t rxEncCertBufLen                                                          = NX_MAX_CERT_BUFFER_SIZE;
     uint8_t rxEncHashBuf[110]                                                       = {0};
     size_t rxEncHashBufLen                                                          = sizeof(rxEncHashBuf);
     uint8_t rxDecCertHashSigBuf[NX_SHA256_BYTE_LEN + NX_ECDSA_P256_SIG_BUFFER_SIZE] = {0};
@@ -3318,7 +3354,9 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
     uint8_t *pCertSigBuf                                                            = NULL;
     size_t certHashBufLen                                                           = 0;
     size_t certSigBufLen                                                            = 0;
-    int cacheFound                                                                  = -1;
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
+    int cacheFound = -1;
+#endif
     uint8_t *seCertBuf[3]                            = {0}; // Used for leaf/p1/p2 certificate
     size_t seCertBufBufLen[3]                        = {0};
     uint8_t *pCertBuf                                = NULL;
@@ -3331,13 +3369,18 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
     uint8_t rxSeCertReq[2]                           = {0};
     size_t rxSeCertReqLen                            = sizeof(rxSeCertReq);
     int count                                        = 0;
-    uint8_t *respRAPDUBuf                        = rxEncCertReqBuf; // Responder R-APDU buffer. Reuse rxEncCertReqBuf[]
-    size_t respRAPDUBufLen                       = rxEncCertReqBufLen;
-    uint8_t rxTagValue                           = 0;
-    int certIndex                                = -1;
-    size_t asn1ECHdrLen                          = 0;
-    uint8_t *pSERootCert                         = NULL;
-    size_t seRootCertLen                         = 0;
+    uint8_t *respRAPDUBuf  = rxEncCertReqBuf; // Responder R-APDU buffer. Reuse rxEncCertReqBuf[]
+    size_t respRAPDUBufLen = rxEncCertReqBufLen;
+    uint8_t rxTagValue     = 0;
+    int certIndex          = -1;
+    size_t asn1ECHdrLen    = 0;
+#if (defined SSS_HAVE_HOST_FRDMMCXA153 && SSS_HAVE_HOST_FRDMMCXA153)
+    // seRootCert available as a global buffer for MCXA
+#else
+    uint8_t seRootCert[NX_MAX_CERT_BUFFER_SIZE] = {0};
+#endif
+    uint8_t *pSERootCert                         = (uint8_t *)&seRootCert;
+    size_t seRootCertLen                         = NX_MAX_CERT_BUFFER_SIZE;
     int i                                        = -1;
     uint8_t publicKey[NX_PUBLIC_KEY_BUFFER_SIZE] = {0};
     size_t publicKeyLen                          = sizeof(publicKey);
@@ -3345,27 +3388,20 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
     ENSURE_OR_GO_EXIT(seSession != NULL);
     ENSURE_OR_GO_EXIT(pAuthCtx != NULL);
 
+    memset(pRxEncCertBuf, 0, NX_MAX_CERT_BUFFER_SIZE);
+    memset(pSERootCert, 0, NX_MAX_CERT_BUFFER_SIZE);
+
     // Initialize the certificate structures for hostcrypto operations
     nx_hostcrypto_cert_init(&deviceCertCtx);
-
-    // Get SE Root Cert
-    pSERootCert = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
-    ENSURE_OR_GO_EXIT(pSERootCert != NULL);
-    memset(pSERootCert, 0, NX_MAX_CERT_BUFFER_SIZE);
-    seRootCertLen = NX_MAX_CERT_BUFFER_SIZE;
 
     status = nx_get_se_root_cert(pAuthCtx->dyn_ctx.hostEphemCurveType, pSERootCert, &seRootCertLen);
     ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
     LOG_MAU8_D("Device Root Certificate", pSERootCert, seRootCertLen);
 
-    // Buffer used for Rx Encrypted Cert.
-    rxEncCertBuf = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
-    ENSURE_OR_GO_EXIT(rxEncCertBuf != NULL);
-    memset(rxEncCertBuf, 0, NX_MAX_CERT_BUFFER_SIZE);
-    rxEncCertBufLen = NX_MAX_CERT_BUFFER_SIZE;
+    status = kStatus_SSS_Fail; // Reinitializing exit status
 
     // Buffer used for SE certificates
-    for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_CERT_LEVEL_P2; certIndex++) {
+    for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_MAX_CERT_DEPTH; certIndex++) {
         seCertBuf[certIndex - 1] = (uint8_t *)SSS_MALLOC(NX_MAX_CERT_BUFFER_SIZE);
         ENSURE_OR_GO_EXIT(seCertBuf[certIndex - 1] != NULL);
         memset(seCertBuf[certIndex - 1], 0, NX_MAX_CERT_BUFFER_SIZE);
@@ -3451,6 +3487,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
         LOG_MAU8_D("Device leaf cert hash", pCertHashBuf, certHashBufLen);
         LOG_MAU8_D("Device ECC signature", pCertSigBuf, certSigBufLen);
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
         // Looking for cert hash in cache
         cacheFound = NX_LEAF_CERT_CACHE_ITEM_NA;
         if (pAuthCtx->dyn_ctx.hostCacheType == knx_AuthCache_Enabled) {
@@ -3458,17 +3495,17 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
             status = pAuthCtx->static_ctx.fp_find_hash_from_cache(pCertHashBuf, certHashBufLen, &cacheFound);
             ENSURE_OR_GO_EXIT(kStatus_SSS_Success == status);
         }
-
         if (NX_LEAF_CERT_CACHE_ITEM_NA == cacheFound) {
+#endif
             // Cert not cached. Require certificate from SE.
             validCert = false;
-            for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_CERT_LEVEL_P2; certIndex++) {
+            for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_MAX_CERT_DEPTH; certIndex++) {
                 rxEncCertBufLen = NX_MAX_CERT_BUFFER_SIZE;
-                memset(rxEncCertBuf, 0, rxEncCertBufLen);
-                status = nx_Tx_cert_request(seSession, pAuthCtx, certIndex, true, rxEncCertBuf, &rxEncCertBufLen);
+                memset(pRxEncCertBuf, 0, rxEncCertBufLen);
+                status = nx_Tx_cert_request(seSession, pAuthCtx, certIndex, true, pRxEncCertBuf, &rxEncCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
                 LOG_D("Certificate Level - %d", certIndex);
-                LOG_MAU8_D("Encrypted certificate", rxEncCertBuf, rxEncCertBufLen);
+                LOG_MAU8_D("Encrypted certificate", pRxEncCertBuf, rxEncCertBufLen);
 
                 // Get responder cert from encrypted certificate
                 pCertBuf     = seCertBuf[certIndex - 1];
@@ -3478,7 +3515,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
 
                 // Decrypt using ke1, ive1
                 status = nx_decrypt_certificate(
-                    pAuthCtx, certIndex, true, rxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
+                    pAuthCtx, certIndex, true, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
                 LOG_MAU8_D("Decrypted device certificate", pCertBuf, *pCertBufLen);
 
@@ -3533,6 +3570,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
             status = kStatus_SSS_Fail;
             ENSURE_OR_GO_EXIT(validCert == true);
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
             if (pAuthCtx->dyn_ctx.hostCacheType == knx_AuthCache_Enabled) {
                 // Cache device leaf cert hash and public key
                 status = nx_leaf_cert_cache_insert(pAuthCtx, pCertHashBuf, certHashBufLen);
@@ -3586,7 +3624,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
                 epemDERPubkeyLen);
             ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
         }
-
+#endif
         // Cert hash and signature C-APDU
         status = nx_verifier_Tx_cert_hash_sig(seSession,
             pAuthCtx,
@@ -3704,6 +3742,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
         pCertSigBuf    = &rxDecCertHashSigBuf[NX_SHA256_BYTE_LEN];
         certSigBufLen  = rxDecCertHashSigBufLen - certHashBufLen;
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
         // Looking for cert hash in cashe
         cacheFound = NX_LEAF_CERT_CACHE_ITEM_NA;
         if (pAuthCtx->dyn_ctx.hostCacheType == knx_AuthCache_Enabled) {
@@ -3714,13 +3753,14 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
         }
 
         if (NX_LEAF_CERT_CACHE_ITEM_NA == cacheFound) {
+#endif
             // Cert not cached. Require certificate from SE.
 
             validCert = false;
-            for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_CERT_LEVEL_P2; certIndex++) {
+            for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_MAX_CERT_DEPTH; certIndex++) {
                 rxEncCertBufLen = NX_MAX_CERT_BUFFER_SIZE;
-                memset(rxEncCertBuf, 0, rxEncCertBufLen);
-                status = nx_Tx_cert_request(seSession, pAuthCtx, certIndex, false, rxEncCertBuf, &rxEncCertBufLen);
+                memset(pRxEncCertBuf, 0, rxEncCertBufLen);
+                status = nx_Tx_cert_request(seSession, pAuthCtx, certIndex, false, pRxEncCertBuf, &rxEncCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
 
                 // Get responder cert from encrypted certificate
@@ -3730,7 +3770,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
                 memset(pCertBuf, 0, seCertBufBufLen[certIndex - 1]);
 
                 status = nx_decrypt_certificate(
-                    pAuthCtx, certIndex, false, rxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
+                    pAuthCtx, certIndex, false, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
 
                 // Parse leaf/p1/p2 pkcs7 certificate and add it to container.
@@ -3785,6 +3825,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
             status = kStatus_SSS_Fail;
             ENSURE_OR_GO_EXIT(validCert == true);
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
             if (pAuthCtx->dyn_ctx.hostCacheType == knx_AuthCache_Enabled) {
                 // Cache device leaf cert hash and public key
                 status = nx_leaf_cert_cache_insert(pAuthCtx, pCertHashBuf, certHashBufLen);
@@ -3841,7 +3882,7 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
                 epemDERPubkeyLen);
             ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
         }
-
+#endif
         pAuthCtx->dyn_ctx.authType = knx_AuthType_SIGMA_I_Prover;
     }
 
@@ -3849,21 +3890,13 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
 exit:
     nx_hostcrypto_cert_free(&deviceCertCtx);
 
-    if (pSERootCert != NULL) {
-        SSS_FREE(pSERootCert);
-    }
-
     for (i = 0; i < NX_MAX_CERT_DEPTH; i++) {
         if (deviceCACertCacheBuf[i] != NULL) {
             SSS_FREE(deviceCACertCacheBuf[i]);
         }
     }
 
-    if (rxEncCertBuf != NULL) {
-        SSS_FREE(rxEncCertBuf);
-    }
-
-    for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_CERT_LEVEL_P2; certIndex++) {
+    for (certIndex = NX_CERT_LEVEL_LEAF; certIndex <= NX_MAX_CERT_DEPTH; certIndex++) {
         if (seCertBuf[certIndex - 1] != NULL) {
             SSS_FREE(seCertBuf[certIndex - 1]);
         }
@@ -4301,18 +4334,18 @@ exit:
 static sss_status_t nx_Tx_AuthenticateEV2First_Part1(
     pSeSession_t seSession, nx_auth_symm_ctx_t *pAuthCtx, uint8_t *RndBBuf, size_t RndBDashBufLen)
 {
-    sss_status_t status                       = kStatus_SSS_Fail;
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_AUTHENTICATE_EV2_FIRST, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *afRsp                            = NULL; // Point to additional frame response buffer
-    size_t afRspLen                           = 0;
+    sss_status_t status  = kStatus_SSS_Fail;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_AUTHENTICATE_EV2_FIRST, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD_HEADER]          = {0};
+    size_t cmdHeaderBufLen                                    = 0;
+    int tlvRet                                                = 1;
+    uint8_t *pCmdHeaderBuf                                    = &cmdHeaderBuf[0];
+    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]                       = {0};
+    uint8_t *pRspbuf                                          = &rspbuf[0];
+    size_t rspbufLen                                          = sizeof(rspbuf);
+    uint8_t *afRsp                                            = NULL; // Point to additional frame response buffer
+    size_t afRspLen                                           = 0;
     uint8_t dataToDecrypt[NX_MAX_BUF_SIZE_CMD]                = {0};
     size_t dataToDecryptLen                                   = 0;
     uint8_t plaintextResponse[NX_AUTH_EV2FIRST_PLAINRSP_SIZE] = {0};
@@ -4329,14 +4362,15 @@ static sss_status_t nx_Tx_AuthenticateEV2First_Part1(
     PCDCap2    = pAuthCtx->static_ctx.PCDCap2;
     PCDCap2Len = pAuthCtx->static_ctx.PCDCap2Len;
 
-    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, keyNo);
+    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, keyNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_EXIT(0 == tlvRet)
 
-    tlvRet = SET_U8("pcdCap2Len", &pCmdHeaderBuf, &cmdHeaderBufLen, PCDCap2Len);
+    tlvRet = SET_U8("pcdCap2Len", &pCmdHeaderBuf, &cmdHeaderBufLen, PCDCap2Len, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_EXIT(0 == tlvRet)
 
     if ((PCDCap2Len > 0) && (PCDCap2Len <= NX_PCD_CAPABILITIES_LEN)) {
-        tlvRet = SET_u8buf("PCDCap2", &pCmdHeaderBuf, &cmdHeaderBufLen, PCDCap2, PCDCap2Len);
+        tlvRet =
+            SET_u8buf("PCDCap2", &pCmdHeaderBuf, &cmdHeaderBufLen, PCDCap2, PCDCap2Len, NX_MAX_BUF_SIZE_CMD_HEADER);
         ENSURE_OR_GO_EXIT(0 == tlvRet)
     }
     // AuthenticateEV2Frist Part1
@@ -4427,7 +4461,8 @@ static sss_status_t nx_Tx_AuthenticateEV2First_Part2(
     ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
 
     // AuthenticateEV2Frist Part2
-    tlvRet = SET_u8buf("Enc RndA||RndBdash", &pCmdDataBuf, &cmdDataBufLen, encCmdData, RndABufLen + RndABufLen);
+    tlvRet = SET_u8buf(
+        "Enc RndA||RndBdash", &pCmdDataBuf, &cmdDataBufLen, encCmdData, RndABufLen + RndABufLen, NX_MAX_BUF_SIZE_CMD);
     if (0 != tlvRet) {
         status = kStatus_SSS_Fail;
         goto exit;
@@ -4522,10 +4557,10 @@ static sss_status_t nx_Tx_AuthenticateEV2NonFirst_Part1(
     smStatus_t retStatus = SM_NOT_OK;
 
     tlvHeader_t hdr = {{NX_CLA, NX_INS_AUTHENTICATE_EV2_NON_FIRST, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    int tlvRet                                = 0;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
+    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD_HEADER] = {0};
+    size_t cmdHeaderBufLen                           = 0;
+    int tlvRet                                       = 0;
+    uint8_t *pCmdHeaderBuf                           = &cmdHeaderBuf[0];
     uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP];
     uint8_t *pRspbuf = &rspbuf[0];
     size_t rspbufLen = sizeof(rspbuf);
@@ -4545,7 +4580,7 @@ static sss_status_t nx_Tx_AuthenticateEV2NonFirst_Part1(
     appKey = &pAuthCtx->static_ctx.appKey;
 
     keyNo  = pAuthCtx->dyn_ctx.keyNo;
-    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, keyNo);
+    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, keyNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     if (0 != tlvRet) {
         goto exit;
     }
@@ -4643,7 +4678,8 @@ static sss_status_t nx_Tx_AuthenticateEV2NonFirst_Part2(
     ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
 
     // AuthenticateEV2Frist Part2
-    tlvRet = SET_u8buf("Enc RndA||RndBdash", &pCmdDataBuf, &cmdDataBufLen, encCmdData, RndABufLen + RndABufLen);
+    tlvRet = SET_u8buf(
+        "Enc RndA||RndBdash", &pCmdDataBuf, &cmdDataBufLen, encCmdData, RndABufLen + RndABufLen, NX_MAX_BUF_SIZE_CMD);
     if (0 != tlvRet) {
         goto exit;
     }

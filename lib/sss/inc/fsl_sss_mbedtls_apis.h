@@ -708,4 +708,8 @@ sss_status_t sss_mbedtls_rng_context_free(sss_mbedtls_rng_context_t *context);
 } // extern "C"
 #endif /* __cplusplus */
 
+#if SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X
+int mbedtls_entropy_func_3_X(void *data, unsigned char *output, size_t len);
+#endif
+
 #endif /* FSL_SSS_MBEDTLS_APIS_H */

@@ -10,7 +10,6 @@
  *
  *****************************************************************************/
 
-
 #include <assert.h>
 #include "smComT1oI2C.h"
 #include "phNxpEse_Api.h"
@@ -18,14 +17,15 @@
 #include "i2c_a7.h"
 #include "phEseStatus.h"
 #include "sm_apdu.h"
+#include <limits.h>
 
 #include "nxLog_msg.h"
 #include "nxEnsure.h"
 
 #if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) || defined(T1oI2C_GP1_0)
 
-static U32 smComT1oI2C_Transceive(void* conn_ctx, apdu_t * pApdu);
-static U32 smComT1oI2C_TransceiveRaw(void* conn_ctx, U8 * pTx, U16 txLen, U8 * pRx, U32 * pRxLen);
+static U32 smComT1oI2C_Transceive(void *conn_ctx, apdu_t *pApdu);
+static U32 smComT1oI2C_TransceiveRaw(void *conn_ctx, U8 *pTx, U16 txLen, U8 *pRx, U32 *pRxLen);
 
 U16 smComT1oI2C_Close(void *conn_ctx, U8 mode)
 {
@@ -39,15 +39,13 @@ U16 smComT1oI2C_Close(void *conn_ctx, U8 mode)
     if (NULL != conn_ctx) {
 #ifdef T1OI2C_SEND_DEEP_PWR_DOWN
         status = phNxpEse_deepPwrDown(conn_ctx);
-        if(status != ESESTATUS_SUCCESS)
-        {
+        if (status != ESESTATUS_SUCCESS) {
             LOG_E("phNxpEse_deepPwrDown failed ");
             goto exit;
         }
 #endif
         status = phNxpEse_close(conn_ctx);
-        if(status != ESESTATUS_SUCCESS)
-        {
+        if (status != ESESTATUS_SUCCESS) {
             LOG_E("Failed to close ESE interface and free all resources ");
             goto exit;
         }
@@ -61,20 +59,18 @@ exit:
     return ret;
 }
 
-
 U16 smComT1oI2C_Init(void **conn_ctx, const char *pConnString)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    U16 ret          = SMCOM_COM_FAILED;
+    ESESTATUS status               = ESESTATUS_FAILED;
+    U16 ret                        = SMCOM_COM_FAILED;
     phNxpEse_initParams initParams = {0};
-    initParams.initMode = ESE_MODE_NORMAL;
+    initParams.initMode            = ESE_MODE_NORMAL;
 
-    if(conn_ctx != NULL) {
+    if (conn_ctx != NULL) {
         *conn_ctx = NULL;
     }
     status = phNxpEse_open(conn_ctx, initParams, pConnString);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    if (status != ESESTATUS_SUCCESS) {
         LOG_E(" Failed to create physical connection with ESE ");
         goto exit;
     }
@@ -86,17 +82,16 @@ exit:
 
 U16 smComT1oI2C_Resume(void **conn_ctx, const char *pConnString)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    U16 ret          = SMCOM_COM_FAILED;
+    ESESTATUS status               = ESESTATUS_FAILED;
+    U16 ret                        = SMCOM_COM_FAILED;
     phNxpEse_initParams initParams = {0};
-    initParams.initMode = ESE_MODE_RESUME;
+    initParams.initMode            = ESE_MODE_RESUME;
 
-    if(conn_ctx != NULL) {
+    if (conn_ctx != NULL) {
         *conn_ctx = NULL;
     }
     status = phNxpEse_open(conn_ctx, initParams, pConnString);
-    if (status != ESESTATUS_SUCCESS)
-    {
+    if (status != ESESTATUS_SUCCESS) {
         LOG_E(" Failed to create physical connection with ESE ");
         goto exit;
     }
@@ -108,17 +103,17 @@ exit:
 
 U16 smComT1oI2C_Open(void *conn_ctx, U8 mode, U8 seqCnt, U8 *T1oI2Catr, U16 *T1oI2CatrLen)
 {
-    ESESTATUS status = ESESTATUS_FAILED;
-    U16 ret          = SMCOM_COM_FAILED;
-    phNxpEse_data AtrRsp = {0};
+    ESESTATUS status               = ESESTATUS_FAILED;
+    U16 ret                        = SMCOM_COM_FAILED;
+    phNxpEse_data AtrRsp           = {0};
     phNxpEse_initParams initParams = {0};
-    initParams.initMode = ESE_MODE_NORMAL;
+    initParams.initMode            = ESE_MODE_NORMAL;
 
     if (NULL == T1oI2CatrLen) {
         return SMCOM_COM_FAILED;
     }
 
-    AtrRsp.len = *T1oI2CatrLen;
+    AtrRsp.len    = *T1oI2CatrLen;
     AtrRsp.p_data = T1oI2Catr;
 
     ENSURE_OR_GO_EXIT(NULL != T1oI2CatrLen)
@@ -128,58 +123,55 @@ U16 smComT1oI2C_Open(void *conn_ctx, U8 mode, U8 seqCnt, U8 *T1oI2Catr, U16 *T1o
     }
 
     status = phNxpEse_init(conn_ctx, initParams, &AtrRsp);
-    if (status != ESESTATUS_SUCCESS)
-    {
-        *T1oI2CatrLen=0;
+    if (status != ESESTATUS_SUCCESS) {
+        *T1oI2CatrLen = 0;
         LOG_E(" Failed to Open session ");
         goto exit;
     }
-    else
-    {
-       *T1oI2CatrLen = AtrRsp.len ; /*Retrive INF FIELD*/
+    else {
+        ENSURE_OR_GO_EXIT(AtrRsp.len <= UINT16_MAX)
+        *T1oI2CatrLen = (U16)AtrRsp.len; /*Retrive INF FIELD*/
     }
     return smCom_Init(&smComT1oI2C_Transceive, &smComT1oI2C_TransceiveRaw);
 exit:
     return ret;
 }
 
-static U32 smComT1oI2C_Transceive(void* conn_ctx, apdu_t * pApdu)
+static U32 smComT1oI2C_Transceive(void *conn_ctx, apdu_t *pApdu)
 {
     U32 respLen = MAX_APDU_BUF_LENGTH;
     U32 retCode = SMCOM_COM_FAILED;
 
     ENSURE_OR_GO_EXIT(pApdu != NULL);
 
-    retCode = smComT1oI2C_TransceiveRaw(conn_ctx, (U8 *)pApdu->pBuf, pApdu->buflen, pApdu->pBuf, &respLen);
+    retCode      = smComT1oI2C_TransceiveRaw(conn_ctx, (U8 *)pApdu->pBuf, pApdu->buflen, pApdu->pBuf, &respLen);
     pApdu->rxlen = (U16)respLen;
 exit:
     return retCode;
 }
 
-static U32 smComT1oI2C_TransceiveRaw(void* conn_ctx, U8 * pTx, U16 txLen, U8 * pRx, U32 * pRxLen)
+static U32 smComT1oI2C_TransceiveRaw(void *conn_ctx, U8 *pTx, U16 txLen, U8 *pRx, U32 *pRxLen)
 {
     phNxpEse_data pCmdTrans = {0};
     phNxpEse_data pRspTrans = {0};
     ESESTATUS txnStatus     = ESESTATUS_FAILED;
     U32 ret                 = SMCOM_COM_FAILED;
 
-    pCmdTrans.len = txLen;
+    pCmdTrans.len    = txLen;
     pCmdTrans.p_data = pTx;
 
     ENSURE_OR_GO_EXIT(NULL != pRxLen)
 
-    pRspTrans.len = *pRxLen;
+    pRspTrans.len    = *pRxLen;
     pRspTrans.p_data = pRx;
 
     LOG_MAU8_D("APDU Tx>", pTx, txLen);
     txnStatus = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
-    if ( txnStatus == ESESTATUS_SUCCESS )
-    {
+    if (txnStatus == ESESTATUS_SUCCESS) {
         *pRxLen = pRspTrans.len;
         LOG_MAU8_D("APDU Rx<", pRx, pRspTrans.len);
     }
-    else
-    {
+    else {
         *pRxLen = 0;
         LOG_E(" Transcive Failed ");
         return SMCOM_SND_FAILED;
@@ -190,13 +182,12 @@ exit:
     return ret;
 }
 
-U16 smComT1oI2C_ComReset(void* conn_ctx)
+U16 smComT1oI2C_ComReset(void *conn_ctx)
 {
     ESESTATUS status = ESESTATUS_SUCCESS;
     U16 ret          = SMCOM_COM_FAILED;
-    status = phNxpEse_deInit(conn_ctx);
-    if(status !=ESESTATUS_SUCCESS)
-    {
+    status           = phNxpEse_deInit(conn_ctx);
+    if (status != ESESTATUS_SUCCESS) {
         LOG_E("Failed to Reset 7816 protocol instance ");
         goto exit;
     }

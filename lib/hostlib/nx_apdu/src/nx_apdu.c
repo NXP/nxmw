@@ -19,6 +19,11 @@
 
 #define NEWLINE() printf("\r\n")
 
+/* GLOBAL BUFFERS */
+uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD_HEADER];
+uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD];
+uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP];
+
 static smStatus_t ecc_existing_key_commMode(
     pSeSession_t session_ctx, uint8_t keyId, bool *found, nx_ev2_comm_mode_t *commMode);
 
@@ -609,7 +614,7 @@ static smStatus_t secure_messaging_get_commMode(
             retStatus = nx_GetConfig_CertMgmt(
                 session_ctx, &leafCacheSize, &intermCacheSize, &featureSelection, &acManageCertRepo);
             if (retStatus != SM_OK) {
-                LOG_E("nx_GetConfig_EccKeyMgmt failed");
+                LOG_E("nx_GetConfig_CertMgmt failed");
                 goto cleanup;
             }
 
@@ -794,16 +799,13 @@ void nx_sesson_unbind(SeSession_t *pSession)
 
 smStatus_t nx_FreeMem(pSeSession_t session_ctx, uint32_t *freeMemSize)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_FREE_MEM, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t freeMemBuf[3]                     = {0};
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_FREE_MEM, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t freeMemBuf[3]   = {0};
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "FreeMem []");
@@ -811,6 +813,11 @@ smStatus_t nx_FreeMem(pSeSession_t session_ctx, uint32_t *freeMemSize)
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != freeMemSize)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     LOG_I("session_ctx->authType %x", session_ctx->authType);
     retStatus = DoAPDUTxRx_s_Case4_ext(
@@ -834,23 +841,24 @@ cleanup:
 
 smStatus_t nx_GetVersion(pSeSession_t session_ctx, bool getFabID, Nx_VersionParams_t *pVersionInfo)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_VERSION, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_NA;
-    void *options                             = NULL;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_GET_VERSION, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_NA;
+    void *options               = NULL;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != pVersionInfo)
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
     if (((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
             (session_ctx->authType == knx_AuthType_SIGMA_I_Prover)) &&
         (session_ctx->ctx.pdynSigICtx != NULL)) {
@@ -881,7 +889,8 @@ smStatus_t nx_GetVersion(pSeSession_t session_ctx, bool getFabID, Nx_VersionPara
 #endif /* VERBOSE_APDU_LOGS */
 
     if (true == getFabID) {
-        tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetVersionOption_ReturnFabId);
+        tlvRet = SET_U8(
+            "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetVersionOption_ReturnFabId, NX_MAX_BUF_SIZE_CMD_HEADER);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -993,22 +1002,23 @@ cleanup:
 
 smStatus_t nx_Activate_Config(pSeSession_t session_ctx, nx_activate_config_t *configList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_ACTIVATE_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    int tlvRet                                = 1;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    uint8_t confCount                         = 0;
+    smStatus_t retStatus   = SM_NOT_OK;
+    tlvHeader_t hdr        = {{NX_CLA, NX_INS_ACTIVATE_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen = 0;
+    uint8_t *pCmdHeaderBuf = &cmdHeaderBuf[0];
+    int tlvRet             = 1;
+    size_t rspbufLen       = sizeof(rspbuf);
+    uint8_t *pRspbuf       = &rspbuf[0];
+    uint8_t confCount      = 0;
     uint8_t confList[NX_ACTIVATE_CONF_ELEMENT_SIZE * NX_ACTIVATE_CONF_COUNT_MAX] = {0};
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ActivateConfiguration []");
 #endif /* VERBOSE_APDU_LOGS */
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
     if ((session_ctx == NULL) || (configList == NULL)) {
         goto cleanup;
     }
@@ -1038,11 +1048,15 @@ smStatus_t nx_Activate_Config(pSeSession_t session_ctx, nx_activate_config_t *co
         goto cleanup;
     }
 
-    tlvRet = SET_U8("ConfCount", &pCmdHeaderBuf, &cmdHeaderBufLen, confCount);
+    tlvRet = SET_U8("ConfCount", &pCmdHeaderBuf, &cmdHeaderBufLen, confCount, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet =
-        SET_u8buf("ConfList", &pCmdHeaderBuf, &cmdHeaderBufLen, confList, NX_ACTIVATE_CONF_ELEMENT_SIZE * confCount);
+    tlvRet = SET_u8buf("ConfList",
+        &pCmdHeaderBuf,
+        &cmdHeaderBufLen,
+        confList,
+        NX_ACTIVATE_CONF_ELEMENT_SIZE * confCount,
+        NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdHeaderBufLen, NULL, 0, rspbuf, &rspbufLen, NULL);
@@ -1067,16 +1081,13 @@ cleanup:
 
 smStatus_t nx_GetCardUID(pSeSession_t session_ctx, uint8_t *pGetCardUID, size_t *getCardUIDLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CARDUID, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CARDUID, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
     uint8_t uidFormat = 0, uidLength = 0;
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -1085,6 +1096,10 @@ smStatus_t nx_GetCardUID(pSeSession_t session_ctx, uint8_t *pGetCardUID, size_t 
 
 #endif /* VERBOSE_APDU_LOGS */
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != pGetCardUID)
     ENSURE_OR_GO_CLEANUP(NULL != getCardUIDLen)
@@ -1148,26 +1163,27 @@ smStatus_t nx_ManageKeyPair(pSeSession_t session_ctx,
     size_t *pubKeyLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_MGMT_KEY_PAIR, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t writeAccess                       = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_MGMT_KEY_PAIR, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    uint8_t writeAccess         = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         LOG_E("nx_ManageKeyPair Invalid Parameters!!!");
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_KEY_PAIR, &commMode, &objectID);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
 
@@ -1183,27 +1199,28 @@ smStatus_t nx_ManageKeyPair(pSeSession_t session_ctx,
     }
     writeAccess = ((writeCommMode << NX_COMM_MODE_BIT_SHIFT) | writeAccessCond);
 
-    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID);
+    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, option);
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, option, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("curveID", &pCmdHeaderBuf, &cmdHeaderBufLen, curveID);
+    tlvRet = SET_U8("curveID", &pCmdHeaderBuf, &cmdHeaderBufLen, curveID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("KeyPolicy(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, policy);
+    tlvRet = SET_U16_LSB("KeyPolicy(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, policy, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("writeAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, writeAccess);
+    tlvRet = SET_U8("writeAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, writeAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("KUCLimit(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, kucLimit);
+    tlvRet = SET_U32_LSB("KUCLimit(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, kucLimit, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (option == Nx_MgtKeyPair_Act_Import_SK) {
         if (privateKey != NULL) {
-            tlvRet = SET_u8buf("Private key", &pCmdDataBuf, &cmdDataBufBufLen, privateKey, privateKeyLen);
+            tlvRet = SET_u8buf(
+                "Private key", &pCmdDataBuf, &cmdDataBufBufLen, privateKey, privateKeyLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
         else {
@@ -1261,26 +1278,28 @@ smStatus_t nx_ManageCARootKey(pSeSession_t session_ctx,
     uint8_t caIssuerNameLen,
     Nx_CommMode_t userCommMode)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_MGMT_CA_ROOT_KEY, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t writeAccess                       = 0;
-    uint8_t readAccessCond                    = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_MGMT_CA_ROOT_KEY, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    uint8_t writeAccess         = 0;
+    uint8_t readAccessCond      = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (pubKey == NULL)) {
         LOG_E("nx_ManageCARootKey Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, userCommMode, NX_INS_MGMT_CA_ROOT_KEY, &commMode, &objectID);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -1299,28 +1318,28 @@ smStatus_t nx_ManageCARootKey(pSeSession_t session_ctx,
     writeAccess    = ((writeCommMode << NX_COMM_MODE_BIT_SHIFT) | writeAccessCond);
     readAccessCond = ((Nx_CommMode_FULL << NX_COMM_MODE_BIT_SHIFT) | Nx_AccessCondition_No_Access);
 
-    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID);
+    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("curveID", &pCmdHeaderBuf, &cmdHeaderBufLen, curveID);
+    tlvRet = SET_U8("curveID", &pCmdHeaderBuf, &cmdHeaderBufLen, curveID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("accessRight(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, acBitmap);
+    tlvRet = SET_U16_LSB("accessRight(LSB)", &pCmdHeaderBuf, &cmdHeaderBufLen, acBitmap, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("writeAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, writeAccess);
+    tlvRet = SET_U8("writeAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, writeAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("readAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, readAccessCond);
+    tlvRet = SET_U8("readAccessCond", &pCmdHeaderBuf, &cmdHeaderBufLen, readAccessCond, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Reserved", &pCmdHeaderBuf, &cmdHeaderBufLen, 0x00);
+    tlvRet = SET_U8("Reserved", &pCmdHeaderBuf, &cmdHeaderBufLen, 0x00, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf("Public key", &pCmdDataBuf, &cmdDataBufBufLen, pubKey, pubKeyLen);
+    tlvRet = SET_u8buf("Public key", &pCmdDataBuf, &cmdDataBufBufLen, pubKey, pubKeyLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("CA Subject Name Len", &pCmdDataBuf, &cmdDataBufBufLen, caIssuerNameLen);
+    tlvRet = SET_U8("CA Subject Name Len", &pCmdDataBuf, &cmdDataBufBufLen, caIssuerNameLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (caIssuerNameLen != 0) {
@@ -1328,7 +1347,8 @@ smStatus_t nx_ManageCARootKey(pSeSession_t session_ctx,
             LOG_E("nx_ManageCARootKey Invalid CA Issuer Name!!!");
             goto cleanup;
         }
-        tlvRet = SET_u8buf("CA Issuer Name", &pCmdDataBuf, &cmdDataBufBufLen, caIssuerName, caIssuerNameLen);
+        tlvRet = SET_u8buf(
+            "CA Issuer Name", &pCmdDataBuf, &cmdDataBufBufLen, caIssuerName, caIssuerNameLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -1341,18 +1361,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_EccKeyMgmt(pSeSession_t session_ctx, uint8_t acManageKeyPair, uint8_t acManageCARootKey)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -1363,15 +1380,21 @@ smStatus_t nx_SetConfig_EccKeyMgmt(pSeSession_t session_ctx, uint8_t acManageKey
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ECC_Key_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ECC_Key_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     acManageKeyPair = acManageKeyPair & NX_CONF_COMM_MODE_AND_AC_MASK;
-    tlvRet          = SET_U8("ManageKeyPair AC", &pCmdDataBuf, &cmdDataBufBufLen, acManageKeyPair);
+    tlvRet          = SET_U8("ManageKeyPair AC", &pCmdDataBuf, &cmdDataBufBufLen, acManageKeyPair, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     acManageCARootKey = acManageCARootKey & NX_CONF_COMM_MODE_AND_AC_MASK;
-    tlvRet            = SET_U8("ManageCARootKey AC", &pCmdDataBuf, &cmdDataBufBufLen, acManageCARootKey);
+    tlvRet = SET_U8("ManageCARootKey AC", &pCmdDataBuf, &cmdDataBufBufLen, acManageCARootKey, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1397,18 +1420,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_PICCConfig(pSeSession_t session_ctx, uint8_t PICCConfig)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [PICC Configurations]");
@@ -1418,11 +1438,17 @@ smStatus_t nx_SetConfig_PICCConfig(pSeSession_t session_ctx, uint8_t PICCConfig)
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_PICC_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_PICC_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     PICCConfig = PICCConfig & NX_CONF_PICC_USERID_MASK;
-    tlvRet     = SET_U8("PICC Configurations", &pCmdDataBuf, &cmdDataBufBufLen, PICCConfig);
+    tlvRet     = SET_U8("PICC Configurations", &pCmdDataBuf, &cmdDataBufBufLen, PICCConfig, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1448,18 +1474,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_ATSUpdate(pSeSession_t session_ctx, uint8_t *userATS, size_t userATSLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [ATS Update]");
@@ -1469,10 +1492,15 @@ smStatus_t nx_SetConfig_ATSUpdate(pSeSession_t session_ctx, uint8_t *userATS, si
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATS_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATS_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf("UserATS", &pCmdDataBuf, &cmdDataBufBufLen, userATS, userATSLen);
+    tlvRet = SET_u8buf("UserATS", &pCmdDataBuf, &cmdDataBufBufLen, userATS, userATSLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1494,18 +1522,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_SAKUpdate(pSeSession_t session_ctx, uint8_t sak1, uint8_t sak2)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [SAK Update]");
@@ -1515,10 +1540,15 @@ smStatus_t nx_SetConfig_SAKUpdate(pSeSession_t session_ctx, uint8_t sak1, uint8_
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_SAK_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_SAK_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("UserSAK(LSB)", &pCmdDataBuf, &cmdDataBufBufLen, (sak2 << 8) | sak1);
+    tlvRet = SET_U16_LSB("UserSAK(LSB)", &pCmdDataBuf, &cmdDataBufBufLen, (sak2 << 8) | sak1, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1544,18 +1574,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_SMConfig(pSeSession_t session_ctx, uint8_t SMConfigA, uint8_t SMConfigB)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Secure Messaging Configuration]");
@@ -1565,13 +1592,19 @@ smStatus_t nx_SetConfig_SMConfig(pSeSession_t session_ctx, uint8_t SMConfigA, ui
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Secure_Msg_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Secure_Msg_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     SMConfigB = SMConfigB & NX_CONF_SMCONFIG_BYTE_B_MASK;
-    tlvRet    = SET_U8("SMConfigB", &pCmdDataBuf, &cmdDataBufBufLen, SMConfigB);
+    tlvRet    = SET_U8("SMConfigB", &pCmdDataBuf, &cmdDataBufBufLen, SMConfigB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     SMConfigA = SMConfigA & NX_CONF_SMCONFIG_BYTE_A_RFU_MASK;
-    tlvRet    = SET_U8("SMConfigA", &pCmdDataBuf, &cmdDataBufBufLen, SMConfigA);
+    tlvRet    = SET_U8("SMConfigA", &pCmdDataBuf, &cmdDataBufBufLen, SMConfigA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1597,18 +1630,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_CapData(pSeSession_t session_ctx, uint8_t *CapDataBuf, uint8_t CapDataBufLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Capability Data]");
@@ -1618,12 +1648,19 @@ smStatus_t nx_SetConfig_CapData(pSeSession_t session_ctx, uint8_t *CapDataBuf, u
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Capability_Data);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Capability_Data, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (CapDataBufLen == NX_CONF_CAPABILITY_DATA_LEN) {
         memset(CapDataBuf, 0x00, NX_CONF_CAPABILITY_RFU_DATA_LEN);
-        tlvRet = SET_u8buf("Capability Data", &pCmdDataBuf, &cmdDataBufBufLen, CapDataBuf, CapDataBufLen);
+        tlvRet = SET_u8buf(
+            "Capability Data", &pCmdDataBuf, &cmdDataBufBufLen, CapDataBuf, CapDataBufLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
@@ -1653,18 +1690,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_ATQAUpdate(pSeSession_t session_ctx, uint16_t userATQA)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [ATQA Update]");
@@ -1674,10 +1708,16 @@ smStatus_t nx_SetConfig_ATQAUpdate(pSeSession_t session_ctx, uint16_t userATQA)
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATQA_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATQA_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("UserATQA(LSB)", &pCmdDataBuf, &cmdDataBufBufLen, userATQA);
+    tlvRet = SET_U16_LSB("UserATQA(LSB)", &pCmdDataBuf, &cmdDataBufBufLen, userATQA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1703,18 +1743,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_SilentModeConfig(pSeSession_t session_ctx, uint8_t silentMode, uint8_t REQS, uint8_t WUPS)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Silent Mode Configuration]");
@@ -1724,18 +1761,24 @@ smStatus_t nx_SetConfig_SilentModeConfig(pSeSession_t session_ctx, uint8_t silen
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Silent_Mode_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Silent_Mode_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     silentMode = silentMode & NX_CONF_SILENTMODE_SILENT_OPTIONS_MASK;
-    tlvRet     = SET_U8("SilentMode", &pCmdDataBuf, &cmdDataBufBufLen, silentMode);
+    tlvRet     = SET_U8("SilentMode", &pCmdDataBuf, &cmdDataBufBufLen, silentMode, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (silentMode & NX_CONF_SILENTMODE_CUSTOMIZED_REQS_WUPS_ENABLE) {
-        tlvRet = SET_U8("REQS", &pCmdDataBuf, &cmdDataBufBufLen, REQS);
+        tlvRet = SET_U8("REQS", &pCmdDataBuf, &cmdDataBufBufLen, REQS, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("WUPS", &pCmdDataBuf, &cmdDataBufBufLen, WUPS);
+        tlvRet = SET_U8("WUPS", &pCmdDataBuf, &cmdDataBufBufLen, WUPS, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -1762,18 +1805,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_EnhancedPrivacyConfig(pSeSession_t session_ctx, uint8_t privacyOption, uint8_t appPrivacyKey)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Enhanced Privacy Configuration]");
@@ -1783,14 +1823,23 @@ smStatus_t nx_SetConfig_EnhancedPrivacyConfig(pSeSession_t session_ctx, uint8_t 
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Enhanced_Privacy_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option",
+        &pCmdHeaderBuf,
+        &cmdHeaderBufLen,
+        Nx_ConfigOption_Enhanced_Privacy_Config,
+        NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     privacyOption = privacyOption & NX_CONF_PRIVACY_FEATURES_MASK;
-    tlvRet        = SET_U8("PrivacyOption", &pCmdDataBuf, &cmdDataBufBufLen, privacyOption);
+    tlvRet        = SET_U8("PrivacyOption", &pCmdDataBuf, &cmdDataBufBufLen, privacyOption, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("AppPrivacyKey", &pCmdDataBuf, &cmdDataBufBufLen, appPrivacyKey);
+    tlvRet = SET_U8("AppPrivacyKey", &pCmdDataBuf, &cmdDataBufBufLen, appPrivacyKey, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1816,18 +1865,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_NFCMgmt(pSeSession_t session_ctx, uint8_t nfcSupport, uint16_t protocolOptions)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [NFC Management]");
@@ -1837,14 +1883,19 @@ smStatus_t nx_SetConfig_NFCMgmt(pSeSession_t session_ctx, uint8_t nfcSupport, ui
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_NFC_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_NFC_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     nfcSupport = nfcSupport & NX_CONF_NFC_SUPPORT_MASK;
-    tlvRet     = SET_U8("NFCSupport", &pCmdDataBuf, &cmdDataBufBufLen, nfcSupport);
+    tlvRet     = SET_U8("NFCSupport", &pCmdDataBuf, &cmdDataBufBufLen, nfcSupport, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("ProtocolOptions", &pCmdDataBuf, &cmdDataBufBufLen, protocolOptions);
+    tlvRet = SET_U16_LSB("ProtocolOptions", &pCmdDataBuf, &cmdDataBufBufLen, protocolOptions, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1870,18 +1921,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_I2CMgmt(pSeSession_t session_ctx, uint8_t i2cSupport, uint8_t i2cAddr, uint16_t protocolOptions)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [I2C Management]");
@@ -1891,17 +1939,22 @@ smStatus_t nx_SetConfig_I2CMgmt(pSeSession_t session_ctx, uint8_t i2cSupport, ui
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_I2C_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_I2C_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     i2cSupport = i2cSupport & NX_CONF_I2C_SUPPORT_MASK;
-    tlvRet     = SET_U8("I2CSupport", &pCmdDataBuf, &cmdDataBufBufLen, i2cSupport);
+    tlvRet     = SET_U8("I2CSupport", &pCmdDataBuf, &cmdDataBufBufLen, i2cSupport, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("I2CAddress", &pCmdDataBuf, &cmdDataBufBufLen, i2cAddr);
+    tlvRet = SET_U8("I2CAddress", &pCmdDataBuf, &cmdDataBufBufLen, i2cAddr, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("ProtocolOptions", &pCmdDataBuf, &cmdDataBufBufLen, protocolOptions);
+    tlvRet = SET_U16_LSB("ProtocolOptions", &pCmdDataBuf, &cmdDataBufBufLen, protocolOptions, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -1924,19 +1977,16 @@ cleanup:
 
 smStatus_t nx_SetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t gpioConfig)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t gpio1Config                       = 0; // Determined based on gpio1mode
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t gpio1Config     = 0; // Determined based on gpio1mode
     uint8_t gpio1PadCtrlA =
         (gpioConfig.gpio1DebounceFilterValue & NX_CONF_GPIO_DEBOUNCE_FILTER_VALUE_PADCTRL_A_MASK) >> 8;
     uint8_t gpio1PadCtrlB = gpioConfig.gpio1DebounceFilterValue & NX_CONF_GPIO_DEBOUNCE_FILTER_VALUE_PADCTRL_B_MASK;
@@ -1970,10 +2020,15 @@ smStatus_t nx_SetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t gpio
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_GPIO_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_GPIO_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("GPIO1Mode", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1Mode);
+    tlvRet = SET_U8("GPIO1Mode", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1Mode, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_Output) {
@@ -1986,13 +2041,13 @@ smStatus_t nx_SetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t gpio
     else {
         gpio1Config = 0;
     }
-    tlvRet = SET_U8("GPIO1Config", &pCmdDataBuf, &cmdDataBufBufLen, gpio1Config);
+    tlvRet = SET_U8("GPIO1Config", &pCmdDataBuf, &cmdDataBufBufLen, gpio1Config, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("GPIO1PadCtrl", &pCmdDataBuf, &cmdDataBufBufLen, gpio1PadCtrl);
+    tlvRet = SET_U32_LSB("GPIO1PadCtrl", &pCmdDataBuf, &cmdDataBufBufLen, gpio1PadCtrl, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("GPIO2Mode", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2Mode);
+    tlvRet = SET_U8("GPIO2Mode", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2Mode, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_Output) {
@@ -2005,47 +2060,61 @@ smStatus_t nx_SetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t gpio
     else {
         gpio2Config = 0;
     }
-    tlvRet = SET_U8("GPIO2Config", &pCmdDataBuf, &cmdDataBufBufLen, gpio2Config);
+    tlvRet = SET_U8("GPIO2Config", &pCmdDataBuf, &cmdDataBufBufLen, gpio2Config, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("GPIO2PadCtrl", &pCmdDataBuf, &cmdDataBufBufLen, gpio2PadCtrl);
+    tlvRet = SET_U32_LSB("GPIO2PadCtrl", &pCmdDataBuf, &cmdDataBufBufLen, gpio2PadCtrl, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("GPIO1Notif", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1OutputNotif);
+    tlvRet = SET_U8("GPIO1Notif", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1OutputNotif, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("GPIO2Notif", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2OutputNotif);
+    tlvRet = SET_U8("GPIO2Notif", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2OutputNotif, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     mgmtGPIOAC = mgmtGPIOAC & NX_CONF_COMM_MODE_AND_AC_MASK;
-    tlvRet     = SET_U8("ManageGPIOAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, mgmtGPIOAC);
+    tlvRet     = SET_U8("ManageGPIOAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, mgmtGPIOAC, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     readGPIOAC = readGPIOAC & NX_CONF_COMM_MODE_AND_AC_MASK;
-    tlvRet     = SET_U8("ReadGPIOAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, readGPIOAC);
+    tlvRet     = SET_U8("ReadGPIOAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, readGPIOAC, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("DefaultTarget", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutDefaultTarget);
+    tlvRet = SET_U8(
+        "DefaultTarget", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutDefaultTarget, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("InRushTarget", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutInRushTarget);
+    tlvRet = SET_U8(
+        "InRushTarget", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutInRushTarget, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("InRushDuration", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutInRushDuration);
+    tlvRet = SET_U16_LSB(
+        "InRushDuration", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutInRushDuration, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("AdditionalCurrent", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio1PowerOutAdditionalCurrent);
+    tlvRet = SET_U8("AdditionalCurrent",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        gpioConfig.gpio1PowerOutAdditionalCurrent,
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("NFCPauseFileNo", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2OutputNFCPauseFileNo);
+    tlvRet = SET_U8(
+        "NFCPauseFileNo", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2OutputNFCPauseFileNo, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet =
-        SET_U24_LSB("NFCPauseOffset", &pCmdDataBuf, &cmdDataBufBufLen, (size_t)gpioConfig.gpio2OutputNFCPauseOffset);
+    tlvRet = SET_U24_LSB("NFCPauseOffset",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        (size_t)gpioConfig.gpio2OutputNFCPauseOffset,
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet =
-        SET_U24_LSB("NFCPauseLength", &pCmdDataBuf, &cmdDataBufBufLen, (size_t)gpioConfig.gpio2OutputNFCPauseLength);
+    tlvRet = SET_U24_LSB("NFCPauseLength",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        (size_t)gpioConfig.gpio2OutputNFCPauseLength,
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2072,18 +2141,15 @@ smStatus_t nx_SetConfig_CertMgmt(pSeSession_t session_ctx,
     uint8_t featureSelection,
     uint8_t acManageCertRepo)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -2093,6 +2159,11 @@ smStatus_t nx_SetConfig_CertMgmt(pSeSession_t session_ctx,
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((leafCacheSize < NX_CONF_CERT_LEAF_CACHE_SIZE_MIN) || (leafCacheSize > NX_CONF_CERT_LEAF_CACHE_SIZE_MAX)) {
         goto cleanup;
@@ -2107,20 +2178,21 @@ smStatus_t nx_SetConfig_CertMgmt(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Cert_Mgmt);
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Cert_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("LeafCacheSize", &pCmdDataBuf, &cmdDataBufBufLen, leafCacheSize);
+    tlvRet = SET_U8("LeafCacheSize", &pCmdDataBuf, &cmdDataBufBufLen, leafCacheSize, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("IntermCacheSize", &pCmdDataBuf, &cmdDataBufBufLen, intermCacheSize);
+    tlvRet = SET_U8("IntermCacheSize", &pCmdDataBuf, &cmdDataBufBufLen, intermCacheSize, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     featureSelection = featureSelection & NX_CONF_CERT_FEATURE_SELECTION_MASK;
-    tlvRet           = SET_U8("FeatureSelection", &pCmdDataBuf, &cmdDataBufBufLen, featureSelection);
+    tlvRet = SET_U8("FeatureSelection", &pCmdDataBuf, &cmdDataBufBufLen, featureSelection, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     acManageCertRepo = acManageCertRepo & NX_CONF_COMM_MODE_AND_AC_MASK;
-    tlvRet           = SET_U8("ManageCertRepoAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acManageCertRepo);
+    tlvRet =
+        SET_U8("ManageCertRepoAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acManageCertRepo, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2147,18 +2219,15 @@ cleanup:
 smStatus_t nx_SetConfig_WatchdogTimerMgmt(
     pSeSession_t session_ctx, uint8_t HWDTValue, uint8_t AWDT1Value, uint8_t AWDT2Value)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Watchdog Timer Management]");
@@ -2168,16 +2237,22 @@ smStatus_t nx_SetConfig_WatchdogTimerMgmt(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Watchdog_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Watchdog_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("HWDTValue", &pCmdDataBuf, &cmdDataBufBufLen, HWDTValue);
+    tlvRet = SET_U8("HWDTValue", &pCmdDataBuf, &cmdDataBufBufLen, HWDTValue, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("AWDT1Value", &pCmdDataBuf, &cmdDataBufBufLen, AWDT1Value);
+    tlvRet = SET_U8("AWDT1Value", &pCmdDataBuf, &cmdDataBufBufLen, AWDT1Value, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("AWDT2Value", &pCmdDataBuf, &cmdDataBufBufLen, AWDT2Value);
+    tlvRet = SET_U8("AWDT2Value", &pCmdDataBuf, &cmdDataBufBufLen, AWDT2Value, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2210,19 +2285,16 @@ smStatus_t nx_SetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
     uint8_t SBPolicyCount,
     Nx_slot_buffer_policy_t *SBPolicy)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    uint8_t commMode                          = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
+    uint8_t commMode        = 0;
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Crypto API Management]");
@@ -2232,6 +2304,11 @@ smStatus_t nx_SetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if ((TBPolicyCount > NX_TB_POLICY_MAX_COUNT) || (SBPolicyCount > NX_SB_POLICY_MAX_COUNT)) {
         goto cleanup;
     }
@@ -2239,35 +2316,44 @@ smStatus_t nx_SetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Crypto_API_Mgmt);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Crypto_API_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     cryptoAPISupport = cryptoAPISupport & NX_CONF_CRYPTOAPI_SUPPORT_MASK;
-    tlvRet           = SET_U8("Support", &pCmdDataBuf, &cmdDataBufBufLen, cryptoAPISupport);
+    tlvRet           = SET_U8("Support", &pCmdDataBuf, &cmdDataBufBufLen, cryptoAPISupport, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     acCryptoRequest = acCryptoRequest & NX_CONF_COMM_MODE_AND_AC_MASK;
 
-    tlvRet = SET_U8("AccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acCryptoRequest);
+    tlvRet = SET_U8("AccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acCryptoRequest, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     acChangeKey = acChangeKey & NX_CONF_AC_MASK;
 
-    tlvRet = SET_U8("changeAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acChangeKey);
+    tlvRet = SET_U8("changeAccessCondition", &pCmdDataBuf, &cmdDataBufBufLen, acChangeKey, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("TBPolicyCount", &pCmdDataBuf, &cmdDataBufBufLen, TBPolicyCount);
+    tlvRet = SET_U8("TBPolicyCount", &pCmdDataBuf, &cmdDataBufBufLen, TBPolicyCount, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf(
-        "TBPolicy", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t *)TBPolicy, (TBPolicyCount * NX_POLICY_BUF_SIZE));
+    tlvRet = SET_u8buf("TBPolicy",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        (uint8_t *)TBPolicy,
+        (TBPolicyCount * NX_POLICY_BUF_SIZE),
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("SBPolicyCount", &pCmdDataBuf, &cmdDataBufBufLen, SBPolicyCount);
+    tlvRet = SET_U8("SBPolicyCount", &pCmdDataBuf, &cmdDataBufBufLen, SBPolicyCount, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf(
-        "SBPolicy", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t *)SBPolicy, (SBPolicyCount * NX_POLICY_BUF_SIZE));
+    tlvRet = SET_u8buf("SBPolicy",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        (uint8_t *)SBPolicy,
+        (SBPolicyCount * NX_POLICY_BUF_SIZE),
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2303,18 +2389,15 @@ cleanup:
 smStatus_t nx_SetConfig_AuthCounterLimit(
     pSeSession_t session_ctx, uint8_t authCtrFileID, uint8_t authCtrOption, uint32_t authCtrLimit)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -2325,18 +2408,24 @@ smStatus_t nx_SetConfig_AuthCounterLimit(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Auth_Counter_Limit);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Auth_Counter_Limit, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("AuthCtrFileID", &pCmdDataBuf, &cmdDataBufBufLen, authCtrFileID);
+    tlvRet = SET_U8("AuthCtrFileID", &pCmdDataBuf, &cmdDataBufBufLen, authCtrFileID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     authCtrOption = authCtrOption & NX_CONF_AUTH_COUNTER_AES_AUTH_ENABLED_MASK;
 
-    tlvRet = SET_U8("AuthCtrOption", &pCmdDataBuf, &cmdDataBufBufLen, authCtrOption);
+    tlvRet = SET_U8("AuthCtrOption", &pCmdDataBuf, &cmdDataBufBufLen, authCtrOption, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("AuthCtrLimit", &pCmdDataBuf, &cmdDataBufBufLen, authCtrLimit);
+    tlvRet = SET_U32_LSB("AuthCtrLimit", &pCmdDataBuf, &cmdDataBufBufLen, authCtrLimit, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2363,20 +2452,17 @@ cleanup:
 smStatus_t nx_SetConfig_HaltWakeupConfig(
     pSeSession_t session_ctx, uint8_t wakeupOptionA, uint8_t wakeupOptionB, uint8_t RDACSetting, uint8_t HALTOption)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t i2cWakeupAddress                  = 0x00;
-    uint8_t i2cWakeupCycle                    = 0x00;
+    smStatus_t retStatus     = SM_NOT_OK;
+    tlvHeader_t hdr          = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen   = 0;
+    size_t cmdDataBufBufLen  = 0;
+    size_t rspbufLen         = sizeof(rspbuf);
+    uint8_t *pRspbuf         = &rspbuf[0];
+    int tlvRet               = 1;
+    uint8_t *pCmdHeaderBuf   = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf     = &cmdDataBuf[0];
+    uint8_t i2cWakeupAddress = 0x00;
+    uint8_t i2cWakeupCycle   = 0x00;
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [HALT and Wake-up Configuration]");
@@ -2385,6 +2471,11 @@ smStatus_t nx_SetConfig_HaltWakeupConfig(
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     // Check max i2c address and cycle value.
     i2cWakeupAddress = ((wakeupOptionB & NX_CONF_HALT_WAKEUPB_I2C_WAKEUP_ADDRESS_MASK) >>
@@ -2402,20 +2493,21 @@ smStatus_t nx_SetConfig_HaltWakeupConfig(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Halt_Wakeup_Config);
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Halt_Wakeup_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("WakeUpA", &pCmdDataBuf, &cmdDataBufBufLen, wakeupOptionA);
+    tlvRet = SET_U8("WakeUpA", &pCmdDataBuf, &cmdDataBufBufLen, wakeupOptionA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("WakeUpB", &pCmdDataBuf, &cmdDataBufBufLen, wakeupOptionB);
+    tlvRet = SET_U8("WakeUpB", &pCmdDataBuf, &cmdDataBufBufLen, wakeupOptionB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("RDASetting", &pCmdDataBuf, &cmdDataBufBufLen, RDACSetting);
+    tlvRet = SET_U8("RDASetting", &pCmdDataBuf, &cmdDataBufBufLen, RDACSetting, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     HALTOption = HALTOption & NX_CONF_HALT_OPTION_GPIO_RESET_MASK;
-    tlvRet     = SET_U8("HALTOption", &pCmdDataBuf, &cmdDataBufBufLen, HALTOption);
+    tlvRet     = SET_U8("HALTOption", &pCmdDataBuf, &cmdDataBufBufLen, HALTOption, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2441,18 +2533,15 @@ cleanup:
 
 smStatus_t nx_SetConfig_DeferConfig(pSeSession_t session_ctx, uint8_t deferralCount, uint8_t *deferralList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -2463,18 +2552,28 @@ smStatus_t nx_SetConfig_DeferConfig(pSeSession_t session_ctx, uint8_t deferralCo
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if ((deferralCount == 0) || (deferralCount > NX_CONF_DEFERRAL_COUNT_MAX)) {
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Defer_Config);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Defer_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("DeferralCount", &pCmdDataBuf, &cmdDataBufBufLen, deferralCount);
+    tlvRet = SET_U8("DeferralCount", &pCmdDataBuf, &cmdDataBufBufLen, deferralCount, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf(
-        "Defer Configurations", &pCmdDataBuf, &cmdDataBufBufLen, deferralList, NX_CONF_DEFERRAL_SIZE * deferralCount);
+    tlvRet = SET_u8buf("Defer Configurations",
+        &pCmdDataBuf,
+        &cmdDataBufBufLen,
+        deferralList,
+        NX_CONF_DEFERRAL_SIZE * deferralCount,
+        NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2500,20 +2599,17 @@ cleanup:
 
 smStatus_t nx_SetConfig_LockConfig(pSeSession_t session_ctx, uint32_t lockBitMap)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    uint8_t lockBitMapBuf[3]                  = {0};
-    uint8_t lockBitMapBufLen                  = sizeof(lockBitMapBuf);
+    smStatus_t retStatus     = SM_NOT_OK;
+    tlvHeader_t hdr          = {{NX_CLA, NX_INS_SET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen   = 0;
+    size_t cmdDataBufBufLen  = 0;
+    int tlvRet               = 1;
+    uint8_t *pCmdHeaderBuf   = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf     = &cmdDataBuf[0];
+    size_t rspbufLen         = sizeof(rspbuf);
+    uint8_t *pRspbuf         = &rspbuf[0];
+    uint8_t lockBitMapBuf[3] = {0};
+    uint8_t lockBitMapBufLen = sizeof(lockBitMapBuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "SetConfiguration [Lock Configurations]");
@@ -2523,18 +2619,25 @@ smStatus_t nx_SetConfig_LockConfig(pSeSession_t session_ctx, uint32_t lockBitMap
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if (lockBitMap >
         ((1 << NX_NUM_CARD_CONFIGURATIONS) - 1)) { /* At max, NX_NUM_CARD_CONFIGURATIONS number of bits can be set */
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Lock_Config);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Lock_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     lockBitMapBuf[0] = (lockBitMap >> (2 * 8)) & 0xFF;
     lockBitMapBuf[1] = (lockBitMap >> (1 * 8)) & 0xFF;
     lockBitMapBuf[2] = (lockBitMap >> (0 * 8)) & 0xFF;
-    tlvRet           = SET_u8buf("LockBitMap", &pCmdDataBuf, &cmdDataBufBufLen, lockBitMapBuf, lockBitMapBufLen);
+    tlvRet =
+        SET_u8buf("LockBitMap", &pCmdDataBuf, &cmdDataBufBufLen, lockBitMapBuf, lockBitMapBufLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2560,15 +2663,12 @@ cleanup:
 
 smStatus_t nx_GetConfig_ManufactureConfig(pSeSession_t session_ctx, uint16_t *productFeature)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [manufacturer configuration]");
@@ -2576,6 +2676,11 @@ smStatus_t nx_GetConfig_ManufactureConfig(pSeSession_t session_ctx, uint16_t *pr
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != productFeature)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = DoAPDUTxRx_s_Case4(
         session_ctx, &hdr, cmdHeaderBuf, cmdHeaderBufLen, cmdDataBuf, cmdDataBufBufLen, rspbuf, &rspbufLen, NULL);
@@ -2602,17 +2707,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_PICCConfig(pSeSession_t session_ctx, uint8_t *PICCConfig)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [PICC Configurations]");
@@ -2622,7 +2724,13 @@ smStatus_t nx_GetConfig_PICCConfig(pSeSession_t session_ctx, uint8_t *PICCConfig
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_PICC_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_PICC_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2645,17 +2753,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_ATSUpdate(pSeSession_t session_ctx, uint8_t *userATS, size_t *userATSLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [ATS Update]");
@@ -2665,7 +2770,12 @@ smStatus_t nx_GetConfig_ATSUpdate(pSeSession_t session_ctx, uint8_t *userATS, si
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATS_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATS_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2688,17 +2798,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_SAKUpdate(pSeSession_t session_ctx, uint8_t *sak1, uint8_t *sak2)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [SAK Update]");
@@ -2708,7 +2815,12 @@ smStatus_t nx_GetConfig_SAKUpdate(pSeSession_t session_ctx, uint8_t *sak1, uint8
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_SAK_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_SAK_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2740,17 +2852,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_SMConfig(pSeSession_t session_ctx, uint8_t *SMConfigA, uint8_t *SMConfigB)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Secure Messaging Configuration]");
@@ -2760,7 +2869,13 @@ smStatus_t nx_GetConfig_SMConfig(pSeSession_t session_ctx, uint8_t *SMConfigA, u
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Secure_Msg_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Secure_Msg_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2793,17 +2908,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_CapData(pSeSession_t session_ctx, uint8_t *CapDataBuf, uint8_t *CapDataBufLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Capability Data]");
@@ -2813,7 +2925,13 @@ smStatus_t nx_GetConfig_CapData(pSeSession_t session_ctx, uint8_t *CapDataBuf, u
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Capability_Data);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Capability_Data, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2851,17 +2969,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_ATQAUpdate(pSeSession_t session_ctx, uint16_t *userATQA)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [ATQA Update]");
@@ -2871,7 +2986,13 @@ smStatus_t nx_GetConfig_ATQAUpdate(pSeSession_t session_ctx, uint16_t *userATQA)
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATQA_Update);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ATQA_Update, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2901,17 +3022,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_SilentModeConfig(pSeSession_t session_ctx, uint8_t *silentMode, uint8_t *REQS, uint8_t *WUPS)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Silent Mode Configuration]");
@@ -2921,7 +3039,13 @@ smStatus_t nx_GetConfig_SilentModeConfig(pSeSession_t session_ctx, uint8_t *sile
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Silent_Mode_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Silent_Mode_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -2967,17 +3091,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_EnhancedPrivacyConfig(pSeSession_t session_ctx, uint8_t *privacyOption, uint8_t *appPrivacyKey)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Enhanced Privacy Configuration]");
@@ -2987,7 +3108,16 @@ smStatus_t nx_GetConfig_EnhancedPrivacyConfig(pSeSession_t session_ctx, uint8_t 
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Enhanced_Privacy_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option",
+        &pCmdHeaderBuf,
+        &cmdHeaderBufLen,
+        Nx_ConfigOption_Enhanced_Privacy_Config,
+        NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3021,17 +3151,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_NFCMgmt(pSeSession_t session_ctx, uint8_t *nfcSupport, uint16_t *protocolOptions)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [NFC Management]");
@@ -3041,7 +3168,12 @@ smStatus_t nx_GetConfig_NFCMgmt(pSeSession_t session_ctx, uint8_t *nfcSupport, u
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_NFC_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_NFC_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3076,17 +3208,14 @@ cleanup:
 smStatus_t nx_GetConfig_I2CMgmt(
     pSeSession_t session_ctx, uint8_t *i2cSupport, uint8_t *i2cAddr, uint16_t *protocolOptions)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -3097,7 +3226,12 @@ smStatus_t nx_GetConfig_I2CMgmt(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_I2C_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_I2C_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3134,23 +3268,20 @@ cleanup:
 
 smStatus_t nx_GetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t *gpioConfig)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t gpio1Config                       = 0;
-    uint32_t gpio1PadCtrl                     = 0;
-    uint8_t gpio2Config                       = 0;
-    uint32_t gpio2PadCtrl                     = 0;
-    uint8_t mgmtGPIOAC                        = 0;
-    uint8_t readGPIOAC                        = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t gpio1Config     = 0;
+    uint32_t gpio1PadCtrl   = 0;
+    uint8_t gpio2Config     = 0;
+    uint32_t gpio2PadCtrl   = 0;
+    uint8_t mgmtGPIOAC      = 0;
+    uint8_t readGPIOAC      = 0;
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration GPIOMgmt[GPIO Management]");
@@ -3160,7 +3291,12 @@ smStatus_t nx_GetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t *gpi
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_GPIO_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_GPIO_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3263,17 +3399,14 @@ cleanup:
 
 smStatus_t nx_GetConfig_EccKeyMgmt(pSeSession_t session_ctx, uint8_t *acManageKeyPair, uint8_t *acManageCARootKey)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [ECC Key Management]");
@@ -3283,7 +3416,13 @@ smStatus_t nx_GetConfig_EccKeyMgmt(pSeSession_t session_ctx, uint8_t *acManageKe
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ECC_Key_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_ECC_Key_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3321,17 +3460,14 @@ smStatus_t nx_GetConfig_CertMgmt(pSeSession_t session_ctx,
     uint8_t *featureSelection,
     uint8_t *acManageCertRepo)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -3343,7 +3479,12 @@ smStatus_t nx_GetConfig_CertMgmt(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Cert_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Cert_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3384,17 +3525,14 @@ cleanup:
 smStatus_t nx_GetConfig_WatchdogTimerMgmt(
     pSeSession_t session_ctx, uint8_t *HWDTValue, uint8_t *AWDT1Value, uint8_t *AWDT2Value)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Watchdog Timer Management]");
@@ -3404,7 +3542,13 @@ smStatus_t nx_GetConfig_WatchdogTimerMgmt(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Watchdog_Mgmt);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Watchdog_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3448,19 +3592,16 @@ smStatus_t nx_GetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
     uint8_t *SBPolicyCount,
     Nx_slot_buffer_policy_t *SBPolicy)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t maxTBPolicyCnt                    = 0;
-    uint8_t maxSBPolicyCnt                    = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t maxTBPolicyCnt  = 0;
+    uint8_t maxSBPolicyCnt  = 0;
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -3476,10 +3617,16 @@ smStatus_t nx_GetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
     ENSURE_OR_GO_CLEANUP(NULL != SBPolicyCount)
     ENSURE_OR_GO_CLEANUP(NULL != SBPolicy)
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     maxTBPolicyCnt = (*TBPolicyCount);
     maxSBPolicyCnt = (*SBPolicyCount);
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Crypto_API_Mgmt);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Crypto_API_Mgmt, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     retStatus = DoAPDUTxRx_s_Case4(
         session_ctx, &hdr, cmdHeaderBuf, cmdHeaderBufLen, cmdDataBuf, cmdDataBufBufLen, rspbuf, &rspbufLen, NULL);
@@ -3538,17 +3685,14 @@ cleanup:
 smStatus_t nx_GetConfig_AuthCounterLimit(
     pSeSession_t session_ctx, uint8_t *authCtrFileID, uint8_t *authCtrOption, uint32_t *authCtrLimit)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Authentication Counter and Limit Configuration]");
@@ -3558,7 +3702,13 @@ smStatus_t nx_GetConfig_AuthCounterLimit(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Auth_Counter_Limit);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8(
+        "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Auth_Counter_Limit, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3596,17 +3746,14 @@ cleanup:
 smStatus_t nx_GetConfig_HaltWakeupConfig(
     pSeSession_t session_ctx, uint8_t *wakeupOptionA, uint8_t *wakeupOptionB, uint8_t *RDACSetting, uint8_t *HALTOption)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -3618,7 +3765,12 @@ smStatus_t nx_GetConfig_HaltWakeupConfig(
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, 0x17);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, 0x17, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3658,15 +3810,13 @@ cleanup:
 
 smStatus_t nx_GetConfig_DeferConfig(pSeSession_t session_ctx, uint8_t *deferralCount, uint8_t *deferralList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus   = SM_NOT_OK;
+    tlvHeader_t hdr        = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen = 0;
+    int tlvRet             = 1;
+    uint8_t *pCmdHeaderBuf = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf       = &rspbuf[0];
+    size_t rspbufLen       = sizeof(rspbuf);
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -3677,7 +3827,12 @@ smStatus_t nx_GetConfig_DeferConfig(pSeSession_t session_ctx, uint8_t *deferralC
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Defer_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Defer_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdHeaderBufLen, NULL, 0, rspbuf, &rspbufLen, NULL);
@@ -3714,18 +3869,15 @@ cleanup:
 
 smStatus_t nx_GetConfig_LockConfig(pSeSession_t session_ctx, uint32_t *lockBitMap)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t lockMapBuf[3]                     = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_CONFIG, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t lockMapBuf[3]   = {0};
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "GetConfiguration [Lock Configurations]");
@@ -3735,7 +3887,13 @@ smStatus_t nx_GetConfig_LockConfig(pSeSession_t session_ctx, uint32_t *lockBitMa
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Lock_Config);
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Lock_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -3775,21 +3933,23 @@ smStatus_t nx_ManageGPIO_Output(pSeSession_t session_ctx,
     size_t nfcPauseRespDataLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGNT_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_MGNT_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdbuf            = &cmdHeaderBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         LOG_E("nx_ManageGPIO_Output Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGNT_GPIO, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -3801,22 +3961,22 @@ smStatus_t nx_ManageGPIO_Output(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ManageGPIO [Output]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("GPIONo", &pCmdbuf, &cmdbufLen, gpioNo);
+    tlvRet = SET_U8("GPIONo", &pCmdbuf, &cmdbufLen, gpioNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     operation = operation & NX_MANAGE_GPIO_NFC_AND_OUTPUT_MASK;
-    tlvRet    = SET_U8("Operation", &pCmdbuf, &cmdbufLen, operation);
+    tlvRet    = SET_U8("Operation", &pCmdbuf, &cmdbufLen, operation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (((operation & NX_MGMT_NFC_ACTION_MASK) == NX_MGMT_NFC_ACTION_NFC_RELEASE_PAUSE) && (nfcPauseRespData != NULL) &&
         (nfcPauseRespDataLen > 0)) {
         ENSURE_OR_GO_CLEANUP(cmdbufLen < NX_MAX_BUF_SIZE_CMD);
-        memcpy(&cmdbuf[cmdbufLen], nfcPauseRespData, nfcPauseRespDataLen);
+        memcpy(&cmdHeaderBuf[cmdbufLen], nfcPauseRespData, nfcPauseRespDataLen);
         ENSURE_OR_GO_CLEANUP((UINT_MAX - cmdbufLen) >= nfcPauseRespDataLen);
         cmdbufLen += nfcPauseRespDataLen;
     }
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
@@ -3840,23 +4000,25 @@ smStatus_t nx_ManageGPIO_PowerOut(pSeSession_t session_ctx,
     uint8_t *powerOutMeasureResult,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGNT_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    uint8_t *pRspbuf                    = &rspbuf[0];
-    size_t rspbufLen                    = sizeof(rspbuf);
-    size_t rspIndex                     = 0;
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_MGNT_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdbuf            = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         LOG_E("nx_ManageGPIO_PowerOut Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGNT_GPIO, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -3868,13 +4030,13 @@ smStatus_t nx_ManageGPIO_PowerOut(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ManageGPIO [PowerOut]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("GPIONo", &pCmdbuf, &cmdbufLen, gpioNo);
+    tlvRet = SET_U8("GPIONo", &pCmdbuf, &cmdbufLen, gpioNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdbuf, &cmdbufLen, operation);
+    tlvRet = SET_U8("Operation", &pCmdbuf, &cmdbufLen, operation, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
@@ -3908,20 +4070,22 @@ smStatus_t nx_ReadGPIO(pSeSession_t session_ctx,
     Nx_GPIO_Status_t *gpio2CurrentStatus,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_READ_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_READ_GPIO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL || tagTamperPermStatus == NULL || gpio1CurrentOrTTCurrentStatus == NULL ||
         gpio2CurrentStatus == NULL) {
         LOG_E("nx_ReadGPIO Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     // In case user doesn't provide valid commMode, get commMode from SE configuration.
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_READ_GPIO, &commMode, NULL);
@@ -3934,7 +4098,7 @@ smStatus_t nx_ReadGPIO(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ReadGPIO []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
         if (rspbufLen != 5) { // rsp + 2 bytes SW
@@ -3961,26 +4125,28 @@ smStatus_t nx_ChangeKey(pSeSession_t session_ctx,
     uint8_t *keyData,
     size_t keyDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CHANGE_KEY, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CHANGE_KEY, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (keyData == NULL)) {
         LOG_E("nx_ChangeKey Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4002,19 +4168,20 @@ smStatus_t nx_ChangeKey(pSeSession_t session_ctx,
     }
 
     if (objectID > NX_KEY_MGMT_MIN_APP_KEY_NUMBER && objectID <= NX_KEY_MGMT_MAX_APP_KEY_NUMBER) {
-        tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, (objectID));
+        tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, (objectID), NX_MAX_BUF_SIZE_CMD_HEADER);
     }
     else {
-        tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, (keyType << 6) | (objectID));
+        tlvRet =
+            SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, (keyType << 6) | (objectID), NX_MAX_BUF_SIZE_CMD_HEADER);
     }
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (objectID >= NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER && objectID <= NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-        tlvRet = SET_U16_LSB("KeyPolicy", &pCmdHeaderBuf, &cmdHeaderBufLen, policy);
+        tlvRet = SET_U16_LSB("KeyPolicy", &pCmdHeaderBuf, &cmdHeaderBufLen, policy, NX_MAX_BUF_SIZE_CMD_HEADER);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_u8buf("KeyData", &pCmdDataBuf, &cmdDataBufBufLen, keyData, keyDataLen);
+    tlvRet = SET_u8buf("KeyData", &pCmdDataBuf, &cmdDataBufBufLen, keyData, keyDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -4039,24 +4206,26 @@ cleanup:
 smStatus_t nx_GetKeySettings_AppKeys(
     pSeSession_t session_ctx, uint8_t *keySetting, NX_KEY_TYPE_t *keyType, uint8_t *keyNumber)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (keySetting == NULL) || (keyType == NULL) || (keyNumber == NULL)) {
         LOG_E("nx_GetKeySettings_AppKeys Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4105,21 +4274,18 @@ cleanup:
 smStatus_t nx_GetKeySettings_CryptoRequestKeyList(
     pSeSession_t session_ctx, uint8_t *keyCount, nx_crypto_key_meta_data_t *cryptoRequestKeyList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    uint8_t maxKeyCount                       = 0;
-    int i                                     = 0;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    uint8_t maxKeyCount         = 0;
+    int i                       = 0;
     uint8_t keyList[NX_KEY_SETTING_CRYPTO_KEY_MAX_ENTRY * NX_KEY_SETTING_CRYPTO_KEY_META_DATA_BYTES];
     nx_crypto_key_meta_data_t *pMetaDta = NULL;
     void *options                       = &commMode;
@@ -4128,6 +4294,11 @@ smStatus_t nx_GetKeySettings_CryptoRequestKeyList(
         LOG_E("nx_GetKeySettings_CryptoRequestKeyList Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4145,7 +4316,8 @@ smStatus_t nx_GetKeySettings_CryptoRequestKeyList(
 
     maxKeyCount = *keyCount;
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_CryptoKey);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_CryptoKey, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -4191,20 +4363,17 @@ cleanup:
 smStatus_t nx_GetKeySettings_ECCPrivateKeyList(
     pSeSession_t session_ctx, uint8_t *keyCount, nx_ecc_key_meta_data_t *eccPrivateKeyList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    uint8_t maxKeyCount                       = 0;
-    int i                                     = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    size_t rspIndex         = 0;
+    uint8_t maxKeyCount     = 0;
+    int i                   = 0;
     uint8_t keyList[NX_KEY_SETTING_ECC_KEY_MAX_ENTRY * NX_KEY_SETTING_ECC_KEY_META_DATA_BYTES];
     nx_ecc_key_meta_data_t *pMetaDta = NULL;
     uint8_t writeAccess              = 0;
@@ -4214,6 +4383,11 @@ smStatus_t nx_GetKeySettings_ECCPrivateKeyList(
     if ((session_ctx == NULL) || (eccPrivateKeyList == NULL) || (keyCount == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4231,7 +4405,8 @@ smStatus_t nx_GetKeySettings_ECCPrivateKeyList(
 
     maxKeyCount = *keyCount;
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_ECCPrivKey);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_ECCPrivKey, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -4287,19 +4462,16 @@ cleanup:
 smStatus_t nx_GetKeySettings_CARootKeyList(
     pSeSession_t session_ctx, uint8_t *keyCount, nx_ca_root_key_meta_data_t *caRootKeyList)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    int i                                     = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_GET_KEY_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf        = &rspbuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    size_t rspIndex         = 0;
+    int i                   = 0;
     uint8_t keyList[NX_KEY_SETTING_CAROOTKEY_MAX_ENTRY * NX_KEY_SETTING_CAROOTKEY_META_DATA_BYTES];
     nx_ca_root_key_meta_data_t *pMetaDta = NULL;
     uint8_t writeAccess                  = 0;
@@ -4310,6 +4482,11 @@ smStatus_t nx_GetKeySettings_CARootKeyList(
     if ((session_ctx == NULL) || (caRootKeyList == NULL) || (keyCount == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4327,7 +4504,8 @@ smStatus_t nx_GetKeySettings_CARootKeyList(
 
     maxKeyCount = *keyCount;
 
-    tlvRet = SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_CARootKey);
+    tlvRet =
+        SET_U8("Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_GetKeySettingOpt_CARootKey, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -4379,24 +4557,26 @@ cleanup:
 
 smStatus_t nx_GetKeyVersion(pSeSession_t session_ctx, uint8_t objectID, uint8_t *keyVer)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_GET_KEY_VERSION, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    uint8_t *pRspbuf                          = &rspbuf[0];
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_GET_KEY_VERSION, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (keyVer == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -4412,7 +4592,7 @@ smStatus_t nx_GetKeyVersion(pSeSession_t session_ctx, uint8_t objectID, uint8_t 
     nLog("APDU", NX_LEVEL_DEBUG, "GetKeyVersion []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID);
+    tlvRet = SET_U8("KeyNo", &pCmdHeaderBuf, &cmdHeaderBufLen, objectID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -4445,21 +4625,23 @@ smStatus_t nx_ReadCertRepo_Cert(pSeSession_t session_ctx,
     size_t *certificateLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_READ_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_READ_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdbuf            = &cmdHeaderBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (certificate == NULL) || (certificateLen == NULL)) {
         LOG_E("nx_ReadCertRepo_Cert Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((dataItem != NX_CERTIFICATE_LEVEL_LEAF) && (dataItem != NX_CERTIFICATE_LEVEL_P1) &&
         (dataItem != NX_CERTIFICATE_LEVEL_P2)) {
@@ -4475,13 +4657,14 @@ smStatus_t nx_ReadCertRepo_Cert(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ReadCertRepo Cert [%x]", dataItem);
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Cert Repository ID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("Cert Repository ID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, dataItem);
+    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, dataItem, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus =
+        DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         if (*certificateLen >= (rspbufLen - 2)) {
@@ -4513,16 +4696,14 @@ smStatus_t nx_ReadCertRepo_Metadata(pSeSession_t session_ctx,
     Nx_CommMode_t *readCommMode,
     uint8_t *readAccessCond)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_READ_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    uint8_t *pRspbuf                    = &rspbuf[0];
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_READ_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdbuf            = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
     uint8_t writeAccessRight = 0, readAccessRight = 0;
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -4536,19 +4717,24 @@ smStatus_t nx_ReadCertRepo_Metadata(pSeSession_t session_ctx,
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
         // Get commMode in case of authenticated.
         commMode = EV2_CommMode_MAC;
     }
 
-    tlvRet = SET_U8("Cert Repository ID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("Cert Repository ID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, NX_DATA_ITEM_REPO_META_DATA);
+    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, NX_DATA_ITEM_REPO_META_DATA, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus =
+        DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         size_t rspIndex = 0;
@@ -4609,17 +4795,15 @@ smStatus_t nx_ManageCertRepo_CreateCertRepo(pSeSession_t session_ctx,
     uint8_t readAccessCond,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t action                      = NX_MgCertRepoINS_CreateRepo;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    uint8_t action       = NX_MgCertRepoINS_CreateRepo;
     Nx_MgCertRepo_GetCommModeParams_t GetCommModeParams = {0};
     GetCommModeParams.repoID                            = repoID;
     GetCommModeParams.action                            = NX_MgCertRepoINS_CreateRepo;
-    uint8_t *pCmdbuf                                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]                 = {0};
+    uint8_t *pCmdbuf                                    = &cmdHeaderBuf[0];
     size_t rspbufLen                                    = sizeof(rspbuf);
     uint8_t *pRspbuf                                    = &rspbuf[0];
     uint8_t writeAccess = 0, readAccess = 0;
@@ -4630,6 +4814,10 @@ smStatus_t nx_ManageCertRepo_CreateCertRepo(pSeSession_t session_ctx,
         LOG_E("nx_ManageCertRepo_CreateCertRepo Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_CERT_REPO, &commMode, &GetCommModeParams);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -4653,25 +4841,25 @@ smStatus_t nx_ManageCertRepo_CreateCertRepo(pSeSession_t session_ctx,
     }
     readAccess = ((readCommMode << NX_COMM_MODE_BIT_SHIFT) | readAccessCond);
 
-    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action);
+    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("cert private keyID", &pCmdbuf, &cmdbufLen, privateKeyId);
+    tlvRet = SET_U8("cert private keyID", &pCmdbuf, &cmdbufLen, privateKeyId, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("repoSize(LSB)", &pCmdbuf, &cmdbufLen, repoSize);
+    tlvRet = SET_U16_LSB("repoSize(LSB)", &pCmdbuf, &cmdbufLen, repoSize, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("writeAccess", &pCmdbuf, &cmdbufLen, writeAccess);
+    tlvRet = SET_U8("writeAccess", &pCmdbuf, &cmdbufLen, writeAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("readAccess", &pCmdbuf, &cmdbufLen, readAccess);
+    tlvRet = SET_U8("readAccess", &pCmdbuf, &cmdbufLen, readAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus       = SM_NOT_OK;
@@ -4698,25 +4886,27 @@ smStatus_t nx_ManageCertRepo_LoadCert(pSeSession_t session_ctx,
     uint16_t certBufLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t action                      = NX_MgCertRepoINS_LoadCert;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    uint8_t action       = NX_MgCertRepoINS_LoadCert;
     Nx_MgCertRepo_GetCommModeParams_t GetCommModeParams;
-    GetCommModeParams.repoID            = repoID;
-    GetCommModeParams.action            = NX_MgCertRepoINS_LoadCert;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    GetCommModeParams.repoID    = repoID;
+    GetCommModeParams.action    = NX_MgCertRepoINS_LoadCert;
+    uint8_t *pCmdbuf            = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (certBuf == NULL)) {
         LOG_E("nx_ManageCertRepo_LoadCert Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_CERT_REPO, &commMode, &GetCommModeParams);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -4728,19 +4918,19 @@ smStatus_t nx_ManageCertRepo_LoadCert(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ManageCertRepo [LoadCert]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action);
+    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, certLevel);
+    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, certLevel, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf("cert", &pCmdbuf, &cmdbufLen, certBuf, certBufLen);
+    tlvRet = SET_u8buf("cert", &pCmdbuf, &cmdbufLen, certBuf, certBufLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdDataBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
 cleanup:
     return retStatus;
@@ -4753,17 +4943,15 @@ smStatus_t nx_ManageCertRepo_LoadCertMapping(pSeSession_t session_ctx,
     uint16_t certMappingLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t action                      = NX_MgCertRepoINS_LoadCertMapping;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    uint8_t action       = NX_MgCertRepoINS_LoadCertMapping;
     Nx_MgCertRepo_GetCommModeParams_t GetCommModeParams = {0};
     GetCommModeParams.repoID                            = repoID;
     GetCommModeParams.action                            = NX_MgCertRepoINS_LoadCertMapping;
-    uint8_t *pCmdbuf                                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]                 = {0};
+    uint8_t *pCmdbuf                                    = &cmdDataBuf[0];
     size_t rspbufLen                                    = sizeof(rspbuf);
     nx_ev2_comm_mode_t commMode                         = EV2_CommMode_PLAIN;
     void *options                                       = &commMode;
@@ -4772,6 +4960,10 @@ smStatus_t nx_ManageCertRepo_LoadCertMapping(pSeSession_t session_ctx,
         LOG_E("nx_ManageCertRepo_LoadCertMapping Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_CERT_REPO, &commMode, &GetCommModeParams);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -4783,22 +4975,22 @@ smStatus_t nx_ManageCertRepo_LoadCertMapping(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ManageCertRepo [LoadCertMapping]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action);
+    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, certLevel);
+    tlvRet = SET_U8("cert level", &pCmdbuf, &cmdbufLen, certLevel, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("cert mapping Len(LSB)", &pCmdbuf, &cmdbufLen, certMappingLen);
+    tlvRet = SET_U16_LSB("cert mapping Len(LSB)", &pCmdbuf, &cmdbufLen, certMappingLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf("cert Mapping", &pCmdbuf, &cmdbufLen, certMapping, certMappingLen);
+    tlvRet = SET_u8buf("cert Mapping", &pCmdbuf, &cmdbufLen, certMapping, certMappingLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdDataBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
 cleanup:
     return retStatus;
@@ -4806,17 +4998,15 @@ cleanup:
 
 smStatus_t nx_ManageCertRepo_ActivateRepo(pSeSession_t session_ctx, uint8_t repoID, Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t action                      = NX_MgCertRepoINS_ActivateRepo;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    uint8_t action       = NX_MgCertRepoINS_ActivateRepo;
     Nx_MgCertRepo_GetCommModeParams_t GetCommModeParams = {0};
     GetCommModeParams.repoID                            = repoID;
     GetCommModeParams.action                            = NX_MgCertRepoINS_ActivateRepo;
-    uint8_t *pCmdbuf                                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]                 = {0};
+    uint8_t *pCmdbuf                                    = &cmdHeaderBuf[0];
     size_t rspbufLen                                    = sizeof(rspbuf);
     uint8_t *pRspbuf                                    = &rspbuf[0];
     nx_ev2_comm_mode_t commMode                         = EV2_CommMode_PLAIN;
@@ -4826,6 +5016,10 @@ smStatus_t nx_ManageCertRepo_ActivateRepo(pSeSession_t session_ctx, uint8_t repo
         LOG_E("nx_ManageCertRepo_ActivateRepo Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_CERT_REPO, &commMode, &GetCommModeParams);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -4837,13 +5031,13 @@ smStatus_t nx_ManageCertRepo_ActivateRepo(pSeSession_t session_ctx, uint8_t repo
     nLog("APDU", NX_LEVEL_DEBUG, "ManageCertRepo [ActivateRepo]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action);
+    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus       = SM_NOT_OK;
@@ -4871,17 +5065,15 @@ smStatus_t nx_ManageCertRepo_ResetRepo(pSeSession_t session_ctx,
     uint8_t readAccessCond,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t action                      = NX_MgCertRepoINS_ResetRepo;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_MGMT_CERT_REPO, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    uint8_t action       = NX_MgCertRepoINS_ResetRepo;
     Nx_MgCertRepo_GetCommModeParams_t GetCommModeParams = {0};
     GetCommModeParams.repoID                            = repoID;
     GetCommModeParams.action                            = NX_MgCertRepoINS_ResetRepo;
-    uint8_t *pCmdbuf                                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]                 = {0};
+    uint8_t *pCmdbuf                                    = &cmdHeaderBuf[0];
     size_t rspbufLen                                    = sizeof(rspbuf);
     uint8_t *pRspbuf                                    = &rspbuf[0];
     uint8_t writeAccess = 0, readAccess = 0;
@@ -4892,6 +5084,10 @@ smStatus_t nx_ManageCertRepo_ResetRepo(pSeSession_t session_ctx,
         LOG_E("nx_ManageCertRepo_ResetRepo Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_MGMT_CERT_REPO, &commMode, &GetCommModeParams);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -4915,19 +5111,19 @@ smStatus_t nx_ManageCertRepo_ResetRepo(pSeSession_t session_ctx,
     }
     readAccess = ((readCommMode << NX_COMM_MODE_BIT_SHIFT) | readAccessCond);
 
-    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action);
+    tlvRet = SET_U8("action", &pCmdbuf, &cmdbufLen, action, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID);
+    tlvRet = SET_U8("repoID", &pCmdbuf, &cmdbufLen, repoID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("writeAccess", &pCmdbuf, &cmdbufLen, writeAccess);
+    tlvRet = SET_U8("writeAccess", &pCmdbuf, &cmdbufLen, writeAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("readAccess", &pCmdbuf, &cmdbufLen, readAccess);
+    tlvRet = SET_U8("readAccess", &pCmdbuf, &cmdbufLen, readAccess, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus       = SM_NOT_OK;
@@ -4956,14 +5152,12 @@ smStatus_t nx_CreateCounterFile(pSeSession_t session_ctx,
     Nx_AccessCondition_t readWriteAccessCondition,
     Nx_AccessCondition_t changeAccessCondition)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_CREATE_COUNTER_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
+    smStatus_t retStatus  = SM_NOT_OK;
+    tlvHeader_t hdr       = {{NX_CLA, NX_INS_CREATE_COUNTER_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen      = 0;
+    int tlvRet            = 1;
+    uint8_t *pCmdbuf      = &cmdHeaderBuf[0];
+    size_t rspbufLen      = sizeof(rspbuf);
     uint16_t accessRights = 0, readAC = 0, writeAC = 0, readWriteAC = 0, changeAC = 0;
     nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
     void *options                  = &cmdCommMode;
@@ -4972,6 +5166,10 @@ smStatus_t nx_CreateCounterFile(pSeSession_t session_ctx,
         LOG_E("nx_CreateCounterFile Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -5003,19 +5201,19 @@ smStatus_t nx_CreateCounterFile(pSeSession_t session_ctx,
     accessRights = (readAC << NX_FILE_AR_READ_OFFSET) | (writeAC << NX_FILE_AR_WRITE_OFFSET) |
                    (readWriteAC << NX_FILE_AR_READWRITE_OFFSET) | (changeAC << NX_FILE_AR_CHANGE_OFFSET);
 
-    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("fileOption", &pCmdbuf, &cmdbufLen, fileOption);
+    tlvRet = SET_U8("fileOption", &pCmdbuf, &cmdbufLen, fileOption, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("accessRights", &pCmdbuf, &cmdbufLen, accessRights);
+    tlvRet = SET_U16_LSB("accessRights", &pCmdbuf, &cmdbufLen, accessRights, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("Value", &pCmdbuf, &cmdbufLen, value);
+    tlvRet = SET_U32_LSB("Value", &pCmdbuf, &cmdbufLen, value, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
 cleanup:
     return retStatus;
@@ -5023,24 +5221,26 @@ cleanup:
 
 smStatus_t nx_IncrCounterFile(pSeSession_t session_ctx, uint8_t fileNo, uint32_t incrValue, Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_INCREMENT_COUNTER_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_INCREMENT_COUNTER_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdHeaderBuf      = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         LOG_E("nx_IncrCounterFile Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_INCREMENT_COUNTER_FILE, &commMode, &fileNo);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -5052,10 +5252,10 @@ smStatus_t nx_IncrCounterFile(pSeSession_t session_ctx, uint8_t fileNo, uint32_t
     nLog("APDU", NX_LEVEL_DEBUG, "IncrCounterFile []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("FileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U32_LSB("incrValue", &pCmdDataBuf, &cmdDataBufBufLen, incrValue);
+    tlvRet = SET_U32_LSB("incrValue", &pCmdDataBuf, &cmdDataBufBufLen, incrValue, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -5067,22 +5267,24 @@ cleanup:
 
 smStatus_t nx_GetFileCounters(pSeSession_t session_ctx, uint8_t fileNo, uint32_t *counter, Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_GET_FILE_COUNTERS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    size_t rspIndex                     = 0;
-    nx_ev2_comm_mode_t commMode         = EV2_CommMode_PLAIN;
-    void *options                       = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_GET_FILE_COUNTERS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen            = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdbuf            = &cmdHeaderBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (counter == NULL)) {
         LOG_E("nx_GetFileCounters Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_GET_FILE_COUNTERS, &commMode, &fileNo);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -5095,10 +5297,10 @@ smStatus_t nx_GetFileCounters(pSeSession_t session_ctx, uint8_t fileNo, uint32_t
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
@@ -5141,15 +5343,13 @@ smStatus_t nx_CreateStdDataFile(pSeSession_t session_ctx,
     Nx_AccessCondition_t readWriteAccessCondition,
     Nx_AccessCondition_t changeAccessCondition)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_CREATE_STD_DATA_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    uint8_t *pRspbuf                    = &rspbuf[0];
+    smStatus_t retStatus  = SM_NOT_OK;
+    tlvHeader_t hdr       = {{NX_CLA, NX_INS_CREATE_STD_DATA_FILE, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen      = 0;
+    int tlvRet            = 1;
+    uint8_t *pCmdbuf      = &cmdHeaderBuf[0];
+    size_t rspbufLen      = sizeof(rspbuf);
+    uint8_t *pRspbuf      = &rspbuf[0];
     uint16_t accessRights = 0, readAC = 0, writeAC = 0, readWriteAC = 0, changeAC = 0;
     nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
     void *options                  = &cmdCommMode;
@@ -5158,6 +5358,10 @@ smStatus_t nx_CreateStdDataFile(pSeSession_t session_ctx,
         LOG_E("nx_CreateStdDataFile Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((fileSize < NX_FILE_SIZE_MIN) || (fileSize > NX_FILE_SIZE_MAX)) {
         LOG_E("nx_CreateStdDataFile Invalid File Size!!!");
@@ -5179,14 +5383,14 @@ smStatus_t nx_CreateStdDataFile(pSeSession_t session_ctx,
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("isoFileID", &pCmdbuf, &cmdbufLen, isoFileID);
+    tlvRet = SET_U16_LSB("isoFileID", &pCmdbuf, &cmdbufLen, isoFileID, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     fileOption = fileOption & NX_FILE_OPTION_COMM_MODE_MASK;
-    tlvRet     = SET_U8("fileOption", &pCmdbuf, &cmdbufLen, fileOption);
+    tlvRet     = SET_U8("fileOption", &pCmdbuf, &cmdbufLen, fileOption, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     readAC       = readAccessCondition;
@@ -5195,13 +5399,13 @@ smStatus_t nx_CreateStdDataFile(pSeSession_t session_ctx,
     changeAC     = changeAccessCondition;
     accessRights = (readAC << NX_FILE_AR_READ_OFFSET) | (writeAC << NX_FILE_AR_WRITE_OFFSET) |
                    (readWriteAC << NX_FILE_AR_READWRITE_OFFSET) | (changeAC << NX_FILE_AR_CHANGE_OFFSET);
-    tlvRet = SET_U16_LSB("accessRights", &pCmdbuf, &cmdbufLen, accessRights);
+    tlvRet = SET_U16_LSB("accessRights", &pCmdbuf, &cmdbufLen, accessRights, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U24_LSB("fileSize", &pCmdbuf, &cmdbufLen, fileSize);
+    tlvRet = SET_U24_LSB("fileSize", &pCmdbuf, &cmdbufLen, fileSize, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus       = SM_NOT_OK;
@@ -5230,18 +5434,15 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
     Nx_AccessCondition_t changeAccessCondition,
     nx_file_SDM_config_t *sdmConfig)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CHANGE_FILE_SETTING, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t *pRspbuf                          = &rspbuf[0];
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_CHANGE_FILE_SETTING, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdHeaderBuf  = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t *pRspbuf        = &rspbuf[0];
     uint16_t accessRights = 0, sdmAccessRights = 0;
     uint8_t deferOption            = 0;
     nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
@@ -5251,6 +5452,11 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
         LOG_E("nx_ChangeFileSettings Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -5269,7 +5475,7 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("FileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     accessRights =
@@ -5277,10 +5483,10 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
             (readWriteAccessCondition << NX_FILE_AR_READWRITE_OFFSET) |
             (changeAccessCondition << NX_FILE_AR_CHANGE_OFFSET));
 
-    tlvRet = SET_U8("fileOption", &pCmdDataBuf, &cmdDataBufBufLen, fileOption);
+    tlvRet = SET_U8("fileOption", &pCmdDataBuf, &cmdDataBufBufLen, fileOption, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("accessRights", &pCmdDataBuf, &cmdDataBufBufLen, accessRights);
+    tlvRet = SET_U16_LSB("accessRights", &pCmdDataBuf, &cmdDataBufBufLen, accessRights, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((fileOption & NX_FILE_OPTION_SDM_ENABLED) == NX_FILE_OPTION_SDM_ENABLED) {
@@ -5299,11 +5505,11 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                            (sdmConfig->acSDMCtrRet << NX_FILE_SDMCtrRet_OFFSET));
 
         // SDMOption
-        tlvRet = SET_U8("sdmOption", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->sdmOption);
+        tlvRet = SET_U8("sdmOption", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->sdmOption, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         // SDMAccessRights
-        tlvRet = SET_U16_LSB("sdmAccessRights", &pCmdDataBuf, &cmdDataBufBufLen, sdmAccessRights);
+        tlvRet = SET_U16_LSB("sdmAccessRights", &pCmdDataBuf, &cmdDataBufBufLen, sdmAccessRights, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         // VCUIDOffset
@@ -5314,7 +5520,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("vcuidOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->VCUIDOffset);
+            tlvRet = SET_U24_LSB(
+                "vcuidOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->VCUIDOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5326,7 +5533,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("sdmReadCtrOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMReadCtrOffset);
+            tlvRet = SET_U24_LSB(
+                "sdmReadCtrOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMReadCtrOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5338,7 +5546,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("piccDataOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->PICCDataOffset);
+            tlvRet = SET_U24_LSB(
+                "piccDataOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->PICCDataOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5349,7 +5558,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("gpioStatusOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->GPIOStatusOffset);
+            tlvRet = SET_U24_LSB(
+                "gpioStatusOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->GPIOStatusOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5361,7 +5571,11 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("sdmMacInputOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMMACInputOffset);
+            tlvRet = SET_U24_LSB("sdmMacInputOffset",
+                &pCmdDataBuf,
+                &cmdDataBufBufLen,
+                sdmConfig->SDMMACInputOffset,
+                NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5378,10 +5592,12 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("sdmEncOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMENCOffset);
+            tlvRet = SET_U24_LSB(
+                "sdmEncOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMENCOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-            tlvRet = SET_U24_LSB("sdmEncLen", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMENCLength);
+            tlvRet =
+                SET_U24_LSB("sdmEncLen", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMENCLength, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5393,7 +5609,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("sdmMACOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMMACOffset);
+            tlvRet = SET_U24_LSB(
+                "sdmMACOffset", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMMACOffset, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
@@ -5404,7 +5621,8 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
                 goto cleanup;
             }
 
-            tlvRet = SET_U24_LSB("sdmReadCtrLimit", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMReadCtrLimit);
+            tlvRet = SET_U24_LSB(
+                "sdmReadCtrLimit", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->SDMReadCtrLimit, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -5415,10 +5633,10 @@ smStatus_t nx_ChangeFileSettings(pSeSession_t session_ctx,
             deferOption |= NX_CONF_DEFER_SDM_ENC_ENABLED;
         }
 
-        tlvRet = SET_U8("DeferOption", &pCmdDataBuf, &cmdDataBufBufLen, deferOption);
+        tlvRet = SET_U8("DeferOption", &pCmdDataBuf, &cmdDataBufBufLen, deferOption, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("DeferMethod", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->sdmDeferMethod);
+        tlvRet = SET_U8("DeferMethod", &pCmdDataBuf, &cmdDataBufBufLen, sdmConfig->sdmDeferMethod, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -5453,18 +5671,16 @@ smStatus_t nx_GetFileSettings(pSeSession_t session_ctx,
     size_t *fileSize,
     nx_file_SDM_config_t *sdmConfig)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_GET_FILE_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    uint8_t *pRspbuf                    = &rspbuf[0];
-    size_t rspbufLen                    = sizeof(rspbuf);
-    uint8_t tmpUint8                    = 0;
-    uint8_t deferOption                 = 0x00;
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_GET_FILE_SETTINGS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    size_t rspIndex      = 0;
+    uint8_t *pCmdbuf     = &cmdHeaderBuf[0];
+    uint8_t *pRspbuf     = &rspbuf[0];
+    size_t rspbufLen     = sizeof(rspbuf);
+    uint8_t tmpUint8     = 0;
+    uint8_t deferOption  = 0x00;
     uint16_t tmpUint16 = 0, accessRights = 0, sdmAccessRights = 0;
     uint32_t tmpUint32             = 0;
     nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
@@ -5475,6 +5691,10 @@ smStatus_t nx_GetFileSettings(pSeSession_t session_ctx,
         LOG_E("nx_GetFileSettings Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -5493,10 +5713,10 @@ smStatus_t nx_GetFileSettings(pSeSession_t session_ctx,
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
         if (rspbufLen < 6) {
@@ -5719,21 +5939,24 @@ cleanup:
 
 smStatus_t nx_GetFileIDs(pSeSession_t session_ctx, uint8_t *fIDList, size_t *fIDListLen)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_GET_FILE_IDS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t cmdCommMode      = EV2_CommMode_PLAIN;
-    void *options                       = &cmdCommMode;
+    smStatus_t retStatus           = SM_NOT_OK;
+    tlvHeader_t hdr                = {{NX_CLA, NX_INS_GET_FILE_IDS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen               = 0;
+    int tlvRet                     = 1;
+    size_t rspIndex                = 0;
+    size_t rspbufLen               = sizeof(rspbuf);
+    nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
+    void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (fIDList == NULL) || (fIDListLen == NULL)) {
         LOG_E("nx_GetFileIDs Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -5749,7 +5972,7 @@ smStatus_t nx_GetFileIDs(pSeSession_t session_ctx, uint8_t *fIDList, size_t *fID
     nLog("APDU", NX_LEVEL_DEBUG, "GetFileIDs []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
@@ -5776,21 +5999,23 @@ cleanup:
 
 smStatus_t nx_GetISOFileIDs(pSeSession_t session_ctx, uint8_t *fIDList, size_t *fIDListLen)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_GET_ISO_FILE_IDS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t cmdCommMode      = EV2_CommMode_PLAIN;
-    void *options                       = &cmdCommMode;
+    smStatus_t retStatus           = SM_NOT_OK;
+    tlvHeader_t hdr                = {{NX_CLA, NX_INS_GET_ISO_FILE_IDS, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen               = 0;
+    int tlvRet                     = 1;
+    size_t rspIndex                = 0;
+    size_t rspbufLen               = sizeof(rspbuf);
+    nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
+    void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (fIDList == NULL) || (fIDListLen == NULL)) {
         LOG_E("nx_GetFileIDs Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((session_ctx->authType == knx_AuthType_SIGMA_I_Verifier) ||
         (session_ctx->authType == knx_AuthType_SIGMA_I_Prover) || (session_ctx->authType == knx_AuthType_SYMM_AUTH)) {
@@ -5806,7 +6031,7 @@ smStatus_t nx_GetISOFileIDs(pSeSession_t session_ctx, uint8_t *fIDList, size_t *
     nLog("APDU", NX_LEVEL_DEBUG, "GetISOFileIDs []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus = DoAPDUTxRx_s_Case4(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
         if (rspbufLen > 56) { // n*2 n[0..27] + 2 bytes SW
@@ -5838,23 +6063,26 @@ smStatus_t nx_ReadData(pSeSession_t session_ctx,
     size_t *bufferSize,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                = SM_NOT_OK;
-    tlvHeader_t hdr                     = {{NX_CLA, NX_INS_READ_DATA, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdbuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdbufLen                    = 0;
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t *pCmdbuf                    = &cmdbuf[0];
+    smStatus_t retStatus = SM_NOT_OK;
+    tlvHeader_t hdr      = {{NX_CLA, NX_INS_READ_DATA, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdbufLen     = 0;
+    int tlvRet           = 1;
+    size_t rspIndex      = 0;
+    uint8_t *pCmdbuf     = &cmdHeaderBuf[0];
     size_t length;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
-    nx_ev2_comm_mode_t cmdCommMode      = EV2_CommMode_PLAIN;
-    void *options                       = &cmdCommMode;
+    size_t rspbufLen               = sizeof(rspbuf);
+    nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
+    void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (buffer == NULL) || (bufferSize == NULL)) {
         LOG_E("nx_ReadData Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_READ_DATA, &cmdCommMode, &fileNo);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -5867,10 +6095,10 @@ smStatus_t nx_ReadData(pSeSession_t session_ctx,
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo);
+    tlvRet = SET_U8("FileNo", &pCmdbuf, &cmdbufLen, fileNo, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U24_LSB("offset", &pCmdbuf, &cmdbufLen, offset);
+    tlvRet = SET_U24_LSB("offset", &pCmdbuf, &cmdbufLen, offset, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (dataLen > NX_DADA_MGMT_MAX_FILE_SIZE) {
@@ -5880,10 +6108,11 @@ smStatus_t nx_ReadData(pSeSession_t session_ctx,
         length = dataLen;
     }
 
-    tlvRet = SET_U24_LSB("length", &pCmdbuf, &cmdbufLen, length);
+    tlvRet = SET_U24_LSB("length", &pCmdbuf, &cmdbufLen, length, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdbuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
+    retStatus =
+        DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, cmdHeaderBuf, cmdbufLen, NULL, 0, rspbuf, &rspbufLen, options);
 
     if (retStatus == SM_OK) {
         retStatus = SM_NOT_OK;
@@ -5920,24 +6149,26 @@ smStatus_t nx_WriteData(pSeSession_t session_ctx,
     size_t dataLen,
     Nx_CommMode_t knownCommMode)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_WRITE_DATA, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdHeaderBuf                    = &cmdHeaderBuf[0];
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t cmdCommMode            = EV2_CommMode_PLAIN;
-    void *options                             = &cmdCommMode;
+    smStatus_t retStatus           = SM_NOT_OK;
+    tlvHeader_t hdr                = {{NX_CLA, NX_INS_WRITE_DATA, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen         = 0;
+    size_t cmdDataBufBufLen        = 0;
+    int tlvRet                     = 1;
+    uint8_t *pCmdHeaderBuf         = &cmdHeaderBuf[0];
+    uint8_t *pCmdDataBuf           = &cmdDataBuf[0];
+    size_t rspbufLen               = sizeof(rspbuf);
+    nx_ev2_comm_mode_t cmdCommMode = EV2_CommMode_PLAIN;
+    void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (data == NULL)) {
         LOG_E("nx_ReadData Invalid Parameters!!!");
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, knownCommMode, NX_INS_WRITE_DATA, &cmdCommMode, &fileNo);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -5950,16 +6181,16 @@ smStatus_t nx_WriteData(pSeSession_t session_ctx,
 #endif /* VERBOSE_APDU_LOGS */
 
     fileNo = fileNo & NX_FILE_NO_MASK;
-    tlvRet = SET_U8("fileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo);
+    tlvRet = SET_U8("fileNo", &pCmdHeaderBuf, &cmdHeaderBufLen, fileNo, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U24_LSB("offset", &pCmdHeaderBuf, &cmdHeaderBufLen, offset);
+    tlvRet = SET_U24_LSB("offset", &pCmdHeaderBuf, &cmdHeaderBufLen, offset, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U24_LSB("length", &pCmdHeaderBuf, &cmdHeaderBufLen, dataLen);
+    tlvRet = SET_U24_LSB("length", &pCmdHeaderBuf, &cmdHeaderBufLen, dataLen, NX_MAX_BUF_SIZE_CMD_HEADER);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_u8buf("data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen);
+    tlvRet = SET_u8buf("data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4_ext(
@@ -5980,18 +6211,16 @@ smStatus_t nx_ISOInternalAuthenticate(pSeSession_t session_ctx,
     uint8_t *sigB,
     size_t *sigBLen)
 {
-    smStatus_t retStatus                    = SM_NOT_OK;
-    tlvHeader_t hdr                         = {{NX_CLA_ISO, NX_INS_ISO_INTERNAL_AUTH, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdDataBufBufLen                 = 0;
-    int tlvRet                              = 1;
-    size_t rspIndex                         = 0;
-    uint8_t *pCmdDataBuf                    = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]     = {0};
-    uint8_t temp[100]                       = {0};
-    uint8_t *ptemp                          = &temp[0];
-    size_t tempLen                          = 0;
-    size_t rspbufLen                        = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA_ISO, NX_INS_ISO_INTERNAL_AUTH, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    size_t rspIndex         = 0;
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    uint8_t temp[100]       = {0};
+    uint8_t *ptemp          = &temp[0];
+    size_t tempLen          = 0;
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ISOInternalAuthenticate []");
@@ -6005,6 +6234,11 @@ smStatus_t nx_ISOInternalAuthenticate(pSeSession_t session_ctx,
     ENSURE_OR_GO_CLEANUP(NULL != sigB)
     ENSURE_OR_GO_CLEANUP(NULL != sigBLen)
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if ((rndALen != NX_ISO_INTERNAL_AUTH_RND_LENGTH) || (optsALen > NX_ISO_INTERNAL_AUTH_OPTSA_MAX_LENGTH)) {
         LOG_E("Invalid parameter for nx_ISOInternalAuthenticate.");
         goto cleanup;
@@ -6012,13 +6246,15 @@ smStatus_t nx_ISOInternalAuthenticate(pSeSession_t session_ctx,
 
     hdr.hdr[3] = privKeyNo;
 
-    tlvRet = TLVSET_u8buf("OptsA", &pCmdDataBuf, &cmdDataBufBufLen, NX_TAG_OPTS_A, optsA, optsALen);
+    tlvRet =
+        TLVSET_u8buf("OptsA", &pCmdDataBuf, &cmdDataBufBufLen, NX_TAG_OPTS_A, optsA, optsALen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = TLVSET_u8buf("rndA", &ptemp, &tempLen, NX_TAG_RNDA, rndA, rndALen);
+    tlvRet = TLVSET_u8buf("rndA", &ptemp, &tempLen, NX_TAG_RNDA, rndA, rndALen, sizeof(temp));
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = TLVSET_u8buf("AuthDOHdr", &pCmdDataBuf, &cmdDataBufBufLen, NX_TAG_AUTHDOHDR, temp, tempLen);
+    tlvRet = TLVSET_u8buf(
+        "AuthDOHdr", &pCmdDataBuf, &cmdDataBufBufLen, NX_TAG_AUTHDOHDR, temp, tempLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus =
@@ -6055,15 +6291,13 @@ smStatus_t nx_ISOSelectFile(pSeSession_t session_ctx,
     uint8_t *FCIData,
     size_t *FCIDataLen)
 {
-    smStatus_t retStatus                    = SM_NOT_OK;
-    tlvHeader_t hdr                         = {{NX_CLA_ISO, NX_INS_ISO_SELECT_FILE, selectionCtl, option}};
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdDataBufBufLen                 = 0;
-    int tlvRet                              = 1;
-    size_t rspIndex                         = 0;
-    uint8_t *pCmdDataBuf                    = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]     = {0};
-    size_t rspbufLen                        = sizeof(rspbuf);
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA_ISO, NX_INS_ISO_SELECT_FILE, selectionCtl, option}};
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    size_t rspIndex         = 0;
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspbufLen        = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ISOSelectFile []");
@@ -6072,8 +6306,12 @@ smStatus_t nx_ISOSelectFile(pSeSession_t session_ctx,
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != FCIDataLen)
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     if (data != NULL) {
-        tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen);
+        tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -6113,11 +6351,10 @@ smStatus_t nx_ISOReadBinary_ShortFile(
     smStatus_t retStatus = SM_NOT_OK;
     shortISOFileID &= 0x1F;
     shortISOFileID |= 0x80;
-    tlvHeader_t hdr                     = {{NX_CLA_ISO, NX_INS_ISO_READ_BINARY, shortISOFileID, 0}};
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
+    tlvHeader_t hdr  = {{NX_CLA_ISO, NX_INS_ISO_READ_BINARY, shortISOFileID, 0}};
+    int tlvRet       = 1;
+    size_t rspIndex  = 0;
+    size_t rspbufLen = sizeof(rspbuf);
 
     ENSURE_OR_GO_CLEANUP(offset <= UINT8_MAX);
     hdr.hdr[3] = (uint8_t)offset;
@@ -6129,6 +6366,9 @@ smStatus_t nx_ISOReadBinary_ShortFile(
     if ((session_ctx == NULL) || (data == NULL) || (dataLen == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, NULL, 0, NULL, 0, rspbuf, &rspbufLen, NULL);
     if (retStatus == SM_OK) {
@@ -6164,10 +6404,9 @@ smStatus_t nx_ISOReadBinary(pSeSession_t session_ctx, size_t offset, uint8_t *da
     smStatus_t retStatus = SM_NOT_OK;
     tlvHeader_t hdr      = {
         {NX_CLA_ISO, NX_INS_ISO_READ_BINARY, (uint8_t)((offset & 0x7F00) >> 8), (uint8_t)(offset & 0xFF)}};
-    int tlvRet                          = 1;
-    size_t rspIndex                     = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP] = {0};
-    size_t rspbufLen                    = sizeof(rspbuf);
+    int tlvRet       = 1;
+    size_t rspIndex  = 0;
+    size_t rspbufLen = sizeof(rspbuf);
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ISOReadBinary []");
@@ -6176,6 +6415,9 @@ smStatus_t nx_ISOReadBinary(pSeSession_t session_ctx, size_t offset, uint8_t *da
     if ((session_ctx == NULL) || (data == NULL) || (dataLen == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = DoAPDUTxRx_s_Case4_ext(session_ctx, &hdr, NULL, 0, NULL, 0, rspbuf, &rspbufLen, NULL);
     if (retStatus == SM_OK) {
@@ -6212,11 +6454,10 @@ smStatus_t nx_ISOUpdateBinary_ShortFile(
     smStatus_t retStatus = SM_NOT_OK;
     shortISOFileID &= 0x1F;
     shortISOFileID |= 0x80;
-    tlvHeader_t hdr                         = {{NX_CLA_ISO, NX_INS_ISO_UPDATE_BINARY, shortISOFileID, NX_P2_DEFAULT}};
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdDataBufBufLen                 = 0;
-    int tlvRet                              = 1;
-    uint8_t *pCmdDataBuf                    = &cmdDataBuf[0];
+    tlvHeader_t hdr         = {{NX_CLA_ISO, NX_INS_ISO_UPDATE_BINARY, shortISOFileID, NX_P2_DEFAULT}};
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ISOUpdateBinary_ShortFile []");
@@ -6225,7 +6466,11 @@ smStatus_t nx_ISOUpdateBinary_ShortFile(
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != data)
 
-    tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen);
+    // Clean the global buffers before proceeding
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTx_s_Case3(session_ctx, &hdr, NULL, 0, cmdDataBuf, cmdDataBufBufLen, NULL);
@@ -6239,10 +6484,9 @@ smStatus_t nx_ISOUpdateBinary(pSeSession_t session_ctx, size_t offset, const uin
     smStatus_t retStatus = SM_NOT_OK;
     tlvHeader_t hdr      = {
         {NX_CLA_ISO, NX_INS_ISO_UPDATE_BINARY, (uint8_t)((offset & 0x7F00) >> 8), (uint8_t)(offset & 0xFF)}};
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdDataBufBufLen                 = 0;
-    int tlvRet                              = 1;
-    uint8_t *pCmdDataBuf                    = &cmdDataBuf[0];
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
 #if VERBOSE_APDU_LOGS
     NEWLINE();
     nLog("APDU", NX_LEVEL_DEBUG, "ISOUpdateBinary []");
@@ -6251,7 +6495,11 @@ smStatus_t nx_ISOUpdateBinary(pSeSession_t session_ctx, size_t offset, const uin
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != data)
 
-    tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen);
+    // Clean the global buffers before proceeding
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
+    tlvRet = SET_u8buf("Data", &pCmdDataBuf, &cmdDataBufBufLen, data, dataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTx_s_Case3(session_ctx, &hdr, NULL, 0, cmdDataBuf, cmdDataBufBufLen, NULL);
@@ -6263,22 +6511,24 @@ cleanup:
 smStatus_t nx_CryptoRequest_SHA_Init(
     pSeSession_t session_ctx, uint8_t algorithm, uint8_t inputDataSrc, const uint8_t *inputData, size_t inputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6290,16 +6540,16 @@ smStatus_t nx_CryptoRequest_SHA_Init(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest SHA [Init]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_INIT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_INIT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6307,12 +6557,14 @@ smStatus_t nx_CryptoRequest_SHA_Init(
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -6340,22 +6592,24 @@ cleanup:
 smStatus_t nx_CryptoRequest_SHA_Update(
     pSeSession_t session_ctx, uint8_t algorithm, uint8_t inputDataSrc, const uint8_t *inputData, size_t inputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6367,13 +6621,13 @@ smStatus_t nx_CryptoRequest_SHA_Update(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest SHA [Update]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_UPDATE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_UPDATE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6381,12 +6635,14 @@ smStatus_t nx_CryptoRequest_SHA_Update(
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -6420,23 +6676,25 @@ smStatus_t nx_CryptoRequest_SHA_Final(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6448,13 +6706,13 @@ smStatus_t nx_CryptoRequest_SHA_Final(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest SHA [Final]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_FINALIZE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_FINALIZE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6462,17 +6720,19 @@ smStatus_t nx_CryptoRequest_SHA_Final(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -6523,23 +6783,25 @@ smStatus_t nx_CryptoRequest_SHA_Oneshot(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6551,16 +6813,16 @@ smStatus_t nx_CryptoRequest_SHA_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest SHA [Oneshot]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_SHA, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_ONESHOT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_DigestOperate_ONESHOT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6568,17 +6830,19 @@ smStatus_t nx_CryptoRequest_SHA_Oneshot(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -6623,23 +6887,25 @@ cleanup:
 smStatus_t nx_CryptoRequest_RNG(
     pSeSession_t session_ctx, uint8_t rndLen, uint8_t resultDst, uint8_t *outputData, size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6651,13 +6917,13 @@ smStatus_t nx_CryptoRequest_RNG(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest RNG []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_RNG);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_RNG, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Num Bytes", &pCmdDataBuf, &cmdDataBufBufLen, rndLen);
+    tlvRet = SET_U8("Num Bytes", &pCmdDataBuf, &cmdDataBufBufLen, rndLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+    tlvRet = SET_U8("Result Destination", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -6706,22 +6972,24 @@ smStatus_t nx_CryptoRequest_ECCSign_Init(pSeSession_t session_ctx,
     uint8_t *inputData,
     size_t inputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6733,19 +7001,19 @@ smStatus_t nx_CryptoRequest_ECCSign_Init(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCSign [Init]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_INIT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_INIT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6753,12 +7021,14 @@ smStatus_t nx_CryptoRequest_ECCSign_Init(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -6786,22 +7056,24 @@ cleanup:
 smStatus_t nx_CryptoRequest_ECCSign_Update(
     pSeSession_t session_ctx, uint8_t inputSrc, uint8_t *inputData, size_t inputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6813,13 +7085,13 @@ smStatus_t nx_CryptoRequest_ECCSign_Update(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCSign [Update]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_UPDATE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_UPDATE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6827,12 +7099,14 @@ smStatus_t nx_CryptoRequest_ECCSign_Update(
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -6864,23 +7138,25 @@ smStatus_t nx_CryptoRequest_ECCSign_Final(pSeSession_t session_ctx,
     uint8_t *outputSig,
     size_t *outputSigLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6892,13 +7168,13 @@ smStatus_t nx_CryptoRequest_ECCSign_Final(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCSign [Final]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_FINALIZE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_FINALIZE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -6906,12 +7182,14 @@ smStatus_t nx_CryptoRequest_ECCSign_Final(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -6957,23 +7235,25 @@ smStatus_t nx_CryptoRequest_ECCSign_Oneshot(pSeSession_t session_ctx,
     uint8_t *outputSig,
     size_t *outputSigLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -6985,19 +7265,19 @@ smStatus_t nx_CryptoRequest_ECCSign_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCSign [Oneshot]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_ONESHOT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_ONESHOT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7005,12 +7285,14 @@ smStatus_t nx_CryptoRequest_ECCSign_Oneshot(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7056,23 +7338,25 @@ smStatus_t nx_CryptoRequest_ECCSign_Digest_Oneshot(pSeSession_t session_ctx,
     uint8_t *outputSig,
     size_t *outputSigLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (inputDataLen != 32)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7084,24 +7368,25 @@ smStatus_t nx_CryptoRequest_ECCSign_Digest_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCSign [Oneshot Sha256]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCSign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_HASH_ONESHOT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_HASH_ONESHOT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc == kSE_CryptoDataSrc_CommandBuf) {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7110,7 +7395,8 @@ smStatus_t nx_CryptoRequest_ECCSign_Digest_Oneshot(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -7156,22 +7442,24 @@ smStatus_t nx_CryptoRequest_ECCVerify_Init(pSeSession_t session_ctx,
     size_t inputDataLen,
     uint16_t *result)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != result)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7183,27 +7471,28 @@ smStatus_t nx_CryptoRequest_ECCVerify_Init(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCVerify [Init]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_INIT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_INIT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID);
+    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hostPKLen == 0x41) && (hostPK != NULL)) {
-        tlvRet = SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen);
+        tlvRet =
+            SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7211,12 +7500,14 @@ smStatus_t nx_CryptoRequest_ECCVerify_Init(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7247,22 +7538,24 @@ cleanup:
 smStatus_t nx_CryptoRequest_ECCVerify_Update(
     pSeSession_t session_ctx, uint8_t inputSrc, uint8_t *inputData, size_t inputDataLen, uint16_t *result)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != result)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7274,13 +7567,13 @@ smStatus_t nx_CryptoRequest_ECCVerify_Update(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCVerify [Update]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_UPDATE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_UPDATE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7288,12 +7581,14 @@ smStatus_t nx_CryptoRequest_ECCVerify_Update(
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7329,22 +7624,24 @@ smStatus_t nx_CryptoRequest_ECCVerify_Final(pSeSession_t session_ctx,
     size_t inputDataLen,
     uint16_t *result)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != result)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7356,21 +7653,21 @@ smStatus_t nx_CryptoRequest_ECCVerify_Final(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCVerify [Finalize]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_FINALIZE);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_FINALIZE, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((signatureLen == 0x40) && (signature != NULL)) {
-        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen);
+        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7378,12 +7675,14 @@ smStatus_t nx_CryptoRequest_ECCVerify_Final(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7423,22 +7722,24 @@ smStatus_t nx_CryptoRequest_ECCVerify_Oneshot(pSeSession_t session_ctx,
     size_t inputDataLen,
     uint16_t *result)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != result)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7450,20 +7751,21 @@ smStatus_t nx_CryptoRequest_ECCVerify_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCVerify []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_ONESHOT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_ONESHOT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID);
+    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hostPKLen == 0x41) && (hostPK != NULL)) {
-        tlvRet = SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen);
+        tlvRet =
+            SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
@@ -7471,14 +7773,14 @@ smStatus_t nx_CryptoRequest_ECCVerify_Oneshot(pSeSession_t session_ctx,
     }
 
     if ((signatureLen == 0x40) && (signature != NULL)) {
-        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen);
+        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7486,12 +7788,14 @@ smStatus_t nx_CryptoRequest_ECCVerify_Oneshot(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         if (inputData != NULL) {
-            tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+            tlvRet =
+                SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -7531,22 +7835,24 @@ smStatus_t nx_CryptoRequest_ECCVerify_Digest_Oneshot(pSeSession_t session_ctx,
     size_t inputDataLen,
     uint16_t *result)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != result)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7558,20 +7864,21 @@ smStatus_t nx_CryptoRequest_ECCVerify_Digest_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECCVerify []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECCVerify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_HASH_ONESHOT);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, kSE_ECSignOperate_HASH_ONESHOT, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm);
+    tlvRet = SET_U8("Algorithm", &pCmdDataBuf, &cmdDataBufBufLen, algorithm, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID);
+    tlvRet = SET_U8("curveID", &pCmdDataBuf, &cmdDataBufBufLen, curveID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hostPKLen == 0x41) && (hostPK != NULL)) {
-        tlvRet = SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen);
+        tlvRet =
+            SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
@@ -7579,24 +7886,26 @@ smStatus_t nx_CryptoRequest_ECCVerify_Digest_Oneshot(pSeSession_t session_ctx,
     }
 
     if ((signatureLen == 0x40) && (signature != NULL)) {
-        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen);
+        tlvRet = SET_u8buf("Signature", &pCmdDataBuf, &cmdDataBufBufLen, signature, signatureLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc);
+    tlvRet = SET_U8("Input Source", &pCmdDataBuf, &cmdDataBufBufLen, inputSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataLen == 32) {
         if (inputSrc != kSE_CryptoDataSrc_CommandBuf) {
-            tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+            tlvRet = SET_U8(
+                "Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
         else {
             if (inputData != NULL) {
-                tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+                tlvRet = SET_u8buf(
+                    "Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
                 ENSURE_OR_GO_CLEANUP(0 == tlvRet);
             }
             else {
@@ -7641,25 +7950,27 @@ smStatus_t nx_CryptoRequest_ECDH_Oneshot(pSeSession_t session_ctx,
     uint8_t *pubKey,
     size_t *pPubKeyLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t option                            = Nx_ECDHOption_SingleStep;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
-    size_t pubKeyLen                          = 0;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t option              = Nx_ECDHOption_SingleStep;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
+    size_t pubKeyLen            = 0;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7671,20 +7982,21 @@ smStatus_t nx_CryptoRequest_ECDH_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECDH []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option);
+    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Shared secret Destination", &pCmdDataBuf, &cmdDataBufBufLen, sharedSecretDst);
+    tlvRet = SET_U8("Shared secret Destination", &pCmdDataBuf, &cmdDataBufBufLen, sharedSecretDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hostPKLen == 0x41) && (hostPK != NULL)) {
-        tlvRet = SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen);
+        tlvRet =
+            SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -7738,24 +8050,26 @@ cleanup:
 smStatus_t nx_CryptoRequest_ECDH_TwoStepPart1(
     pSeSession_t session_ctx, uint8_t keyID, uint8_t *pubKey, size_t *pubKeyLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t option                            = Nx_ECDHOption_TwoStep_1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t option              = Nx_ECDHOption_TwoStep_1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
     ENSURE_OR_GO_CLEANUP(NULL != pubKey)
     ENSURE_OR_GO_CLEANUP(NULL != pubKeyLen)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7767,13 +8081,13 @@ smStatus_t nx_CryptoRequest_ECDH_TwoStepPart1(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECDH [Step1]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option);
+    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -7808,22 +8122,24 @@ smStatus_t nx_CryptoRequest_ECDH_TwoStepPart2(pSeSession_t session_ctx,
     uint8_t *shareSecret,
     size_t *shareSecretLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t option                            = Nx_ECDHOption_TwoStep_2;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t option              = Nx_ECDHOption_TwoStep_2;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     ENSURE_OR_GO_CLEANUP(NULL != session_ctx)
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -7835,20 +8151,21 @@ smStatus_t nx_CryptoRequest_ECDH_TwoStepPart2(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_ECDH [Step2]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECDH, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option);
+    tlvRet = SET_U8("Option", &pCmdDataBuf, &cmdDataBufBufLen, option, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Kep Pair Id", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Shared secret Destination", &pCmdDataBuf, &cmdDataBufBufLen, sharedSecretDst);
+    tlvRet = SET_U8("Shared secret Destination", &pCmdDataBuf, &cmdDataBufBufLen, sharedSecretDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hostPKLen == 0x41) && (hostPK != NULL)) {
-        tlvRet = SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen);
+        tlvRet =
+            SET_u8buf("Host's Public Key", &pCmdDataBuf, &cmdDataBufBufLen, hostPK, hostPKLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -7895,23 +8212,25 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Sign(pSeSession_t session_ctx,
     uint8_t *dstData,
     size_t *dstDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (operation == Nx_MAC_Operation_NA)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -7931,26 +8250,27 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Sign(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CMAC_Sign [%x]", operation);
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CMAC_Sign);
+    tlvRet =
+        SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CMAC_Sign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, operation);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, operation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((operation == Nx_MAC_Operation_Initialize) || (operation == Nx_MAC_Operation_OneShot)) {
-        tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Sign);
+        tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Sign, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -7958,11 +8278,12 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Sign(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8022,23 +8343,25 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Verify(pSeSession_t session_ctx,
     size_t cmac_Len,
     uint16_t *verifyResult)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    size_t rspIndex                           = 0;
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    size_t rspIndex             = 0;
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (operation == Nx_MAC_Operation_NA)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -8058,21 +8381,22 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Verify(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CMAC_Verify [%x]", operation);
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CMAC_Verify);
+    tlvRet =
+        SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CMAC_Verify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, operation);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, operation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((operation == Nx_MAC_Operation_Initialize) || (operation == Nx_MAC_Operation_OneShot)) {
-        tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Verify);
+        tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Verify, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -8083,14 +8407,15 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Verify(pSeSession_t session_ctx,
             goto cleanup;
         }
 
-        tlvRet = SET_U8("CMAC Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)cmac_Len);
+        tlvRet = SET_U8("CMAC Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)cmac_Len, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_u8buf("CMAC Data Length", &pCmdDataBuf, &cmdDataBufBufLen, cmac_data, cmac_Len);
+        tlvRet =
+            SET_u8buf("CMAC Data Length", &pCmdDataBuf, &cmdDataBufBufLen, cmac_data, cmac_Len, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -8098,11 +8423,12 @@ smStatus_t nx_CryptoRequest_AES_CMAC_Verify(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8154,23 +8480,25 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Init(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (outputData == NULL) || (outputDataLen == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -8189,29 +8517,30 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Init(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CBC_ECB_Init []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Init);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Init, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive);
+    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if ((aesPrimitive == Nx_AES_Primitive_CBC_Encrypt) || (aesPrimitive == Nx_AES_Primitive_CBC_Decrypt)) {
-        tlvRet = SET_U8("icvSrc", &pCmdDataBuf, &cmdDataBufBufLen, icvSrc);
+        tlvRet = SET_U8("icvSrc", &pCmdDataBuf, &cmdDataBufBufLen, icvSrc, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         if (icvSrc == kSE_CryptoDataSrc_CommandBuf) {
             if ((icvDataLen == 0x10) && (icvData != NULL)) {
-                tlvRet = SET_u8buf("icvData", &pCmdDataBuf, &cmdDataBufBufLen, icvData, icvDataLen);
+                tlvRet =
+                    SET_u8buf("icvData", &pCmdDataBuf, &cmdDataBufBufLen, icvData, icvDataLen, NX_MAX_BUF_SIZE_CMD);
                 ENSURE_OR_GO_CLEANUP(0 == tlvRet);
             }
             else {
@@ -8222,7 +8551,7 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Init(pSeSession_t session_ctx,
         }
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -8230,11 +8559,12 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Init(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8279,23 +8609,25 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Update(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (outputData == NULL) || (outputDataLen == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -8306,13 +8638,13 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Update(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CBC_ECB_Update []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Update);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Update, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -8320,11 +8652,12 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Update(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8369,23 +8702,25 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Final(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (outputData == NULL) || (outputDataLen == NULL)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -8396,13 +8731,13 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Final(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CBC_ECB_Final []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Final);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Final, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -8410,11 +8745,12 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Final(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8465,24 +8801,26 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Oneshot(pSeSession_t session_ctx,
     uint8_t resultDst,
     uint8_t *outputData)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
-    size_t outputDataLen                      = inputDataLen;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
+    size_t outputDataLen        = inputDataLen;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -8501,29 +8839,30 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_CBC_ECB_Oneshot []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_AES_CBC_ECB, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_OneShot);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_OneShot, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive);
+    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if ((aesPrimitive == Nx_AES_Primitive_CBC_Encrypt) || (aesPrimitive == Nx_AES_Primitive_CBC_Decrypt)) {
-        tlvRet = SET_U8("icvSrc", &pCmdDataBuf, &cmdDataBufBufLen, icvSrc);
+        tlvRet = SET_U8("icvSrc", &pCmdDataBuf, &cmdDataBufBufLen, icvSrc, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         if (icvSrc == kSE_CryptoDataSrc_CommandBuf) {
             if ((icvDataLen == 0x10) && (icvData != NULL)) {
-                tlvRet = SET_u8buf("icvData", &pCmdDataBuf, &cmdDataBufBufLen, icvData, icvDataLen);
+                tlvRet =
+                    SET_u8buf("icvData", &pCmdDataBuf, &cmdDataBufBufLen, icvData, icvDataLen, NX_MAX_BUF_SIZE_CMD);
                 ENSURE_OR_GO_CLEANUP(0 == tlvRet);
             }
             else {
@@ -8534,7 +8873,7 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Oneshot(pSeSession_t session_ctx,
         }
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -8542,15 +8881,16 @@ smStatus_t nx_CryptoRequest_AES_CBC_ECB_Oneshot(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+    tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -8608,24 +8948,26 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
     uint16_t *verifyResult,
     uint8_t *outputData)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
-    size_t outputDataLen                      = inputDataLen;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
+    size_t outputDataLen        = inputDataLen;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -8644,26 +8986,26 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_AEAD_Encrypt_Oneshot []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_OneShot);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_OneShot, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive);
+    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if ((aesPrimitive != Nx_AES_Primitive_CCM_Encrypt_Sign_internal_nonce) &&
         (aesPrimitive != Nx_AES_Primitive_GCM_Encrypt_Sign_internal_nonce)) {
-        tlvRet = SET_U8("nonceSrc", &pCmdDataBuf, &cmdDataBufBufLen, nonceSrc);
+        tlvRet = SET_U8("nonceSrc", &pCmdDataBuf, &cmdDataBufBufLen, nonceSrc, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8685,33 +9027,34 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("nonceDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)nonceDataLen);
+    tlvRet = SET_U8("nonceDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)nonceDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aesPrimitive != Nx_AES_Primitive_CCM_Encrypt_Sign_internal_nonce) &&
         (aesPrimitive != Nx_AES_Primitive_GCM_Encrypt_Sign_internal_nonce)) {
         if ((nonceDataLen > 0) && (nonceInput != NULL)) {
-            tlvRet = SET_u8buf("nonceData", &pCmdDataBuf, &cmdDataBufBufLen, nonceInput, nonceDataLen);
+            tlvRet =
+                SET_u8buf("nonceData", &pCmdDataBuf, &cmdDataBufBufLen, nonceInput, nonceDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc);
+    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    if (aadLen > UINT16_MAX) {
+    if (aadLen > UINT8_MAX) {
         retStatus = SM_NOT_OK;
         goto cleanup;
     }
-    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen);
+    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aadLen > 0) && (aad != NULL)) {
-        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen);
+        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataLen > UINT8_MAX) {
@@ -8719,11 +9062,11 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((inputDataLen > 0) && (inputData != NULL)) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8744,12 +9087,12 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen);
+    tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (action == Nx_CryptoAPI_Operation_AES_Decrypt_Verify) {
         if (tagInput != NULL) {
-            tlvRet = SET_u8buf("tag Data", &pCmdDataBuf, &cmdDataBufBufLen, tagInput, tagLen);
+            tlvRet = SET_u8buf("tag Data", &pCmdDataBuf, &cmdDataBufBufLen, tagInput, tagLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
         else {
@@ -8757,7 +9100,7 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Oneshot(pSeSession_t session_ctx,
             goto cleanup;
         }
 
-        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8844,23 +9187,25 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
         ((keyID > kSE_CryptoAESKey_TB_SLOTNUM_MAX) && (keyID < kSE_CryptoAESKey_SB_SLOTNUM_MIN)) ||
@@ -8878,26 +9223,26 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_AEAD_Encrypt_Init []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Init);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Init, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive);
+    tlvRet = SET_U8("aesPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, aesPrimitive, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+    tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+        tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if ((aesPrimitive != Nx_AES_Primitive_CCM_Encrypt_Sign_internal_nonce) &&
         (aesPrimitive != Nx_AES_Primitive_GCM_Encrypt_Sign_internal_nonce)) {
-        tlvRet = SET_U8("nonceSrc", &pCmdDataBuf, &cmdDataBufBufLen, nonceSrc);
+        tlvRet = SET_U8("nonceSrc", &pCmdDataBuf, &cmdDataBufBufLen, nonceSrc, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -8919,13 +9264,14 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("nonceDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)nonceDataLen);
+    tlvRet = SET_U8("nonceDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)nonceDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aesPrimitive != Nx_AES_Primitive_CCM_Encrypt_Sign_internal_nonce) &&
         (aesPrimitive != Nx_AES_Primitive_GCM_Encrypt_Sign_internal_nonce)) {
         if ((nonceDataLen > 0) && (nonceInput != NULL)) {
-            tlvRet = SET_u8buf("nonceData", &pCmdDataBuf, &cmdDataBufBufLen, nonceInput, nonceDataLen);
+            tlvRet =
+                SET_u8buf("nonceData", &pCmdDataBuf, &cmdDataBufBufLen, nonceInput, nonceDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -8935,10 +9281,12 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U16_LSB("Total AAD Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint16_t)totalAadLen);
+    tlvRet =
+        SET_U16_LSB("Total AAD Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint16_t)totalAadLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U16_LSB("Total Input Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint16_t)totalInputLen);
+    tlvRet = SET_U16_LSB(
+        "Total Input Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint16_t)totalInputLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (aesPrimitive >= Nx_AES_Primitive_CCM_Encrypt_Sign && aesPrimitive <= Nx_AES_Primitive_CCM_Decrypt_Verify) {
@@ -8958,10 +9306,10 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen);
+    tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc);
+    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (aadLen > UINT8_MAX) {
@@ -8969,15 +9317,15 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen);
+    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aadLen > 0) && (aad != NULL)) {
-        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen);
+        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataLen > UINT8_MAX) {
@@ -8985,16 +9333,16 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Init(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((inputDataLen > 0) && (inputData != NULL)) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if (action == Nx_CryptoAPI_Operation_AES_Decrypt_Verify) {
-        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9115,23 +9463,25 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Update(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -9142,28 +9492,28 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Update(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_AEAD_Encrypt_Update []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Update);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Update, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc);
+    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (aadLen > UINT8_MAX) {
         retStatus = SM_NOT_OK;
         goto cleanup;
     }
-    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen);
+    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aadLen > 0) && (aad != NULL)) {
-        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen);
+        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataLen > UINT8_MAX) {
@@ -9171,16 +9521,16 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Update(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((inputDataLen > 0) && (inputData != NULL)) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if (action == Nx_CryptoAPI_Operation_AES_Decrypt_Verify) {
-        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9267,23 +9617,25 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Final(pSeSession_t session_ctx,
     uint8_t *outputData,
     size_t *outputDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -9294,13 +9646,13 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Final(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_AES_AEAD_Encrypt_Final []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, action, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Final);
+    tlvRet = SET_U8("operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_AES_Operation_Final, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc);
+    tlvRet = SET_U8("aadSrc", &pCmdDataBuf, &cmdDataBufBufLen, aadSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (aadLen > UINT8_MAX) {
@@ -9308,15 +9660,15 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Final(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen);
+    tlvRet = SET_U8("aadLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)aadLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((aadLen > 0) && (aad != NULL)) {
-        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen);
+        tlvRet = SET_u8buf("aad", &pCmdDataBuf, &cmdDataBufBufLen, aad, aadLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("inputDataSrc", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataLen > UINT8_MAX) {
@@ -9324,11 +9676,11 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Final(pSeSession_t session_ctx,
         goto cleanup;
     }
 
-    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+    tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((inputDataLen > 0) && (inputData != NULL)) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9338,15 +9690,15 @@ smStatus_t nx_CryptoRequest_AES_AEAD_Final(pSeSession_t session_ctx,
     }
 
     if (action == Nx_CryptoAPI_Operation_AES_Decrypt_Verify) {
-        tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen);
+        tlvRet = SET_U8("tagLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)tagLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (tagInput != NULL) {
-            tlvRet = SET_u8buf("tag Data", &pCmdDataBuf, &cmdDataBufBufLen, tagInput, tagLen);
+            tlvRet = SET_u8buf("tag Data", &pCmdDataBuf, &cmdDataBufBufLen, tagInput, tagLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
 
-        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9438,22 +9790,24 @@ cleanup:
 smStatus_t nx_CryptoRequest_Write_Internal_Buffer(
     pSeSession_t session_ctx, uint8_t dst, const uint8_t *dstData, size_t dstDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -9465,21 +9819,22 @@ smStatus_t nx_CryptoRequest_Write_Internal_Buffer(
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest Write_Internal_Buffer[]");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_Write_Int_Buffer);
+    tlvRet =
+        SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_Write_Int_Buffer, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Destination", &pCmdDataBuf, &cmdDataBufBufLen, dst);
+    tlvRet = SET_U8("Destination", &pCmdDataBuf, &cmdDataBufBufLen, dst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (dstDataLen > UINT8_MAX) {
         retStatus = SM_NOT_OK;
         goto cleanup;
     }
-    tlvRet = SET_U8("Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)dstDataLen);
+    tlvRet = SET_U8("Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)dstDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((dstDataLen > 0) && (dstData != NULL)) {
-        tlvRet = SET_u8buf("dstData", &pCmdDataBuf, &cmdDataBufBufLen, dstData, dstDataLen);
+        tlvRet = SET_u8buf("dstData", &pCmdDataBuf, &cmdDataBufBufLen, dstData, dstDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
@@ -9518,23 +9873,25 @@ smStatus_t nx_CryptoRequest_HMAC_Sign(pSeSession_t session_ctx,
     uint8_t *hmacOutput,
     size_t *hmacOutputLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (hmacOperation == Nx_MAC_Operation_NA) || (digestAlgorithm == kSE_DigestMode_NA)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -9554,29 +9911,29 @@ smStatus_t nx_CryptoRequest_HMAC_Sign(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_HMAC [%x]", hmacOperation);
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HMAC);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HMAC, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("hmacOperation", &pCmdDataBuf, &cmdDataBufBufLen, hmacOperation);
+    tlvRet = SET_U8("hmacOperation", &pCmdDataBuf, &cmdDataBufBufLen, hmacOperation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("hmacPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Sign);
+    tlvRet = SET_U8("hmacPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Sign, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hmacOperation == Nx_MAC_Operation_Initialize) || (hmacOperation == Nx_MAC_Operation_OneShot)) {
-        tlvRet = SET_U8("digestAlgorithm", &pCmdDataBuf, &cmdDataBufBufLen, digestAlgorithm);
+        tlvRet = SET_U8("digestAlgorithm", &pCmdDataBuf, &cmdDataBufBufLen, digestAlgorithm, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -9584,16 +9941,17 @@ smStatus_t nx_CryptoRequest_HMAC_Sign(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if (hmacOperation == Nx_MAC_Operation_Finish || hmacOperation == Nx_MAC_Operation_OneShot) {
-        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst);
+        tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, resultDst, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9655,23 +10013,25 @@ smStatus_t nx_CryptoRequest_HMAC_Verify(pSeSession_t session_ctx,
     size_t hmac_len,
     uint16_t *verifyResult)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if ((session_ctx == NULL) || (hmacOperation == Nx_MAC_Operation_NA) || (digestAlgorithm == kSE_DigestMode_NA)) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     if ((keyID < NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) ||
         ((keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) && (keyID < kSE_CryptoAESKey_TB_SLOTNUM_MIN)) ||
@@ -9690,24 +10050,24 @@ smStatus_t nx_CryptoRequest_HMAC_Verify(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_HMAC_Verify [%x]", hmacOperation);
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HMAC);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HMAC, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("hmacOperation", &pCmdDataBuf, &cmdDataBufBufLen, hmacOperation);
+    tlvRet = SET_U8("hmacOperation", &pCmdDataBuf, &cmdDataBufBufLen, hmacOperation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("hmacPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Verify);
+    tlvRet = SET_U8("hmacPrimitive", &pCmdDataBuf, &cmdDataBufBufLen, Nx_MAC_Primitive_Verify, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((hmacOperation == Nx_MAC_Operation_Initialize) || (hmacOperation == Nx_MAC_Operation_OneShot)) {
-        tlvRet = SET_U8("digestAlgorithm", &pCmdDataBuf, &cmdDataBufBufLen, digestAlgorithm);
+        tlvRet = SET_U8("digestAlgorithm", &pCmdDataBuf, &cmdDataBufBufLen, digestAlgorithm, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID);
+        tlvRet = SET_U8("Key ID", &pCmdDataBuf, &cmdDataBufBufLen, keyID, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (keyID > NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER) {
-            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen);
+            tlvRet = SET_U8("Key length", &pCmdDataBuf, &cmdDataBufBufLen, keyLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
@@ -9717,11 +10077,11 @@ smStatus_t nx_CryptoRequest_HMAC_Verify(pSeSession_t session_ctx,
             LOG_E("Invalid input HMAC value");
             goto cleanup;
         }
-        tlvRet = SET_u8buf("Hmac data", &pCmdDataBuf, &cmdDataBufBufLen, hmac, hmac_len);
+        tlvRet = SET_u8buf("Hmac data", &pCmdDataBuf, &cmdDataBufBufLen, hmac, hmac_len, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc);
+    tlvRet = SET_U8("Input Data Source", &pCmdDataBuf, &cmdDataBufBufLen, inputDataSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (inputDataSrc != kSE_CryptoDataSrc_CommandBuf) {
@@ -9729,11 +10089,12 @@ smStatus_t nx_CryptoRequest_HMAC_Verify(pSeSession_t session_ctx,
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen);
+        tlvRet =
+            SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (inputData != NULL) {
-        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen);
+        tlvRet = SET_u8buf("Input Data", &pCmdDataBuf, &cmdDataBufBufLen, inputData, inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -9788,23 +10149,25 @@ smStatus_t nx_CryptoRequest_HKDF(pSeSession_t session_ctx,
     uint8_t *hkdfOutput,
     size_t *hkdfOutputLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode               = EV2_CommMode_PLAIN;
-    void *options                             = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen      = 0;
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
@@ -9816,70 +10179,70 @@ smStatus_t nx_CryptoRequest_HKDF(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CryptoRequest_HKDF []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HKDF);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_HKDF, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("hkdfOperation", &pCmdDataBuf, &cmdDataBufBufLen, hkdfOperation);
+    tlvRet = SET_U8("hkdfOperation", &pCmdDataBuf, &cmdDataBufBufLen, hkdfOperation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("digestOperation", &pCmdDataBuf, &cmdDataBufBufLen, digestOperation);
+    tlvRet = SET_U8("digestOperation", &pCmdDataBuf, &cmdDataBufBufLen, digestOperation, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((keyId & 0xC0) == 0x00) {
-        tlvRet = SET_U8("keyId", &pCmdDataBuf, &cmdDataBufBufLen, keyId);
+        tlvRet = SET_U8("keyId", &pCmdDataBuf, &cmdDataBufBufLen, keyId, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else {
-        tlvRet = SET_U8("slotNum", &pCmdDataBuf, &cmdDataBufBufLen, keyId);
+        tlvRet = SET_U8("slotNum", &pCmdDataBuf, &cmdDataBufBufLen, keyId, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         if (keyLength > UINT8_MAX) {
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("keyLength", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)keyLength);
+        tlvRet = SET_U8("keyLength", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)keyLength, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if (hkdfOperation == Nx_HKDFOperation_ExtractAndExpand) {
-        tlvRet = SET_U8("saltSrc", &pCmdDataBuf, &cmdDataBufBufLen, saltSrc);
+        tlvRet = SET_U8("saltSrc", &pCmdDataBuf, &cmdDataBufBufLen, saltSrc, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if (saltDataLen > UINT8_MAX) {
             retStatus = SM_NOT_OK;
             goto cleanup;
         }
-        tlvRet = SET_U8("saltDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)saltDataLen);
+        tlvRet = SET_U8("saltDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)saltDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
         if ((saltSrc == kSE_CryptoDataSrc_CommandBuf) && ((saltDataLen > 0) && (saltData != NULL))) {
-            tlvRet = SET_u8buf("saltData", &pCmdDataBuf, &cmdDataBufBufLen, saltData, saltDataLen);
+            tlvRet = SET_u8buf("saltData", &pCmdDataBuf, &cmdDataBufBufLen, saltData, saltDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
     }
 
-    tlvRet = SET_U8("infoSrc", &pCmdDataBuf, &cmdDataBufBufLen, infoSrc);
+    tlvRet = SET_U8("infoSrc", &pCmdDataBuf, &cmdDataBufBufLen, infoSrc, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (infoDataLen > UINT8_MAX) {
         retStatus = SM_NOT_OK;
         goto cleanup;
     }
-    tlvRet = SET_U8("infoDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)infoDataLen);
+    tlvRet = SET_U8("infoDataLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)infoDataLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if ((infoSrc == kSE_CryptoDataSrc_CommandBuf) && ((infoDataLen > 0) && (infoData != NULL))) {
-        tlvRet = SET_u8buf("infoData", &pCmdDataBuf, &cmdDataBufBufLen, infoData, infoDataLen);
+        tlvRet = SET_u8buf("infoData", &pCmdDataBuf, &cmdDataBufBufLen, infoData, infoDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
-    tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)resultDst);
+    tlvRet = SET_U8("resultDst", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)resultDst, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (resultLen > UINT8_MAX) {
         retStatus = SM_NOT_OK;
         goto cleanup;
     }
-    tlvRet = SET_U8("resultLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)resultLen);
+    tlvRet = SET_U8("resultLen", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)resultLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     retStatus = DoAPDUTxRx_s_Case4(
@@ -9928,18 +10291,16 @@ smStatus_t nx_CryptoRequest_ECHO(pSeSession_t session_ctx,
     uint8_t *rspadditionalData,
     size_t *rspadditionalDataLen)
 {
-    smStatus_t retStatus                    = SM_NOT_OK;
-    tlvHeader_t hdr                         = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdDataBufBufLen                 = 0;
-    int tlvRet                              = 1;
-    uint8_t *pCmdDataBuf                    = &cmdDataBuf[0];
-    size_t rspIndex                         = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]     = {0};
-    uint8_t *pRspbuf                        = &rspbuf[0];
-    size_t rspbufLen                        = sizeof(rspbuf);
-    nx_ev2_comm_mode_t commMode             = EV2_CommMode_PLAIN;
-    void *options                           = &commMode;
+    smStatus_t retStatus        = SM_NOT_OK;
+    tlvHeader_t hdr             = {{NX_CLA, NX_INS_CRYPTO_REQ, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdDataBufBufLen     = 0;
+    int tlvRet                  = 1;
+    uint8_t *pCmdDataBuf        = &cmdDataBuf[0];
+    size_t rspIndex             = 0;
+    uint8_t *pRspbuf            = &rspbuf[0];
+    size_t rspbufLen            = sizeof(rspbuf);
+    nx_ev2_comm_mode_t commMode = EV2_CommMode_PLAIN;
+    void *options               = &commMode;
 
 #if VERBOSE_APDU_LOGS
     NEWLINE();
@@ -9950,12 +10311,17 @@ smStatus_t nx_CryptoRequest_ECHO(pSeSession_t session_ctx,
         goto cleanup;
     }
 
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
+
     retStatus = nx_get_comm_mode(session_ctx, session_ctx->userCryptoCommMode, NX_INS_CRYPTO_REQ, &commMode, NULL);
     ENSURE_OR_GO_CLEANUP(SM_OK == retStatus);
 
     retStatus = SM_NOT_OK; //reinitialized
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECHO);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_CryptoAPI_Operation_ECHO, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (commMode == EV2_CommMode_PLAIN) {
@@ -9986,7 +10352,8 @@ smStatus_t nx_CryptoRequest_ECHO(pSeSession_t session_ctx,
     }
 
     if ((additionalData != NULL) && (additionalDataLen != 0)) {
-        tlvRet = SET_u8buf("additionalData", &pCmdDataBuf, &cmdDataBufBufLen, additionalData, additionalDataLen);
+        tlvRet = SET_u8buf(
+            "additionalData", &pCmdDataBuf, &cmdDataBufBufLen, additionalData, additionalDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
@@ -10075,22 +10442,24 @@ smStatus_t nx_ProcessSM_Apply(pSeSession_t session_ctx,
     uint8_t *cipherData,
     size_t *cipherDataLen)
 {
-    smStatus_t retStatus                      = SM_NOT_OK;
-    tlvHeader_t hdr                           = {{NX_CLA, NX_INS_PROCESS_SM, NX_P1_DEFAULT, NX_P2_DEFAULT}};
-    uint8_t cmdHeaderBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderBufLen                    = 0;
-    uint8_t cmdDataBuf[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataBufBufLen                   = 0;
-    int tlvRet                                = 1;
-    uint8_t *pCmdDataBuf                      = &cmdDataBuf[0];
-    size_t rspIndex                           = 0;
-    uint8_t rspbuf[NX_MAX_BUF_SIZE_RSP]       = {0};
-    size_t rspbufLen                          = sizeof(rspbuf);
-    uint8_t commModeByte                      = 0;
+    smStatus_t retStatus    = SM_NOT_OK;
+    tlvHeader_t hdr         = {{NX_CLA, NX_INS_PROCESS_SM, NX_P1_DEFAULT, NX_P2_DEFAULT}};
+    size_t cmdHeaderBufLen  = 0;
+    size_t cmdDataBufBufLen = 0;
+    int tlvRet              = 1;
+    uint8_t *pCmdDataBuf    = &cmdDataBuf[0];
+    size_t rspIndex         = 0;
+    size_t rspbufLen        = sizeof(rspbuf);
+    uint8_t commModeByte    = 0;
 
     if (session_ctx == NULL) {
         goto cleanup;
     }
+
+    // Clean the global buffers before proceeding
+    memset(cmdHeaderBuf, 0, sizeof(cmdHeaderBuf));
+    memset(cmdDataBuf, 0, sizeof(cmdDataBuf));
+    memset(rspbuf, 0, sizeof(rspbuf));
 
     retStatus = SM_NOT_OK; //reinitialized
 
@@ -10099,30 +10468,31 @@ smStatus_t nx_ProcessSM_Apply(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "ProcessSM_Apply []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_ProcessSM_Action_Apply);
+    tlvRet = SET_U8("Action", &pCmdDataBuf, &cmdDataBufBufLen, Nx_ProcessSM_Action_Apply, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_ProcessSM_Operation_Oneshot);
+    tlvRet = SET_U8("Operation", &pCmdDataBuf, &cmdDataBufBufLen, Nx_ProcessSM_Operation_Oneshot, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     commModeByte = commMode;
     commModeByte = (commModeByte << 4);
-    tlvRet       = SET_U8("CommMode", &pCmdDataBuf, &cmdDataBufBufLen, commModeByte);
+    tlvRet       = SET_U8("CommMode", &pCmdDataBuf, &cmdDataBufBufLen, commModeByte, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
     if (commMode == Nx_CommMode_FULL) {
-        tlvRet = SET_U8("Offset", &pCmdDataBuf, &cmdDataBufBufLen, offset);
+        tlvRet = SET_U8("Offset", &pCmdDataBuf, &cmdDataBufBufLen, offset, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
     else if (commMode == Nx_CommMode_Plain) {
-        tlvRet = SET_U8("CmdCtrIncr", &pCmdDataBuf, &cmdDataBufBufLen, cmdCtrIncr);
+        tlvRet = SET_U8("CmdCtrIncr", &pCmdDataBuf, &cmdDataBufBufLen, cmdCtrIncr, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);
     }
 
     if (commMode != Nx_CommMode_Plain) {
         if ((plainData != NULL) && (plainDataLen >= NX_PROCESSSM_PLAIN_TEXT_LENGTH_MIN) &&
             (plainDataLen <= NX_PROCESSSM_PLAIN_TEXT_LENGTH_MAX)) {
-            tlvRet = SET_u8buf("Plaintext", &pCmdDataBuf, &cmdDataBufBufLen, plainData, plainDataLen);
+            tlvRet =
+                SET_u8buf("Plaintext", &pCmdDataBuf, &cmdDataBufBufLen, plainData, plainDataLen, NX_MAX_BUF_SIZE_CMD);
             ENSURE_OR_GO_CLEANUP(0 == tlvRet);
         }
         else {

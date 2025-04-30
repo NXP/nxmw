@@ -60,21 +60,25 @@
 /** PC/Laptop Linux64 */
 #define SSS_HAVE_HOST_PCLINUX64 0
 
-/** Embedded Kinetis Freedom K64F */
-#define SSS_HAVE_HOST_FRDMK64F 0
-
 /** Embedded LPCXpresso55s */
 #define SSS_HAVE_HOST_LPCXPRESSO55S 0
 
 /** Embedded Linux on RaspBerry PI */
 #define SSS_HAVE_HOST_RASPBIAN 0
 
+/** Embedded frdmmcxa153 */
+#define SSS_HAVE_HOST_FRDMMCXA153 0
+
+/** Embedded frdmmcxn947 */
+#define SSS_HAVE_HOST_FRDMMCXN947 0
+
 #if (( 0                             \
     + SSS_HAVE_HOST_PCWINDOWS        \
     + SSS_HAVE_HOST_PCLINUX64        \
-    + SSS_HAVE_HOST_FRDMK64F         \
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
+    + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXN947      \
     ) > 1)
 #        error "Enable only one of 'NXMW_Host'"
 #endif
@@ -83,9 +87,10 @@
 #if (( 0                             \
     + SSS_HAVE_HOST_PCWINDOWS        \
     + SSS_HAVE_HOST_PCLINUX64        \
-    + SSS_HAVE_HOST_FRDMK64F         \
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
+    + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXN947      \
     ) == 0)
 #        error "Enable at-least one of 'NXMW_Host'"
 #endif
@@ -96,6 +101,7 @@
  * 
  * How the host library communicates to the Secure Authenticator.
  * This may be directly over an I2C interface on embedded platform.
+ * Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
  */
 
 /** Not using any Communication layer */
@@ -110,7 +116,9 @@
 /** CCID PC/SC reader interface */
 #define SSS_HAVE_SMCOM_PCSC 0
 
-/** Socket Interface Old Implementation */
+/** Socket Interface Old Implementation.
+ * This is the interface used from Host PC when when we run jrcpv1_server
+ * from the linux PC. */
 #define SSS_HAVE_SMCOM_JRCP_V1_AM 0
 
 #if (( 0                             \
@@ -118,7 +126,7 @@
     + SSS_HAVE_SMCOM_VCOM            \
     + SSS_HAVE_SMCOM_T1OI2C_GP1_0    \
     + SSS_HAVE_SMCOM_PCSC            \
-    + SSS_HAVE_SMCOM_JRCP_V1_AM         \
+    + SSS_HAVE_SMCOM_JRCP_V1_AM      \
     ) > 1)
 #        error "Enable only one of 'NXMW_SMCOM'"
 #endif
@@ -129,7 +137,7 @@
     + SSS_HAVE_SMCOM_VCOM            \
     + SSS_HAVE_SMCOM_T1OI2C_GP1_0    \
     + SSS_HAVE_SMCOM_PCSC            \
-    + SSS_HAVE_SMCOM_JRCP_V1_AM         \
+    + SSS_HAVE_SMCOM_JRCP_V1_AM      \
     ) == 0)
 #        error "Enable at-least one of 'NXMW_SMCOM'"
 #endif
@@ -682,7 +690,7 @@
 
 
 /** NXMW_mbedTLS_ALT : ALT Engine implementation for mbedTLS
- *
+ * 
  * When set to None, mbedTLS would not use ALT Implementation to connect to / use Secure Authenticator.
  * This needs to be set to PSA for PSA example over SSS APIs
  */
@@ -694,7 +702,7 @@
 #define SSS_HAVE_MBEDTLS_ALT_PSA 0
 
 /** Not using any mbedTLS_ALT
- *
+ * 
  * When this is selected, cloud demos can not work with mbedTLS */
 #define SSS_HAVE_MBEDTLS_ALT_NONE 1
 
@@ -762,6 +770,9 @@
 
 #define SSS_HAVE_HOSTCRYPTO_ANY \
  (SSS_HAVE_HOSTCRYPTO_MBEDTLS | SSS_HAVE_HOSTCRYPTO_OPENSSL | SSS_HAVE_HOSTCRYPTO_USER)
+
+#define SSS_HAVE_HOST_EMBEDDED \
+ (SSS_HAVE_HOST_LPCXPRESSO55S | SSS_HAVE_HOST_FRDMMCXA153 | SSS_HAVE_HOST_FRDMMCXN947)
 
 /** Deprecated items. Used here for backwards compatibility. */
 

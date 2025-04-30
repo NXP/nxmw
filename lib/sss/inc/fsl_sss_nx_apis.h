@@ -419,6 +419,8 @@ int util_replace_substring(
 
 sss_status_t sss_util_encode_asn1_signature(
     uint8_t *signatureAsn1, size_t *signatureLenAsn1, uint8_t *rawSignature, size_t rawSignatureLen);
+sss_status_t sss_util_decode_asn1_signature(
+    uint8_t *rawSignature, size_t *rawSignatureLen, uint8_t *signature, size_t signatureLen);
 
 #if (SSS_HAVE_SSS == 1)
 /* Direct Call : session */

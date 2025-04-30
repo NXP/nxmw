@@ -52,6 +52,7 @@
 sss_status_t nx_prepare_host_for_auth_key_symm_auth(
     nx_auth_symm_ctx_t *pAuthCtx, sss_key_store_t *pKs, nx_connect_ctx_t *nx_conn_ctx);
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
 sss_status_t ex_find_hash_in_cache(uint8_t *pCertHashBuf, size_t certHashBufLen, int *found);
 
 sss_status_t ex_get_pk_from_cache(int index, uint8_t *pPublicKeyBuf, size_t *pPublicKeyBufLen);
@@ -62,6 +63,7 @@ sss_status_t ex_insert_hash_pk_to_cache(
 sss_status_t ex_get_parent_cert_from_cache(int index, uint8_t *pCertBuf, size_t *pCertBufLen);
 
 sss_status_t ex_parent_cert_cache_insert(uint8_t *pCertBuf, size_t certBufLen);
+#endif
 
 /* *****************************************************************************************************************
 * Functions

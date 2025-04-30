@@ -19,12 +19,12 @@
 #include "gpio_nx.h"
 #endif
 
-
 #if SSS_HAVE_HOST_RASPBIAN
 
-U16 nx_host_GPIOInit(void *conn_ctx, U8 gpioPIN, U8 setInOutDir) {
+U16 nx_host_GPIOInit(void *conn_ctx, U8 gpioPIN, U8 setInOutDir)
+{
     unsigned int status = 0;
-    status = gpio_export(gpioPIN);
+    status              = gpio_export(gpioPIN);
     if (status == 0) {
         goto exit;
     }
@@ -34,35 +34,39 @@ exit:
     return status;
 }
 
-U16 nx_host_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *resp, U16 *respLen) {
-    int status = 0;
+U16 nx_host_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *resp, U16 *respLen)
+{
+    int status             = 0;
     unsigned int resplocal = 0;
     if (NULL == resp || NULL == respLen) {
         goto exit;
     }
-    status   = gpio_read(gpioPIN, &resplocal);
-    *resp = (U8)(resplocal);
+    status = gpio_read(gpioPIN, &resplocal);
+    *resp  = (U8)(resplocal);
 exit:
-    return (U16)true;
+    return (U16) true;
 }
 
-U16 nx_host_GPIOClear(void *conn_ctx, U8 gpioPIN) {
-    int status = 0;
+U16 nx_host_GPIOClear(void *conn_ctx, U8 gpioPIN)
+{
+    int status         = 0;
     unsigned int value = 0;
-    status  = gpio_write((int)gpioPIN, 0);
+    status             = gpio_write((int)gpioPIN, 0);
     return (U16)status;
 }
 
-U16 nx_host_GPIOSet(void *conn_ctx, U8 gpioPIN) {
-    int status = 0;
+U16 nx_host_GPIOSet(void *conn_ctx, U8 gpioPIN)
+{
+    int status         = 0;
     unsigned int value = 1;
-    status  = gpio_write(gpioPIN, 1);
+    status             = gpio_write(gpioPIN, 1);
     return (U16)status;
 }
 
-U16 nx_host_GPIOClose(void *conn_ctx, U8 gpioPIN) {
+U16 nx_host_GPIOClose(void *conn_ctx, U8 gpioPIN)
+{
     int status = 0;
-    status = gpio_unexport(gpioPIN);
+    status     = gpio_unexport(gpioPIN);
     return status;
 }
 
@@ -72,7 +76,7 @@ U16 nx_host_GPIOInit(void *conn_ctx, U8 gpioPIN, U8 setInOutDir)
 {
     U32 status = 0;
 
-    status   = smComVCom_GPIOInit(conn_ctx, gpioPIN, setInOutDir);
+    status = smComVCom_GPIOInit(conn_ctx, gpioPIN, setInOutDir);
     return (U16)status;
 }
 
@@ -80,7 +84,7 @@ U16 nx_host_GPIOSet(void *conn_ctx, U8 gpioPIN)
 {
     U32 status = 0;
 
-    status   = smComVCom_GPIOSet(conn_ctx, gpioPIN);
+    status = smComVCom_GPIOSet(conn_ctx, gpioPIN);
     return (U16)status;
 }
 
@@ -88,7 +92,7 @@ U16 nx_host_GPIOClear(void *conn_ctx, U8 gpioPIN)
 {
     U32 status = 0;
 
-    status   = smComVCom_GPIOClear(conn_ctx, gpioPIN);
+    status = smComVCom_GPIOClear(conn_ctx, gpioPIN);
     return (U16)status;
 }
 
@@ -96,13 +100,13 @@ U16 nx_host_GPIOToggle(void *conn_ctx, U8 gpioPIN)
 {
     U32 status = 0;
 
-    status   = smComVCom_GPIOToggle(conn_ctx, gpioPIN);
+    status = smComVCom_GPIOToggle(conn_ctx, gpioPIN);
     return (U16)status;
 }
 
 U16 nx_host_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *resp, U16 *respLen)
 {
-    U32 status = 0;
+    U32 status       = 0;
     U32 respLenLocal = 0;
 
     if (NULL == respLen) {
@@ -110,10 +114,11 @@ U16 nx_host_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *resp, U16 *respLen)
     }
     respLenLocal = *respLen;
 
-    status   = smComVCom_GPIORead(conn_ctx, gpioPIN, resp, &respLenLocal);
+    status = smComVCom_GPIORead(conn_ctx, gpioPIN, resp, &respLenLocal);
     if (respLenLocal <= UINT16_MAX) {
         *respLen = (U16)respLenLocal;
-    } else {
+    }
+    else {
         status = 0;
     }
 exit:

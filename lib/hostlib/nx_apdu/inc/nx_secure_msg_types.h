@@ -26,7 +26,14 @@
 #define NX_LEAF_CERT_CACHE_ITEM_NA (NX_LEAF_CERT_CACHE_MAX + 1) // Invaid item number
 #define NX_PARENT_CERT_CACHE_MAX 5
 #define NX_CERT_MAPPING_TABLE_MAX 20
+#if defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+/** TBD
+ * Avoid using platform names in lib
+*/
+#define NX_MAX_CERT_BUFFER_SIZE 512
+#else
 #define NX_MAX_CERT_BUFFER_SIZE 1024
+#endif
 #define NX_ECDSA_V4_RANDOM_LEN 16
 #define NX_MAX_INCLUDE_DIR_LENGTH 150
 #define NX_PCD_CAPABILITIES_LEN 6

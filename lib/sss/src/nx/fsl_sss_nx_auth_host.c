@@ -447,9 +447,12 @@ sss_status_t nx_hostcrypto_get_CA_cert_list(nx_auth_sigma_ctx_t *pAuthCtx,
 #if SSS_HAVE_HOSTCRYPTO_MBEDTLS
     sss_status_t status = kStatus_SSS_Fail;
     int counter         = 0;
-    int i               = -1;
-    uint8_t *pCertBuf   = NULL;
-    size_t certBufLen   = 0;
+
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
+    int i             = -1;
+    uint8_t *pCertBuf = NULL;
+    size_t certBufLen = 0;
+#endif
 
     ENSURE_OR_GO_EXIT(pAuthCtx != NULL);
     ENSURE_OR_GO_EXIT(deviceCertCtx != NULL);
@@ -462,6 +465,7 @@ sss_status_t nx_hostcrypto_get_CA_cert_list(nx_auth_sigma_ctx_t *pAuthCtx,
     ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
     counter++;
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
     status = kStatus_SSS_Fail;
     ENSURE_OR_GO_EXIT(pAuthCtx->static_ctx.fp_get_parent_cert_from_cache != NULL);
     // Add certificate in cache
@@ -492,9 +496,9 @@ sss_status_t nx_hostcrypto_get_CA_cert_list(nx_auth_sigma_ctx_t *pAuthCtx,
                 SSS_FREE(pCertBuf);
             }
         }
-        status = kStatus_SSS_Success;
     }
-
+    status = kStatus_SSS_Success;
+#endif
     deviceCertCtx->deviceCACertListNum = counter;
 
 exit:
@@ -552,8 +556,8 @@ exit:
                 SSS_FREE(pCertBuf);
             }
         }
-        status = kStatus_SSS_Success;
     }
+    status = kStatus_SSS_Success;
 
     deviceCertCtx->deviceCACertListNum = counter;
 
@@ -616,6 +620,10 @@ exit:
 
     status = kStatus_SSS_Success;
 exit:
+    if (pEvpKey != NULL) {
+        EVP_PKEY_free(pEvpKey);
+    }
+
     return status;
 
 #endif
@@ -738,6 +746,7 @@ sss_status_t nx_hostcrypto_push_intermediate_cert(nx_device_cert_ctx_host_t *dev
     sss_status_t status = kStatus_SSS_Fail;
 
     ENSURE_OR_GO_EXIT(NULL != deviceCertCtx)
+    ENSURE_OR_GO_EXIT(certIndex < NX_MAX_CERT_DEPTH);
 
     sk_X509_push(deviceCertCtx->caCertStack, deviceCertCtx->deviceCert[certIndex]);
 
@@ -775,7 +784,8 @@ void nx_hostcrypto_cert_free(nx_device_cert_ctx_host_t *deviceCertCtx)
             X509_free(deviceCertCtx->deviceCACertList[index]);
         }
     }
-    sk_X509_pop_free(deviceCertCtx->caCertStack, X509_free);
+
+    sk_X509_free(deviceCertCtx->caCertStack);
     X509_STORE_CTX_cleanup(deviceCertCtx->storeCtx);
     X509_STORE_CTX_free(deviceCertCtx->storeCtx);
     X509_STORE_free(deviceCertCtx->rootCAStore);

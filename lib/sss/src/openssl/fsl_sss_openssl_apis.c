@@ -331,6 +331,7 @@ void sss_openssl_key_object_free(sss_openssl_object_t *keyObject)
         case kSSS_CipherType_EC_NIST_P:
         case kSSS_CipherType_EC_BRAINPOOL:
         case kSSS_CipherType_CARootKeys_BRAINPOOL:
+        case kSSS_CipherType_CARootKeys_NIST_P:
             pKey = (EVP_PKEY *)keyObject->contents;
             EVP_PKEY_free(pKey);
             break;
@@ -1782,6 +1783,7 @@ sss_status_t sss_openssl_cipher_update(
             blockoutLen   = outBuffSize;
             inputData_len = cipherBlockSize;
             ENSURE_OR_GO_EXIT(blockoutLen >= inputData_len);
+            ENSURE_OR_GO_EXIT(output_offset < *destLen);
             if (1 != EVP_CipherUpdate(context->cipher_ctx,
                          (destData + output_offset),
                          (int *)&blockoutLen,
@@ -2080,6 +2082,7 @@ sss_status_t sss_openssl_aead_init(
     }
 
     if (context->algorithm == kAlgorithm_SSS_AES_GCM) {
+        ENSURE_OR_GO_EXIT(nonceLen <= INT_MAX);
         ret = EVP_CIPHER_CTX_ctrl(context->aead_ctx, EVP_CTRL_GCM_SET_IVLEN, (int)nonceLen, NULL);
         ENSURE_OR_GO_EXIT(ret == 1);
         context->cache_data_len = 0;
@@ -2150,9 +2153,11 @@ sss_status_t sss_openssl_aead_update_aad(sss_openssl_aead_t *context, const uint
     /* Provide AAD data */
     if (context->algorithm == kAlgorithm_SSS_AES_GCM) {
         if (context->mode == kMode_SSS_Decrypt) {
+            ENSURE_OR_GO_EXIT(aadDataLen <= INT_MAX);
             ret = EVP_DecryptUpdate(context->aead_ctx, NULL, &len, aadData, (int)aadDataLen);
         }
         else if (context->mode == kMode_SSS_Encrypt) {
+            ENSURE_OR_GO_EXIT(aadDataLen <= INT_MAX);
             ret = EVP_EncryptUpdate(context->aead_ctx, NULL, &len, aadData, (int)aadDataLen);
         }
         else {
@@ -2719,7 +2724,7 @@ sss_status_t sss_openssl_mac_one_go(
         ENSURE_OR_GO_CLEANUP(ret == 1);
 
         ENSURE_OR_GO_CLEANUP(macLocalLen == *macLen);
-        if (memcmp(macLocal, mac, macLocalLen) != 0) {
+        if (memcmp(macLocal, mac, *macLen) != 0) {
             goto cleanup;
         }
     }
@@ -2891,7 +2896,7 @@ sss_status_t sss_openssl_mac_one_go(
                             macLocal,
                             ((unsigned int *)&macLocalLen))) {
                 if (macLocalLen == *macLen) {
-                    if (!memcmp(macLocal, mac, macLocalLen)) {
+                    if (!memcmp(macLocal, mac, *macLen)) {
                         retval = kStatus_SSS_Success;
                     }
                 }

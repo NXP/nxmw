@@ -19,7 +19,7 @@
 //          |------------|------------|----------------|
 // Before  start   buf(bufLen)                        Max
 // After                          buf(bufLen)
-int set_U8(uint8_t **buf, size_t *bufLen, uint8_t value)
+int set_U8(uint8_t **buf, size_t *bufLen, uint8_t value, size_t max_buf_size)
 {
     int retVal                 = 1;
     uint8_t *pBuf              = NULL;
@@ -33,7 +33,7 @@ int set_U8(uint8_t **buf, size_t *bufLen, uint8_t value)
     if ((SIZE_MAX - (*bufLen)) < size_of_value) {
         goto cleanup;
     }
-    if (((*bufLen) + size_of_value) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_value) > max_buf_size) {
         goto cleanup;
     }
     *pBuf++ = value;
@@ -44,7 +44,7 @@ cleanup:
     return retVal;
 }
 
-int set_U16_LSB(uint8_t **buf, size_t *bufLen, uint16_t value)
+int set_U16_LSB(uint8_t **buf, size_t *bufLen, uint16_t value, size_t max_buf_size)
 {
     int retVal                 = 1;
     uint8_t *pBuf              = NULL;
@@ -59,7 +59,7 @@ int set_U16_LSB(uint8_t **buf, size_t *bufLen, uint16_t value)
         goto cleanup;
     }
 
-    if (((*bufLen) + size_of_value) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_value) > max_buf_size) {
         goto cleanup;
     }
     *pBuf++ = (uint8_t)((value >> 0 * 8) & 0xFF);
@@ -71,7 +71,7 @@ cleanup:
     return retVal;
 }
 
-int set_U24_LSB(uint8_t **buf, size_t *bufLen, size_t value)
+int set_U24_LSB(uint8_t **buf, size_t *bufLen, size_t value, size_t max_buf_size)
 {
     int retVal                 = 1;
     uint8_t *pBuf              = NULL;
@@ -86,7 +86,7 @@ int set_U24_LSB(uint8_t **buf, size_t *bufLen, size_t value)
         goto cleanup;
     }
 
-    if (((*bufLen) + size_of_value) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_value) > max_buf_size) {
         goto cleanup;
     }
     *pBuf++ = (uint8_t)((value >> 0 * 8) & 0xFF);
@@ -154,7 +154,7 @@ cleanup:
     return retVal;
 }
 
-int set_U32_LSB(uint8_t **buf, size_t *bufLen, size_t value)
+int set_U32_LSB(uint8_t **buf, size_t *bufLen, size_t value, size_t max_buf_size)
 {
     int retVal               = 1;
     uint8_t *pBuf            = NULL;
@@ -168,7 +168,7 @@ int set_U32_LSB(uint8_t **buf, size_t *bufLen, size_t value)
     if ((SIZE_MAX - (*bufLen)) < size_of_tlv) {
         goto cleanup;
     }
-    if (((*bufLen) + size_of_tlv) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_tlv) > max_buf_size) {
         goto cleanup;
     }
     *pBuf++ = (uint8_t)((value >> 0 * 8) & 0xFF);
@@ -182,7 +182,7 @@ cleanup:
     return retVal;
 }
 
-int tlvSet_U8(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, uint8_t value)
+int tlvSet_U8(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, uint8_t value, size_t max_buf_size)
 {
     int retVal               = 1;
     uint8_t *pBuf            = NULL;
@@ -196,7 +196,7 @@ int tlvSet_U8(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, uint8_t value)
     if ((SIZE_MAX - (*bufLen)) < size_of_tlv) {
         goto cleanup;
     }
-    if (((*bufLen) + size_of_tlv) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_tlv) > max_buf_size) {
         goto cleanup;
     }
     *pBuf++ = (uint8_t)tag;
@@ -213,7 +213,7 @@ cleanup:
 // before:          buf, bufLen                             Max
 //          |---------|tag---------------|-------------------|
 // after:                             buf, bufLen           Max
-int tlvSet_u8buf(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, const uint8_t *cmd, size_t cmdLen)
+int tlvSet_u8buf(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, const uint8_t *cmd, size_t cmdLen, size_t max_buf_size)
 {
     int retVal    = 1;
     uint8_t *pBuf = NULL;
@@ -238,7 +238,7 @@ int tlvSet_u8buf(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, const uint8_t *cmd
     if ((SIZE_MAX - (*bufLen)) < size_of_tlv) {
         goto cleanup;
     }
-    if (((*bufLen) + size_of_tlv) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_tlv) > max_buf_size) {
         LOG_E("Not enough buffer");
         goto cleanup;
     }
@@ -272,7 +272,7 @@ cleanup:
     return retVal;
 }
 
-int set_u8buf(uint8_t **buf, size_t *bufLen, const uint8_t *cmd, size_t cmdLen)
+int set_u8buf(uint8_t **buf, size_t *bufLen, const uint8_t *cmd, size_t cmdLen, size_t max_buf_size)
 {
     int retVal               = 1;
     uint8_t *pBuf            = NULL;
@@ -288,7 +288,7 @@ int set_u8buf(uint8_t **buf, size_t *bufLen, const uint8_t *cmd, size_t cmdLen)
         goto cleanup;
     }
 
-    if (((*bufLen) + size_of_tlv) > NX_MAX_BUF_SIZE_CMD) {
+    if (((*bufLen) + size_of_tlv) > max_buf_size) {
         LOG_E("Not enough buffer");
         goto cleanup;
     }
@@ -806,6 +806,8 @@ smStatus_t nx_Transform(struct SeSession *pSession,
     ENSURE_OR_GO_EXIT(NULL != out_hdr)
     ENSURE_OR_GO_EXIT(NULL != txBuf)
     ENSURE_OR_GO_EXIT(NULL != ptxBufLen)
+    ENSURE_OR_GO_EXIT((SIZE_MAX - cmdHeaderLen) > cmdDataBufLen)
+    ENSURE_OR_GO_EXIT(cmdHeaderLen + cmdDataBufLen <= NX_MAX_BUF_SIZE_CMD)
 
     if (cmdHeaderLen > 0) {
         ENSURE_OR_GO_EXIT(NULL != cmdHeader)
@@ -815,10 +817,8 @@ smStatus_t nx_Transform(struct SeSession *pSession,
 
     if (cmdDataBufLen > 0) {
         ENSURE_OR_GO_EXIT(NULL != cmdDataBuf)
+        ENSURE_OR_GO_EXIT(i <= NX_MAX_BUF_SIZE_CMD)
         memcpy(&txBuf[i], cmdDataBuf, cmdDataBufLen);
-        if ((SIZE_MAX - i) < cmdDataBufLen) {
-            goto exit;
-        }
         i += cmdDataBufLen;
     }
 
@@ -988,13 +988,13 @@ smStatus_t nx_Transform_AES_EV2(struct SeSession *pSession,
             if (pSession->authType == knx_AuthType_SIGMA_I_Verifier ||
                 pSession->authType == knx_AuthType_SIGMA_I_Prover) {
                 ENSURE_OR_GO_CLEANUP(NULL != pSession->ctx.pdynSigICtx);
+                LOG_D("Command counter = 0x%02x", pSession->ctx.pdynSigICtx->CmdCtr);
                 pSession->ctx.pdynSigICtx->CmdCtr += 1; //command counter incremented after mac authentication
-                LOG_D("Command counter = %d", pSession->ctx.pdynSigICtx->CmdCtr);
             }
             else if (pSession->authType == knx_AuthType_SYMM_AUTH) {
                 ENSURE_OR_GO_CLEANUP(NULL != pSession->ctx.pdynSymmAuthCtx);
+                LOG_D("Command counter = 0x%02x", pSession->ctx.pdynSymmAuthCtx->CmdCtr);
                 pSession->ctx.pdynSymmAuthCtx->CmdCtr += 1; //command counter incremented after mac authentication
-                LOG_D("Command counter = %d", pSession->ctx.pdynSymmAuthCtx->CmdCtr);
             }
         }
     }
@@ -1008,10 +1008,12 @@ smStatus_t nx_Transform_AES_EV2(struct SeSession *pSession,
             if (pSession->authType == knx_AuthType_SIGMA_I_Verifier ||
                 pSession->authType == knx_AuthType_SIGMA_I_Prover) {
                 ENSURE_OR_GO_CLEANUP(NULL != pSession->ctx.pdynSigICtx);
+                LOG_D("Command counter = 0x%02x", pSession->ctx.pdynSigICtx->CmdCtr);
                 pSession->ctx.pdynSigICtx->CmdCtr += 1; //command counter incremented
             }
             else if (pSession->authType == knx_AuthType_SYMM_AUTH) {
                 ENSURE_OR_GO_CLEANUP(NULL != pSession->ctx.pdynSymmAuthCtx);
+                LOG_D("Command counter = 0x%02x", pSession->ctx.pdynSymmAuthCtx->CmdCtr);
                 pSession->ctx.pdynSymmAuthCtx->CmdCtr += 1; //command counter incremented
             }
         }

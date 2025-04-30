@@ -114,7 +114,7 @@ sss_status_t ex_sss_boot_connectstring(int argc, const char *argv[], char **pPor
         portName = (char *)gszCOMPortDefault;
         LOG_I("Using PortName='%s' (gszCOMPortDefault)", portName);
 #elif defined(SSS_HAVE_SMCOM_PCSC) && (SSS_HAVE_SMCOM_PCSC)
-        portName = (char *)gszReaderDefault;
+        portName                 = (char *)gszReaderDefault;
 #endif
 
 #if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS) || \

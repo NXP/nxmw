@@ -293,32 +293,32 @@ typedef struct
 #define NX_DO_LOG_A(DESCRIPTION, ARRAY, ARRAY_LEN)
 #endif
 
-#define TLVSET_U8(DESCRIPTION, PBUF, PBUFLEN, TAG, VALUE) \
-    tlvSet_U8(PBUF, PBUFLEN, TAG, VALUE);                 \
+#define TLVSET_U8(DESCRIPTION, PBUF, PBUFLEN, TAG, VALUE, MAX_BUF_SIZE) \
+    tlvSet_U8(PBUF, PBUFLEN, TAG, VALUE, MAX_BUF_SIZE);                 \
     DO_LOG_V(TAG, DESCRIPTION, VALUE)
 
-#define SET_U8(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
-    set_U8(PBUF, PBUFLEN, VALUE);                 \
+#define SET_U8(DESCRIPTION, PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE) \
+    set_U8(PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE);                 \
     NX_DO_LOG_V(DESCRIPTION, VALUE)
 
 #define TLVSET_U16(DESCRIPTION, PBUF, PBUFLEN, TAG, VALUE) \
     tlvSet_U16(PBUF, PBUFLEN, TAG, VALUE);                 \
     DO_LOG_V(TAG, DESCRIPTION, VALUE)
 
-#define SET_U16_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
-    set_U16_LSB(PBUF, PBUFLEN, VALUE);                 \
+#define SET_U16_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE) \
+    set_U16_LSB(PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE);                 \
     NX_DO_LOG_V(DESCRIPTION, VALUE)
 
-#define SET_U24_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
-    set_U24_LSB(PBUF, PBUFLEN, VALUE);                 \
+#define SET_U24_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE) \
+    set_U24_LSB(PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE);                 \
     NX_DO_LOG_V(DESCRIPTION, VALUE)
 
 #define GET_U24_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
     get_U24_LSB(PBUF, PBUFLEN, VALUE);                 \
     NX_DO_LOG_V(DESCRIPTION, VALUE)
 
-#define SET_U32_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
-    set_U32_LSB(PBUF, PBUFLEN, VALUE);                 \
+#define SET_U32_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE) \
+    set_U32_LSB(PBUF, PBUFLEN, VALUE, MAX_BUF_SIZE);                 \
     NX_DO_LOG_V(DESCRIPTION, VALUE)
 
 #define GET_U32_LSB(DESCRIPTION, PBUF, PBUFLEN, VALUE) \
@@ -354,12 +354,12 @@ typedef struct
 
 #define TLVSET_CryptoObjectID TLVSET_U16
 
-#define TLVSET_u8buf(DESCRIPTION, PBUF, PBUFLEN, TAG, CMD, CMDLEN) \
-    tlvSet_u8buf(PBUF, PBUFLEN, TAG, CMD, CMDLEN);                 \
+#define TLVSET_u8buf(DESCRIPTION, PBUF, PBUFLEN, TAG, CMD, CMDLEN, MAX_BUF_SIZE) \
+    tlvSet_u8buf(PBUF, PBUFLEN, TAG, CMD, CMDLEN, MAX_BUF_SIZE);                 \
     DO_LOG_A(TAG, DESCRIPTION, CMD, CMDLEN)
 
-#define SET_u8buf(DESCRIPTION, PBUF, PBUFLEN, CMD, CMDLEN) \
-    set_u8buf(PBUF, PBUFLEN, CMD, CMDLEN);                 \
+#define SET_u8buf(DESCRIPTION, PBUF, PBUFLEN, CMD, CMDLEN, MAX_BUF_SIZE) \
+    set_u8buf(PBUF, PBUFLEN, CMD, CMDLEN, MAX_BUF_SIZE);                 \
     NX_DO_LOG_A(DESCRIPTION, CMD, CMDLEN)
 
 #define TLVSET_u8bufOptional(DESCRIPTION, PBUF, PBUFLEN, TAG, CMD, CMDLEN) \
@@ -370,21 +370,21 @@ typedef struct
     tlvSet_u8bufOptional_ByteShift(PBUF, PBUFLEN, TAG, CMD, CMDLEN);                 \
     DO_LOG_A(TAG, DESCRIPTION, CMD, CMDLEN)
 
-int tlvSet_U8(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, uint8_t value);
-int tlvSet_u8buf(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, const uint8_t *cmd, size_t cmdLen);
+int tlvSet_U8(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, uint8_t value, size_t max_buf_size);
+int tlvSet_u8buf(uint8_t **buf, size_t *bufLen, NX_TAG_t tag, const uint8_t *cmd, size_t cmdLen, size_t max_buf_size);
 int tlvGet_U8(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, NX_TAG_t tag, uint8_t *pRsp);
 int tlvGet_u8buf(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, NX_TAG_t tag, uint8_t *rsp, size_t *pRspLen);
 int tlvGet_u8bufPointer(
     uint8_t *buf, size_t *pBufIndex, const size_t bufLen, NX_TAG_t tag, uint8_t **rsp, size_t *pRspLen);
 int tlvGet_ValueIndex(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, NX_TAG_t tag);
 
-int set_U8(uint8_t **buf, size_t *bufLen, uint8_t value);
-int set_U16_LSB(uint8_t **buf, size_t *bufLen, uint16_t value);
-int set_U24_LSB(uint8_t **buf, size_t *bufLen, size_t value);
+int set_U8(uint8_t **buf, size_t *bufLen, uint8_t value, size_t max_buf_size);
+int set_U16_LSB(uint8_t **buf, size_t *bufLen, uint16_t value, size_t max_buf_size);
+int set_U24_LSB(uint8_t **buf, size_t *bufLen, size_t value, size_t max_buf_size);
 int get_U24_LSB(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, uint32_t *pRsp);
-int set_U32_LSB(uint8_t **buf, size_t *bufLen, size_t value);
+int set_U32_LSB(uint8_t **buf, size_t *bufLen, size_t value, size_t max_buf_size);
 int get_U32_LSB(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, uint32_t *pRsp);
-int set_u8buf(uint8_t **buf, size_t *bufLen, const uint8_t *cmd, size_t cmdLen);
+int set_u8buf(uint8_t **buf, size_t *bufLen, const uint8_t *cmd, size_t cmdLen, size_t max_buf_size);
 int get_U8(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, uint8_t *pRsp);
 int get_U16_LSB(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, uint16_t *pRsp);
 int get_u8buf(uint8_t *buf, size_t *pBufIndex, const size_t bufLen, uint8_t *rsp, size_t rspLen);

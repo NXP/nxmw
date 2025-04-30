@@ -27,6 +27,7 @@
 #include "nxLog_msg.h"
 #include "fsl_sss_nx_auth_types.h"
 
+#ifdef EX_SSS_SIGMA_I_CACHE_FILE_DIR
 #ifdef EX_SSS_SIGMA_I_CERT_INCLUDE_DIR
 
 #if defined(_MSC_VER)
@@ -537,6 +538,6 @@ sss_status_t ex_parent_cert_cache_insert(uint8_t *pCertBuf, size_t certBufLen)
     return kStatus_SSS_Success;
 }
 
-#endif
-
-#endif //#if SSS_HAVE_NX_TYPE
+#endif // EX_SSS_SIGMA_I_CERT_INCLUDE_DIR
+#endif // EX_SSS_SIGMA_I_CACHE_FILE_DIR
+#endif // SSS_HAVE_NX_TYPE

@@ -15,6 +15,7 @@
 
 #define CALC_NX_CONF_GPIO_PAD_CTRL(A, B, C, D) ((A << (8 * 3)) | (B << (8 * 2)) | (C << (8 * 1)) | D)
 
+#define NX_MAX_BUF_SIZE_CMD_HEADER (100)
 #define NX_MAX_BUF_SIZE_CMD (1024)
 #define NX_MAX_BUF_SIZE_RSP (1024)
 #define NX_MAX_STANDARD_DATA_FILE_SIZE (1024)

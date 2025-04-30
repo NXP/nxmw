@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014, 2018-2020, 2023-2024 NXP
+ * Copyright 2012-2014, 2018-2020, 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <phNxpEseProto7816_3.h>
@@ -217,9 +217,9 @@ static bool_t phNxpEseProto7816_SendSFrame(void *conn_ctx, sFrameInfo_t sFrameDa
         pcb_byte |= PH_PROTO_7816_S_RESYNCH;
         break;
     case DEEP_PWR_DOWN_REQ:
-        frame_len = (PH_PROTO_7816_HEADER_LEN + PH_PROTO_7816_CRC_LEN);
+        frame_len                                    = (PH_PROTO_7816_HEADER_LEN + PH_PROTO_7816_CRC_LEN);
         p_framebuff[PH_PROPTO_7816_LEN_UPPER_OFFSET] = 0;
-        p_framebuff[PH_PROPTO_7816_INF_BYTE_OFFSET] = 0x00;
+        p_framebuff[PH_PROPTO_7816_INF_BYTE_OFFSET]  = 0x00;
 
         pcb_byte |= PH_PROTO_7816_S_BLOCK_REQ; /* PCB */
         pcb_byte |= PH_PROTO_7816_S_DEEP_PWR_DOWN;
@@ -632,7 +632,7 @@ exit:
 static bool_t phNxpEseProto7816_DecodeFrame(uint8_t *p_data, uint32_t data_len)
 {
     bool_t status = FALSE;
-    uint8_t pcb = 0;
+    uint8_t pcb   = 0;
     phNxpEseProto7816_PCB_bits_t pcb_bits;
     iFrameInfo_t *pRx_lastRcvdIframeInfo = &phNxpEseProto7816_3_Var.phNxpEseRx_Cntx.lastRcvdIframeInfo;
     rFrameInfo_t *pNextTx_RframeInfo     = &phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.RframeInfo;
@@ -901,10 +901,10 @@ static bool_t phNxpEseProto7816_DecodeFrame(uint8_t *p_data, uint32_t data_len)
 #endif
         case DEEP_PWR_DOWN_RES:
             pRx_lastRcvdSframeInfo->sFrameType = DEEP_PWR_DOWN_RES;
-            if(p_data[PH_PROPTO_7816_FRAME_LENGTH_OFFSET] > 0) {
+            if (p_data[PH_PROPTO_7816_FRAME_LENGTH_OFFSET] > 0) {
                 phNxpEseProto7816_DecodeSFrameData(p_data);
             }
-            phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType= UNKNOWN;
+            phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType         = UNKNOWN;
             phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState = IDLE_STATE;
             break;
         default:
@@ -1052,8 +1052,6 @@ static bool_t TransceiveProcess(void *conn_ctx)
     sFrameInfo_t sFrameInfo;
     sFrameInfo.sFrameType = INVALID_REQ_RES;
 
-    sFrameInfo.sFrameType = INVALID_REQ_RES;
-
     while (phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState != IDLE_STATE) {
         LOG_D(
             "%s nextTransceiveState %x ", __FUNCTION__, phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState);
@@ -1077,7 +1075,7 @@ static bool_t TransceiveProcess(void *conn_ctx)
             break;
         case SEND_DEEP_PWR_DOWN:
             sFrameInfo.sFrameType = DEEP_PWR_DOWN_REQ;
-            status = phNxpEseProto7816_SendSFrame(conn_ctx, sFrameInfo);
+            status                = phNxpEseProto7816_SendSFrame(conn_ctx, sFrameInfo);
             break;
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
         case SEND_S_CIP:
@@ -1419,6 +1417,47 @@ bool_t phNxpEseProto7816_SetIfscSize(uint16_t IFSC_Size)
     return TRUE;
 }
 
+/******************************************************************************
+ * Function         phNxpEseProto7816_Store
+ *
+ * Description      This function is used to store i2c context
+ *
+ * param[in]        phNxpEseProto7816_t* conn_ctx
+ *
+ * Returns          On success return TRUE or else FALSE.
+ *
+ ******************************************************************************/
+bool_t phNxpEseProto7816_Store(phNxpEseProto7816_t *conn_ctx)
+{
+    if (NULL == conn_ctx) {
+        LOG_E("%s phNxpEseProto7816 Store failed  ", __FUNCTION__);
+        return FALSE;
+    }
+    phNxpEse_memcpy(&phNxpEseProto7816_3_Var, conn_ctx, sizeof(phNxpEseProto7816_t));
+    return TRUE;
+}
+
+/******************************************************************************
+ * Function         phNxpEseProto7816_Retrieve
+ *
+ * Description      This function is used to retrieve i2c context
+ *
+ * param[in]        phNxpEseProto7816_t* conn_ctx
+ *
+ * Returns          On success return TRUE or else FALSE.
+ *
+ ******************************************************************************/
+bool_t phNxpEseProto7816_Retrieve(phNxpEseProto7816_t *conn_ctx)
+{
+    if (NULL == conn_ctx) {
+        LOG_E("%s phNxpEseProto7816 Retrieve failed  ", __FUNCTION__);
+        return FALSE;
+    }
+    phNxpEse_memcpy(conn_ctx, &phNxpEseProto7816_3_Var, sizeof(phNxpEseProto7816_t));
+    phNxpEse_memset(&phNxpEseProto7816_3_Var, 0x00, sizeof(phNxpEseProto7816_t));
+    return TRUE;
+}
+
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
 /******************************************************************************
  * Function         phNxpEseProto7816_GetCip
@@ -1456,7 +1495,6 @@ exit:
     return status;
 }
 
-
 /******************************************************************************
  * Function         phNxpEseProto7816_Release_Req
  *
@@ -1467,17 +1505,17 @@ exit:
  * Returns          On success return TRUE or else FALSE.
  *
  ******************************************************************************/
-bool_t phNxpEseProto7816_Release_Req(void* conn_ctx)
+bool_t phNxpEseProto7816_Release_Req(void *conn_ctx)
 {
-    bool_t status = FALSE;
+    bool_t status                    = FALSE;
     sFrameInfo_t *pNextTx_SframeInfo = &phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.SframeInfo;
 
-    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_TRANSCEIVE;
-    phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType= SFRAME;
-    pNextTx_SframeInfo->sFrameType = RELEASE_REQ;
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState        = PH_NXP_ESE_PROTO_7816_TRANSCEIVE;
+    phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType         = SFRAME;
+    pNextTx_SframeInfo->sFrameType                                = RELEASE_REQ;
     phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState = SEND_S_RELEASE;
-    status = TransceiveProcess(conn_ctx);
-    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_IDLE;
+    status                                                        = TransceiveProcess(conn_ctx);
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState        = PH_NXP_ESE_PROTO_7816_IDLE;
     return status;
 }
 
@@ -1491,18 +1529,18 @@ bool_t phNxpEseProto7816_Release_Req(void* conn_ctx)
  * Returns          On success return TRUE or else FALSE.
  *
  ******************************************************************************/
-bool_t phNxpEseProto7816_Deep_Pwr_Down(void* conn_ctx)
+bool_t phNxpEseProto7816_Deep_Pwr_Down(void *conn_ctx)
 {
-    bool_t status = FALSE;
+    bool_t status                    = FALSE;
     sFrameInfo_t *pNextTx_SframeInfo = &phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.SframeInfo;
 
     phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_TRANSCEIVE;
     /* send the end of session s-frame */
-    phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType= SFRAME;
-    pNextTx_SframeInfo->sFrameType = DEEP_PWR_DOWN_REQ;
+    phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType         = SFRAME;
+    pNextTx_SframeInfo->sFrameType                                = DEEP_PWR_DOWN_REQ;
     phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState = SEND_DEEP_PWR_DOWN;
-    status = TransceiveProcess(conn_ctx);
-    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_IDLE;
+    status                                                        = TransceiveProcess(conn_ctx);
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState        = PH_NXP_ESE_PROTO_7816_IDLE;
     return status;
 }
 #endif

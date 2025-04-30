@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- /**
+/**
  * \addtogroup eSe_PAL_I2C
  * \brief PAL I2C port implementation for linux
  * @{ */
@@ -12,7 +12,6 @@
 
 /* Basic type definitions */
 #include <phEseTypes.h>
-
 
 /*!
  * \brief ESE Poll timeout (min 1 miliseconds)
@@ -30,20 +29,20 @@
 #if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS) || \
     defined(SSS_HAVE_HOST_PCLINUX64) && (SSS_HAVE_HOST_PCLINUX64) || \
     defined(SSS_HAVE_HOST_RASPBIAN) && (SSS_HAVE_HOST_RASPBIAN)
-    /* Non-Embedded platforms */
-  #define ESE_NAD_POLLING_MAX (2*250)
+/* Non-Embedded platforms */
+#define ESE_NAD_POLLING_MAX (2 * 250)
 #else
-  //back off delay is implemented for AX_EMBEDDED devices
-  /*TODO:semslite need more than 20 polling count right now max is set to 60 as 46 was the max sof counter observed
+//back off delay is implemented for embedded devices
+/*TODO:semslite need more than 20 polling count right now max is set to 60 as 46 was the max sof counter observed
    SIMW-2927*/
-    /* Embedded platforms */
-  #define ESE_NAD_POLLING_MAX (2*30)
+/* Embedded platforms */
+#define ESE_NAD_POLLING_MAX (2 * 30)
 #endif
 
 /*!
  * \brief Max retry count for Write
  */
-#define MAX_RETRY_COUNT   8
+#define MAX_RETRY_COUNT 8
 
 /*!
  * \brief ESE wakeup delay in case of write error retry
@@ -62,7 +61,7 @@
  *
  */
 // #define I2C_MASTER_SLAVE_ADDR_7BIT (0x90U >> 1)  //slve bit address is 20U but driver do right shift so set to 40U
-#define SMCOM_I2C_ADDRESS           (0x40)
+#define SMCOM_I2C_ADDRESS (0x40)
 
 /*!
  * \ingroup eSe_PAL_I2C
@@ -91,11 +90,11 @@ typedef struct phPalEse_Config
 
     void *pDevHandle;
     /*!< Device handle output */
-} phPalEse_Config_t,*pphPalEse_Config_t;    /* pointer to phPalEse_Config_t */
+} phPalEse_Config_t, *pphPalEse_Config_t; /* pointer to phPalEse_Config_t */
 
 void phPalEse_i2c_close(void *pDevHandle);
 ESESTATUS phPalEse_i2c_open_and_configure(pphPalEse_Config_t pConfig);
-int phPalEse_i2c_read(void *pDevHandle, uint8_t * pBuffer, int nNbBytesToRead);
-int phPalEse_i2c_write(void *pDevHandle,uint8_t * pBuffer, int nNbBytesToWrite);
+int phPalEse_i2c_read(void *pDevHandle, uint8_t *pBuffer, int nNbBytesToRead);
+int phPalEse_i2c_write(void *pDevHandle, uint8_t *pBuffer, int nNbBytesToWrite);
 /** @} */
-#endif  /*  _PHNXPESE_PAL_I2C_H    */
+#endif /*  _PHNXPESE_PAL_I2C_H    */

@@ -12,17 +12,17 @@
 
 typedef enum
 {
-   ESE_STATUS_CLOSE = 0x00,
-   ESE_STATUS_BUSY,
-   ESE_STATUS_RECOVERY,
-   ESE_STATUS_IDLE,
-   ESE_STATUS_OPEN,
+    ESE_STATUS_CLOSE = 0x00,
+    ESE_STATUS_BUSY,
+    ESE_STATUS_RECOVERY,
+    ESE_STATUS_IDLE,
+    ESE_STATUS_OPEN,
 } phNxpEse_LibStatus;
 
 /* I2C Control structure */
 typedef struct phNxpEse_Context
 {
-    phNxpEse_LibStatus   EseLibStatus;      /* Indicate if Ese Lib is open or closed */
+    phNxpEse_LibStatus EseLibStatus; /* Indicate if Ese Lib is open or closed */
     void *pDevHandle;
 
     uint8_t p_read_buff[MAX_DATA_LEN];
@@ -31,9 +31,8 @@ typedef struct phNxpEse_Context
     phNxpEse_initParams initParams;
 } phNxpEse_Context_t;
 
-
-ESESTATUS phNxpEse_WriteFrame(void* conn_ctx, uint32_t data_len, const uint8_t *p_data);
-ESESTATUS phNxpEse_read(void* conn_ctx, uint32_t *data_len, uint8_t **pp_data);
-void phNxpEse_clearReadBuffer(void* conn_ctx);
+ESESTATUS phNxpEse_WriteFrame(void *conn_ctx, uint32_t data_len, const uint8_t *p_data);
+ESESTATUS phNxpEse_read(void *conn_ctx, uint32_t *data_len, uint8_t **pp_data);
+void phNxpEse_clearReadBuffer(void *conn_ctx);
 
 #endif /* _PHNXPESE_INTERNAL_H_ */

@@ -41,5 +41,4 @@ TARGET_LINK_LIBRARIES(nx_utils smCom)
 
 IF(SSS_HAVE_RTOS_FREERTOS)
     TARGET_LINK_LIBRARIES(nx_utils freertos-kernel)
-    TARGET_LINK_LIBRARIES(nx_utils freertos-ip)
 ENDIF()

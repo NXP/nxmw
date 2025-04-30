@@ -81,6 +81,7 @@ uint16_t nx_Decrypt_AES_EV2_ResponseAPDU(
     ENSURE_OR_GO_EXIT(NULL != rspBuf);
     ENSURE_OR_GO_EXIT(NULL != session_ctx);
     ENSURE_OR_GO_EXIT((SIZE_MAX - (*pRspBufLen)) >= 1);
+    ENSURE_OR_GO_EXIT(*pRspBufLen >= 1); // Non-zero length of response is expected
 
     if (preCommMode == NULL) {
         status = nx_get_command_commMode(cmdByte, &CommMode);
@@ -104,7 +105,7 @@ uint16_t nx_Decrypt_AES_EV2_ResponseAPDU(
 
     if (CommMode == EV2_CommMode_FULL || CommMode == EV2_CommMode_MAC) {
         // RC || CmdCtr || TI || RespData/E(RespData)
-        apduPayloadToMAC_Verify[offset++] = rspBuf[*pRspBufLen + 1]; //return code
+        apduPayloadToMAC_Verify[offset++] = rspBuf[*pRspBufLen - 1]; //return code
         if (session_ctx->authType == knx_AuthType_SIGMA_I_Verifier ||
             session_ctx->authType == knx_AuthType_SIGMA_I_Prover) {
             apduPayloadToMAC_Verify[offset++] = (session_ctx->ctx.pdynSigICtx->CmdCtr & 0x00FF);
@@ -545,12 +546,13 @@ static void nx_PadCommandAPDU(uint8_t *cmdApduBuf, size_t *cmdApduBufLen)
     ENSURE_OR_GO_EXIT(cmdApduBufLen != NULL);
     ENSURE_OR_GO_EXIT(cmdApduBuf != NULL);
     ENSURE_OR_GO_EXIT((UINT_MAX - 1) > (*cmdApduBufLen));
+    ENSURE_OR_GO_EXIT((*cmdApduBufLen) - 1 < NX_MAX_BUF_SIZE_CMD);
 
     // pad the payload and adjust the length of the APDU
     cmdApduBuf[(*cmdApduBufLen)] = EV2_DATA_PAD_BYTE; //need to check
     *cmdApduBufLen += 1;
     zeroBytesToPad = (EV2_KEY_SIZE - ((*cmdApduBufLen) % EV2_KEY_SIZE)) % EV2_KEY_SIZE; //need to check
-    ENSURE_OR_GO_EXIT((UINT_MAX - (*cmdApduBufLen)) > zeroBytesToPad);
+    ENSURE_OR_GO_EXIT((NX_MAX_BUF_SIZE_CMD - (*cmdApduBufLen)) > zeroBytesToPad);
     while (zeroBytesToPad > 0) {
         cmdApduBuf[(*cmdApduBufLen)] = 0x00;
         ENSURE_OR_GO_EXIT((UINT_MAX - 1) > (*cmdApduBufLen));

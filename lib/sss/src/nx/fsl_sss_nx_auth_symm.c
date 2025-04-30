@@ -381,7 +381,7 @@ sss_status_t get_pcdcap2_val_from_fs(uint8_t *pcdcap2, size_t pcdcap2_len)
         size_t sz = 0;
         _dupenv_s(&pcdcap2_path_env, &sz, EX_SSS_BOOT_PCDCAP2_PATH_ENV);
 #else
-        pcdcap2_path_env = getenv(EX_SSS_BOOT_PCDCAP2_PATH_ENV);
+        pcdcap2_path_env    = getenv(EX_SSS_BOOT_PCDCAP2_PATH_ENV);
 #endif //_MSC_VER
 
         if (pcdcap2_path_env != NULL) {
@@ -571,7 +571,7 @@ sss_status_t nx_util_get_app_keys_from_fs(uint8_t *appkeyBuf, size_t appkeyBufLe
         size_t sz = 0;
         _dupenv_s(&appkey_path_env, &sz, EX_SSS_BOOT_APPKEY_PATH_ENV);
 #else
-        appkey_path_env = getenv(EX_SSS_BOOT_APPKEY_PATH_ENV);
+        appkey_path_env     = getenv(EX_SSS_BOOT_APPKEY_PATH_ENV);
 #endif //_MSC_VER
 
         if (appkey_path_env != NULL) {

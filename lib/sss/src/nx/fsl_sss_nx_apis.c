@@ -248,7 +248,7 @@ sss_status_t sss_nx_session_open(sss_nx_session_t *session,
             LOG_AU8_I(cip, cipLen);
         }
 #else
-        /* AX_EMBEDDED Or Native */
+        /* EMBEDDED Or Native */
         lReturn = SM_I2CConnect(&(seSession->conn_ctx), &CommState, cip, &cipLen, pAuthCtx->portName);
         if (lReturn != SW_OK) {
             LOG_E("SM_I2CConnect Failed. Status %04X", lReturn);
@@ -992,7 +992,7 @@ sss_status_t sss_nx_key_object_allocate_handle(sss_nx_object_t *keyObject,
         else if ((keyId >= NX_KEY_MGMT_MIN_CRYPTO_KEY_NUMBER) && (keyId <= NX_KEY_MGMT_MAX_CRYPTO_KEY_NUMBER)) {
             /*Do Nothing, a valid keyID for a Crypto Key*/
         }
-        else if (/*(keyId >= NX_KEY_MGMT_MIN_APP_KEY_NUMBER) &&*/ keyId <= NX_KEY_MGMT_MAX_APP_KEY_NUMBER) {
+        else if (keyId <= NX_KEY_MGMT_MAX_APP_KEY_NUMBER) {
             /*Do Nothing, a valid keyID for an App Key*/
         }
         else {
@@ -3701,6 +3701,10 @@ static smStatus_t sss_nx_TXn_AES_EV2(struct SeSession *pSession,
             ret = SM_NOT_OK;
             goto exit;
         }
+        if (*rspLen < 2) {
+            ret = SM_NOT_OK;
+            goto exit;
+        }
         if ((SIZE_MAX - (*rspLen) + 2) < afRspLen) {
             ret = SM_NOT_OK;
             goto exit;
@@ -3709,6 +3713,8 @@ static smStatus_t sss_nx_TXn_AES_EV2(struct SeSession *pSession,
     }
 
     ret = SM_NOT_OK;
+    ENSURE_OR_GO_EXIT(*rspLen <= NX_MAX_BUF_SIZE_CMD);
+
     ret = pSession->fp_DeCrypt(pSession, cmdHeaderLen + cmdDataLen, cmd, rsp, rspLen, isExtended, options);
     ENSURE_OR_GO_EXIT((ret == SM_OK) || (ret == SM_OK_ALT));
 
@@ -3839,6 +3845,8 @@ static smStatus_t sss_nx_TXn(struct SeSession *pSession,
         *rspLen = *rspLen - 2 + afRspLen; // Response, inlcuding SW1SW2
     }
 
+    ENSURE_OR_GO_EXIT(*rspLen <= NX_MAX_BUF_SIZE_CMD);
+
     ret = SM_NOT_OK;
     ret = pSession->fp_DeCrypt(pSession, cmdHeaderLen + cmdDataLen, cmd, rsp, rspLen, isExtended, options);
     ENSURE_OR_GO_EXIT((ret == SM_OK) || (ret == SM_OK_ALT));
@@ -3860,9 +3868,9 @@ static smStatus_t sss_nx_channel_txnRaw(void *conn_ctx,
     uint8_t hasle,
     uint8_t isExtended)
 {
-    uint8_t txBuf[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t i                           = 0;
-    smStatus_t ret                     = SM_NOT_OK;
+    uint8_t hdrBuf[10] = {0};
+    size_t i           = 0;
+    smStatus_t ret     = SM_NOT_OK;
 
     if ((hdr == NULL) || (cmdBuf == NULL) || (rsp == NULL) || (rspLen == NULL)) {
         LOG_E("Tx APDU command failed: Wrong parameter.");
@@ -3881,25 +3889,28 @@ static smStatus_t sss_nx_channel_txnRaw(void *conn_ctx,
         goto exit;
     }
 
-    memcpy(&txBuf[i], hdr, sizeof(*hdr));
+    memcpy(&hdrBuf[i], hdr, sizeof(*hdr));
     i += sizeof(*hdr);
 
     // Lc + command
     if (cmdBufLen > 0) {
         if (isExtended == 1) {
             // Extended mode
-            txBuf[i++] = 0x00;
-            txBuf[i++] = 0xFFu & (cmdBufLen >> 8);
-            txBuf[i++] = 0xFFu & (cmdBufLen);
+            hdrBuf[i++] = 0x00;
+            hdrBuf[i++] = 0xFFu & (cmdBufLen >> 8);
+            hdrBuf[i++] = 0xFFu & (cmdBufLen);
         }
         else {
             // Short mode
-            txBuf[i++] = (uint8_t)cmdBufLen;
+            hdrBuf[i++] = (uint8_t)cmdBufLen;
         }
         ENSURE_OR_GO_EXIT((i + cmdBufLen) <= NX_MAX_BUF_SIZE_CMD);
-        memcpy(&txBuf[i], cmdBuf, cmdBufLen);
-        i += cmdBufLen;
+        // memcpy(&hdrBuf[i], cmdBuf, cmdBufLen);
     }
+
+    memmove(cmdBuf + i, cmdBuf, cmdBufLen);
+    memcpy(cmdBuf, hdrBuf, i);
+    i += cmdBufLen;
 
     // Le
     if (hasle == 1) {
@@ -3907,23 +3918,23 @@ static smStatus_t sss_nx_channel_txnRaw(void *conn_ctx,
         // Extended Le: 0x00 0x00   // 65536Bytes
         // Extended Le without Lc: 0x00 0x00 0x00 // 65536Bytes
         ENSURE_OR_GO_EXIT(i < (NX_MAX_BUF_SIZE_CMD));
-        txBuf[i++] = 0x00;
+        cmdBuf[i++] = 0x00;
         if (isExtended == 1) {
             if (cmdBufLen == 0) { // Lc = 0
                 ENSURE_OR_GO_EXIT(i < (NX_MAX_BUF_SIZE_CMD - 1));
-                txBuf[i++] = 0x00;
-                txBuf[i++] = 0x00;
+                cmdBuf[i++] = 0x00;
+                cmdBuf[i++] = 0x00;
             }
             else {
                 ENSURE_OR_GO_EXIT(i < (NX_MAX_BUF_SIZE_CMD));
-                txBuf[i++] = 0x00;
+                cmdBuf[i++] = 0x00;
             }
         }
     }
 
     ENSURE_OR_GO_EXIT((*rspLen) <= UINT32_MAX);
     uint32_t U32rspLen = (uint32_t)*rspLen;
-    ret                = (smStatus_t)smCom_TransceiveRaw(conn_ctx, txBuf, (U16)i, rsp, &U32rspLen);
+    ret                = (smStatus_t)smCom_TransceiveRaw(conn_ctx, cmdBuf, (U16)i, rsp, &U32rspLen);
     *rspLen            = U32rspLen;
 
 exit:

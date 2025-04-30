@@ -28,7 +28,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * includes
  ******************************************************************************/
 
-
 #ifdef USE_RTOS
 
 #include "FreeRTOS.h"
@@ -37,7 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define WEAK __attribute__ ((weak))
+#define WEAK __attribute__((weak))
 /*******************************************************************************
  * Static variables
  ******************************************************************************/
@@ -46,7 +45,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Global variables
  ******************************************************************************/
 
-
 /*******************************************************************************
  * Global Function Definitions
  ******************************************************************************/
@@ -54,9 +52,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* configUSE_STATIC_ALLOCATION is set to 1, so the application must provide an
  * implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
  * used by the Idle task. */
-WEAK void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
-                                   StackType_t **ppxIdleTaskStackBuffer,
-                                   uint32_t *pulIdleTaskStackSize)
+WEAK void vApplicationGetIdleTaskMemory(
+    StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize)
 {
     /* If the buffers to be provided to the Idle task are declared inside this
      * function then they must be declared static - otherwise they will be allocated on
@@ -80,9 +77,8 @@ WEAK void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 /* configUSE_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
  * application must provide an implementation of vApplicationGetTimerTaskMemory()
  * to provide the memory that is used by the Timer service task. */
-WEAK void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
-                                    StackType_t **ppxTimerTaskStackBuffer,
-                                    uint32_t *pulTimerTaskStackSize)
+WEAK void vApplicationGetTimerTaskMemory(
+    StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize)
 {
     /* If the buffers to be provided to the Timer task are declared inside this
      * function then they must be declared static - otherwise they will be allocated on

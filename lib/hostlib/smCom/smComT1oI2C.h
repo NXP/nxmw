@@ -23,10 +23,9 @@
 typedef enum
 {
     ESE_MODE_NORMAL = 0, /*!< All wired transaction other OSU */
-    ESE_MODE_OSU, /*!< Jcop Os update mode */
-    ESE_MODE_RESUME /*!< Session Resume mode */
+    ESE_MODE_OSU,        /*!< Jcop Os update mode */
+    ESE_MODE_RESUME      /*!< Session Resume mode */
 } phNxpEse_initMode;
-
 
 #if defined(__cplusplus)
 extern "C" {

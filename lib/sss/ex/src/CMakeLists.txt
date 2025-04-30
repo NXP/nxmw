@@ -15,6 +15,14 @@ FILE(
     ../inc/*.h
 )
 
+if (SSS_HAVE_HOST_EMBEDDED)
+    FILE(
+        GLOB
+        board_files
+        ${NXMW_TOP_DIR}/boards/platform/platform.c
+    )
+ENDIF()
+
 IF(SSS_HAVE_NX_TYPE)
     FILE(
         GLOB
@@ -36,6 +44,7 @@ ADD_LIBRARY(
     ${files}
     ${nx_files}
     ${mbedtls_files}
+    ${board_files}
 )
 
 TARGET_LINK_LIBRARIES(

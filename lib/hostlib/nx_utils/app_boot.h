@@ -42,8 +42,7 @@ extern int app_boot_Init_RTOS(void);
  *
  * @return     0 on success.
  */
-extern int app_boot_Connect(
-    SmCommState_t* pCommState, const char* pConnectionParam);
+extern int app_boot_Connect(SmCommState_t *pCommState, const char *pConnectionParam);
 
 /**
  * SET LEDs for the stauts.
