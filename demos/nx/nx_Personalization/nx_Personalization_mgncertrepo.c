@@ -80,7 +80,8 @@ sss_status_t nx_provision_load2se_uncompressed_cert(
     taggedCertLen = 0;
     taggedCert[0] = 0x7F;
     pCert         = &taggedCert[1];
-    tlvRet        = TLVSET_u8buf("cert", &pCert, &taggedCertLen, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen);
+    tlvRet        = TLVSET_u8buf(
+        "cert", &pCert, &taggedCertLen, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen, sizeof(taggedCert) - 1);
     if (0 != tlvRet) {
         goto exit;
     }

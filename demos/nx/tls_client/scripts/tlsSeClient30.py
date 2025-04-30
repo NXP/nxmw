@@ -78,6 +78,6 @@ if __name__ == '__main__':
         TLS_OPTION="tls1_2"
 
     groups = f"-groups {key_type}"
-    cmd=f"{openssl} s_client -connect {ip_addr}:8080 -{TLS_OPTION} -CAfile {rootca_cer} -cert {client_cer} -key nxp:{client_key_ref} {groups} {sel_cipher} -debug -msg"
+    cmd=f"{openssl} s_client -connect {ip_addr}:8080 -{TLS_OPTION} -CAfile {rootca_cer} -cert {client_cer} -key nxp:{client_key_ref} {groups} {sel_cipher} -debug -msg -propquery \"?provider=nxp_prov,?nxp_prov.signature=yes\""
     log.info(cmd)
     p = subprocess.check_call(cmd, shell=True)

@@ -50,15 +50,14 @@ sss_status_t nxclitool_get_ref_key(int argc,
         0xA0
     };
     /* clang-format on */
-    size_t ref_key_len                        = 40;
-    FILE *ref_fh                              = NULL;
-    FILE *pub_fh                              = NULL;
-    uint8_t pem_pub_key[MAX_CERT_BUF_LEN + 1] = {0};
-    size_t pem_pub_key_len                    = sizeof(pem_pub_key);
-    uint8_t pub_key[PUBKEY_LEN_MAX]           = {0};
-    uint8_t *pk_ptr                           = NULL;
-    size_t pub_key_len                        = sizeof(pub_key);
-    char name[]                               = "EC PRIVATE KEY";
+    size_t ref_key_len              = 40;
+    FILE *ref_fh                    = NULL;
+    FILE *pub_fh                    = NULL;
+    uint8_t pub_key[PUBKEY_LEN_MAX] = {0};
+    uint8_t *pk_ptr                 = NULL;
+    size_t pub_key_len              = sizeof(pub_key);
+    char refKeyMarker[]             = "EC PRIVATE KEY";
+    char pubKeyMarker[]             = "PUBLIC KEY";
 
     // Converting 32 bit key ID into 4 bytes
     LOG_I("Using key ID as 0x%X", key_id);
@@ -76,7 +75,7 @@ sss_status_t nxclitool_get_ref_key(int argc,
         goto exit;
     }
     LOG_I("Using public key at \"%s\"", in_file);
-    if (convert_pem_to_der(pub_fh, pem_pub_key, pem_pub_key_len, pub_key, &pub_key_len) != 0) {
+    if (nxclitool_convert_pem_to_der(pub_fh, pub_key, &pub_key_len, pubKeyMarker) != 0) {
         LOG_E("Unable to convert from PEM to DER");
         status = kStatus_SSS_Fail;
         if (0 != fclose(pub_fh)) {
@@ -143,7 +142,7 @@ sss_status_t nxclitool_get_ref_key(int argc,
         }
 
         LOG_I("Storing the reference key at \"%s\"", out_file);
-        if (0 != nxclitool_store_der_to_pem(ref_fh, ref_key, &ref_key_len, name, sizeof(name))) {
+        if (0 != nxclitool_store_der_to_pem(ref_fh, ref_key, &ref_key_len, refKeyMarker, sizeof(refKeyMarker))) {
             status = kStatus_SSS_Fail;
             if (0 != fclose(ref_fh)) {
                 LOG_E("Failed to close the file handle!");

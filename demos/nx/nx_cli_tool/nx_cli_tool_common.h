@@ -22,8 +22,10 @@
 #define MAX_HOST_NAME_LEN 20
 #define MAX_PORT_NAME_LEN 50
 #define MAX_CERT_BUF_LEN 1024
+#define MAX_KEY_LEN 1024
 #define MAX_FILE_PATH_LEN 512
 #define MAX_FILE_DATA_BUF_SIZE 2048
+#define MAX_PEM_MARKER_LEN 50
 #define NXCLITOOL_SSS_BOOT_SSS_PCSC_READER_DEFAULT "NXP Semiconductors P71 T=0, T=1 Driver 0"
 #define NXCLITOOL_SSS_BOOT_SSS_COMPORT_DEFAULT "\\\\.\\COM7"
 #define NXCLITOOL_SSS_BOOT_SSS_I2C_PORT_DEFAULT "/dev/ttyACM0"
@@ -81,11 +83,13 @@ void nxclitool_show_usage()
     printf("  getbin\t\t\tGet data from standard data file in SA\n");
     printf("  genkey\t\t\tGenerates ECC Key and stores the public key to a file\n");
     printf("  get-ref-key\t\t\tGenerates reference key from a public key and key ID\n");
+    printf("  list-eckey\t\t\tFetches the list and properties of EC keys inside SA\n");
     printf("  list-fileid\t\t\tFetches the list of file IDs inside SA\n");
     printf("  get-uid\t\t\tGet UID from SA. No additional options required\n");
     printf("  rand\t\t\t\tGenerate specified number of random bytes\n");
     printf("  setbin\t\t\tSets data to a standard data file inside SA\n");
     printf("  setkey\t\t\tSet a private key inside SA\n");
+    printf("  i2c_mgnt\t\t\tSet config i2c management SA\n");
     printf("\n");
     printf("For individual command help, enter the command with \"-help\" flag in the end\n");
     printf("EXAMPLE:  nxclitool [COMMAND] -help\n");
@@ -365,7 +369,7 @@ int nxclitool_store_der_to_pem(FILE *fp, unsigned char *input, size_t *in_len, c
     const unsigned char *pinput = input;
     char hdr[]                  = {0};
 
-    ret  = PEM_write(fp, name, hdr, pinput, *in_len);
+    ret = PEM_write(fp, name, hdr, pinput, *in_len);
     if (ret <= 0) {
         LOG_E("PEM_write() function failed");
         ret = -1;
@@ -377,40 +381,52 @@ int nxclitool_store_der_to_pem(FILE *fp, unsigned char *input, size_t *in_len, c
     return ret;
 }
 
-int convert_pem_to_der(FILE *fp, unsigned char *pucInput, size_t inLen, unsigned char *pucOutput, size_t *pxOlen)
+int nxclitool_convert_pem_to_der(FILE *fp, unsigned char *pucOutput, size_t *pxOlen, char *name)
 {
-    int lRet = 1;
+    int lRet                                   = 1;
+    char pemMarker[MAX_PEM_MARKER_LEN]         = "-----BEGIN ";
+    size_t pemMarkerLen                        = 11;
+    unsigned char pemBuf[MAX_CERT_BUF_LEN + 1] = {0};
+
+    LOG_D("FN: %s", __FUNCTION__);
+
+    strncpy(pemMarker + pemMarkerLen, name, MAX_PEM_MARKER_LEN - pemMarkerLen - 1);
+
 #if SSS_HAVE_HOSTCRYPTO_MBEDTLS
     const unsigned char *pucS1  = NULL;
     const unsigned char *pucS2  = NULL;
     const unsigned char *pucEnd = NULL;
     size_t xLen                 = 0;
     size_t xOtherLen            = 0;
+    size_t pemBufLen            = sizeof(pemBuf);
 
-    if (inLen <= MAX_CERT_BUF_LEN) {
+    LOG_D("PEM Marker: %s", pemMarker);
+
+    if (pemBufLen <= MAX_CERT_BUF_LEN) {
         LOG_E("Buffer size is not sufficient to hold the certificate/key string");
         return (-1);
     }
-    pucInput[inLen - 1] =
-        '\0'; // Terminating the buffer with NULL character as strstr() expects a NULL terminated string
-    xLen = fread(pucInput, sizeof(char), MAX_CERT_BUF_LEN, fp);
+
+    xLen = fread(pemBuf, sizeof(char), MAX_CERT_BUF_LEN, fp);
     if (xLen == 0) {
         return (-1);
     }
-    pucEnd = pucInput + xLen;
-    pucS1  = (unsigned char *)strstr((const char *)pucInput, "-----BEGIN");
+    pucEnd = pemBuf + xLen;
+    pucS1  = (unsigned char *)strstr((const char *)pemBuf, pemMarker);
 
     if (pucS1 == NULL) {
+        LOG_D("pucS1 == NULL");
         return (-1);
     }
 
-    pucS2 = (unsigned char *)strstr((const char *)pucInput, "-----END");
+    pucS2 = (unsigned char *)strstr((const char *)pucS1, "-----END");
 
     if (pucS2 == NULL) {
+        LOG_D("pucS2 == NULL");
         return (-1);
     }
 
-    pucS1 += 10;
+    pucS1 += 25;
 
     while (pucS1 < pucEnd && *pucS1 != '-') {
         pucS1++;
@@ -421,6 +437,7 @@ int convert_pem_to_der(FILE *fp, unsigned char *pucInput, size_t inLen, unsigned
     }
 
     if (pucS1 >= pucEnd) {
+        LOG_D("pucS1 >= pucEnd");
         return (-1);
     }
 
@@ -433,9 +450,11 @@ int convert_pem_to_der(FILE *fp, unsigned char *pucInput, size_t inLen, unsigned
     }
 
     if ((pucS2 <= pucS1) || (pucS2 > pucEnd)) {
+        LOG_D("(pucS2 <= pucS1) || (pucS2 > pucEnd)");
         return (-1);
     }
 
+    LOG_D("FN: mbedtls_base64_decode");
     lRet = mbedtls_base64_decode(NULL, 0, &xOtherLen, (const unsigned char *)pucS1, pucS2 - pucS1);
 
     if (lRet == MBEDTLS_ERR_BASE64_INVALID_CHARACTER) {
@@ -456,12 +475,31 @@ int convert_pem_to_der(FILE *fp, unsigned char *pucInput, size_t inLen, unsigned
 
 #elif SSS_HAVE_HOSTCRYPTO_OPENSSL
     int pemReadStatus  = 0;
-    char *name         = NULL;
+    char *pName        = (char *)pemMarker;
     char *header       = NULL;
     uint8_t *prvKeyDer = NULL;
     long prvKeyDerLen  = 0;
+    long seekOffset    = 0;
+    char *ptrMarker    = NULL;
+    size_t xLen        = 0;
 
-    pemReadStatus = PEM_read(fp, &name, &header, &prvKeyDer, &prvKeyDerLen);
+    // Search for required name in the file pinter
+    xLen = fread(pemBuf, sizeof(char), MAX_CERT_BUF_LEN, fp);
+    if (xLen == 0) {
+        return (-1);
+    }
+    ptrMarker = strstr((const char *)pemBuf, pName);
+    ENSURE_OR_GO_CLEANUP(ptrMarker != NULL);
+    LOG_D("PEM Buf: %s", pemBuf);
+    LOG_D("Marker Buf: %s", ptrMarker);
+    seekOffset = (ptrMarker - (char *)pemBuf) / sizeof(char);
+    LOG_D("Read from file offset: %d", seekOffset);
+
+    fseek(fp, seekOffset, SEEK_SET);
+    pemReadStatus = PEM_read(fp, &pName, &header, &prvKeyDer, &prvKeyDerLen);
+    LOG_D("pemReadStatus = %d", pemReadStatus);
+    LOG_D("name = %s", pName);
+    LOG_D("prvKeyDerLen = %d", prvKeyDerLen);
     if (pemReadStatus != 1) {
         LOG_E("Error reading private key file!");
         lRet = -1;
@@ -822,7 +860,7 @@ int nxclitool_fetch_parameters(int argc,
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
-            LOG_W("Ignoring the unrecognised command \"%s\" for this operation", argv[i]);
+            LOG_W("Ignoring the unrecognised option \"%s\" for this command", argv[i]);
             i++;
         }
     }

@@ -16,6 +16,8 @@
 #include "nx_cli_tool_set_key.h"
 #include "nx_cli_tool_get_ref_key.h"
 #include "nx_cli_tool_set_get_bin.h"
+#include "nx_cli_tool_set_i2c_mgnt.h"
+#include "nx_cli_tool_set_cert_mgnt.h"
 
 /* ************************************************************************** */
 /* Function Definitions                                                       */
@@ -34,8 +36,9 @@ void nxclitool_execute_command(int argc, const char *argv[])
     Nx_ECCurve_t curve_type;
     char file_in_path[MAX_FILE_PATH_LEN] = {0};
     char file_out_path[MAX_FILE_PATH_LEN];
-    bool file_out_flag              = FALSE;
-    NXCLITOOL_OPERATION_t operation = NXCLITOOL_OPERATION_SIGN;
+    bool file_out_flag                  = FALSE;
+    NXCLITOOL_OPERATION_t operation     = NXCLITOOL_OPERATION_SIGN;
+    Nx_AccessCondition_t write_acc_cond = Nx_AccessCondition_Free_Access;
 
     conn_ctx.portName = port_name;
 
@@ -360,7 +363,7 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 NULL,
                 NULL,
                 NULL,
-                NULL,
+                &write_acc_cond,
                 NULL,
                 NULL,
                 NULL,
@@ -383,7 +386,7 @@ void nxclitool_execute_command(int argc, const char *argv[])
 
         status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
-        status = nxclitool_set_key(argc, argv, &boot_ctx, key_id, curve_type, operation, file_in_path);
+        status = nxclitool_set_key(argc, argv, &boot_ctx, key_id, curve_type, operation, write_acc_cond, file_in_path);
     }
 
     // Get reference key
@@ -532,6 +535,73 @@ void nxclitool_execute_command(int argc, const char *argv[])
         status = nxclitool_list_fileid(argc, argv, &boot_ctx);
     }
 
+    // Get EC key settings
+    else if (0 == strcmp(argv[1], "list-eckey")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_list_eckey();
+            return;
+        }
+
+        if (argc > 2) {
+            LOG_W("\"list-eckey\" does not need any arguments. Ignoring the arguments...");
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+        status = nxclitool_list_eckey(argc, argv, &boot_ctx);
+    }
+
+    // Get EC key settings
+    else if (0 == strcmp(argv[1], "set-i2c_mgnt")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_i2c_mgnt();
+            return;
+        }
+
+        if (argc < 3) {
+            LOG_W("\"i2c_mgnt\" does not need any arguments. Ignoring the arguments...");
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+        status = nxclitool_set_i2c_mgnt(argc, argv, &boot_ctx);
+    }
+    //set-cert_mgnt
+    else if (0 == strcmp(argv[1], "set-cert_mgnt")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_set_cert_mgnt();
+            return;
+        }
+
+        if (argc < 3) {
+            LOG_W("\"set-cert_mgnt\" does not need any arguments. Ignoring the arguments...");
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+        status = nxclitool_set_cert_mgnt(argc, argv, &boot_ctx);
+    }
     // Invalid Command
     else {
         LOG_E("Invalid command. Refer usage below");

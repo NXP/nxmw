@@ -42,20 +42,20 @@ Run the tool as:
 
 option_list is a list of supported configuration options, where at least one option must be supplied. Here is the list of supported options and their values:
 
-- [-gpio1mode {disabledoutputpowerout}]
-- [-gpio2mode {disabledoutput}]
-- [-gpio1Notif {disablednfc}]
-- [-gpio2Notif {disablednfc}]
-- [-gpioMgmtCM {plainfull}]
-- [-gpioReadCM {plainfull}]
-- [-gpioMgmtAC {0x0-0xF}]
-- [-gpioReadAC {0x0-0xF}]
-- [-cryptoCM {plainfull}]
-- [-cryptoAC {0x0-0xF}]
-- [-keypairCM {plainfull}]
-- [-keypairAC {0x0-0xF}]
-- [-caRootKeyCM {plainfull}]
-- [-caRootKeyAC {0x0-0xF}]
+- \[-gpio1mode {disabledoutputpowerout}\]
+- \[-gpio2mode {disabledoutput}\]
+- \[-gpio1Notif {disablednfc}\]
+- \[-gpio2Notif {disablednfc}\]
+- \[-gpioMgmtCM {plainfull}\]
+- \[-gpioReadCM {plainfull}\]
+- \[-gpioMgmtAC {0x0-0xF}\]
+- \[-gpioReadAC {0x0-0xF}\]
+- \[-cryptoCM {plainfull}\]
+- \[-cryptoAC {0x0-0xF}\]
+- \[-keypairCM {plainfull}\]
+- \[-keypairAC {0x0-0xF}\]
+- \[-caRootKeyCM {plainfull}\]
+- \[-caRootKeyAC {0x0-0xF}\]
 
 For example, to set GPIO1 to be in the output mode, following command can be run:
 

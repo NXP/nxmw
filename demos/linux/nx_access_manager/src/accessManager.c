@@ -59,7 +59,7 @@ extern const char gszCOMPortDefault[];
 
 client_t *addClient(client_t *head, int sock);
 client_t *amRemoveObsoleteClients(client_t *head, int *fOnHold);
-client_t *amDeleteAllClients(client_t* head);
+client_t *amDeleteAllClients(client_t *head);
 
 int main(int argc, char **argv)
 {
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
     amStatus = amParseCmdLineArgs(argc, argv, &requestAnyAddressBinding);
     if (amStatus != AM_OK) {
         showAccessManagerHelp(argv);
-        return EXIT_FAILURE;
+        return EXIT_SUCCESS;
     }
 
     LOG_I("Starting accessManager (Rev.%d.%d).", ACCESS_MGR_VERSION_MAJOR, ACCESS_MGR_VERSION_MINOR);
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 #ifdef ACCESS_MGR_UNIX_SOCKETS
     listeningSock = socket(AF_UNIX, socketType, 0);
 #else
-    listeningSock = socket(AF_INET, socketType, 0);
+    listeningSock     = socket(AF_INET, socketType, 0);
 #endif
     if (listeningSock < 0) {
         perror("socket");
@@ -350,9 +350,8 @@ int main(int argc, char **argv)
                     if (sessionOpen == FALSE) {
                         // Open a session one-time
                         LOG_I("Opening a session...");
-                        status = amSessionOpen(argc, argv, &boot_ctx, auth_type, (char*)&portname);
-                        if (status != kStatus_SSS_Success)
-                        {
+                        status = amSessionOpen(argc, argv, &boot_ctx, auth_type, (char *)&portname);
+                        if (status != kStatus_SSS_Success) {
                             LOG_E("amSessionOpen failed with status: 0x%04X.", status);
                             close(cl->sock);
                             cl->sock = -1;
@@ -364,7 +363,7 @@ int main(int argc, char **argv)
                         LOG_I("Session already open");
                     }
 
-                    if(0 == memcmp(&rcvBuf[MSG_HEADER_SIZE], appletSelectCmd, appletSelectCmdLen)) {
+                    if (0 == memcmp(&rcvBuf[MSG_HEADER_SIZE], appletSelectCmd, appletSelectCmdLen)) {
                         // Applet select request from client which was taken care of while opening session
                         // Send pre-cooked applet select response
                         LOG_I("Applet select request from client. Sending SW_OK (90 00) to client");
@@ -422,12 +421,12 @@ int main(int argc, char **argv)
                     // Quit command received from client. Close the AM
                     LOG_W("Quit command received");
 
-                    fServe = 0;
+                    fServe          = 0;
                     sndBuf[MTY_IDX] = MTY_QUIT;
                     sndBuf[NAD_IDX] = rcvBuf[NAD_IDX];
                     sndBuf[LNH_IDX] = 0x00;
                     sndBuf[LNL_IDX] = 0x00;
-                    sndBufLen = MSG_HEADER_SIZE;
+                    sndBufLen       = MSG_HEADER_SIZE;
 
                     LOG_I("TX to client ID %d:", cl->sock);
                     LOG_AU8_I(sndBuf, sndBufLen);
@@ -526,9 +525,6 @@ client_t *amRemoveObsoleteClients(client_t *head, int *fOnHold)
         client_t *cl = head;
 
         head = head->next;
-        if (cl->nLock > 0) {
-            *fOnHold = 0;
-        }
         free(cl);
     }
 
@@ -541,9 +537,6 @@ client_t *amRemoveObsoleteClients(client_t *head, int *fOnHold)
     while (client != NULL) {
         if (client->sock < 0) {
             prevClient->next = client->next;
-            if (client->nLock > 0) {
-                *fOnHold = 0;
-            }
             free(client);
             client = prevClient;
         }
@@ -554,7 +547,7 @@ client_t *amRemoveObsoleteClients(client_t *head, int *fOnHold)
     return head;
 }
 
-client_t* amDeleteAllClients(client_t* head)
+client_t *amDeleteAllClients(client_t *head)
 {
     client_t *prevClient, *client;
 
@@ -637,65 +630,6 @@ sss_status_t amSessionOpen(
 
 cleanup:
     return status;
-}
-
-sss_status_t amSessionResume(ex_sss_boot_ctx_t *pboot_ctx, nx_auth_type_t auth_type, char *portName)
-{
-    sss_status_t retval        = kStatus_SSS_InvalidArgument;
-    SmCommState_t CommState    = {0};
-    int sm_connected           = 0;
-    sss_nx_session_t *session  = (sss_nx_session_t *)&pboot_ctx->session;
-    pSeSession_t seSession     = {0};
-    nx_connect_ctx_t *pAuthCtx = &pboot_ctx->nx_open_ctx;
-    U16 lReturn                = ERR_COMM_ERROR;
-    LOG_D("FN: %s", __FUNCTION__);
-
-    seSession                  = &session->s_ctx;
-    pAuthCtx->skip_select_file = 1;
-    CommState.sessionResume    = 1;
-    CommState.select           = SELECT_NONE;
-
-    if ((pAuthCtx->connType != kType_SE_Conn_Type_Channel) &&
-        ((pAuthCtx->auth.authType != knx_AuthType_SYMM_AUTH) ||
-            (pAuthCtx->auth.ctx.symmAuth.dyn_ctx.authStatus != kVCState_AuthenticatedAES))) {
-#if SSS_HAVE_SMCOM_T1OI2C_GP1_0
-        uint8_t cip[100]   = {0};
-        uint16_t cipLen    = sizeof(cip);
-        CommState.connType = pAuthCtx->connType;
-
-        /* AX_EMBEDDED Or Native */
-        lReturn = SM_I2CConnect(&(seSession->conn_ctx), &CommState, cip, &cipLen, pAuthCtx->portName);
-        if (lReturn != SW_OK) {
-            LOG_E("SM_I2CConnect Failed. Status %04X", lReturn);
-            retval = kStatus_SSS_Fail;
-            goto exit;
-        }
-        if (cipLen != 0) {
-            LOG_AU8_I(cip, cipLen);
-        }
-#endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
-        sm_connected = 1;
-    }
-    else if ((pAuthCtx->connType == kType_SE_Conn_Type_VCOM) || (pAuthCtx->connType == kType_SE_Conn_Type_T1oI2C) ||
-             (pAuthCtx->connType == kType_SE_Conn_Type_PCSC) || (pAuthCtx->connType == kType_SE_Conn_Type_JRCP_V1_AM)) {
-        seSession->conn_ctx = pAuthCtx->conn_ctx;
-        sm_connected        = 1;
-    }
-    retval = kStatus_SSS_Success;
-
-exit:
-    if (retval != kStatus_SSS_Success) {
-        if ((sm_connected) && (pAuthCtx->connType != kType_SE_Conn_Type_Channel)) {
-            SM_Close(seSession->conn_ctx, 0);
-        }
-
-        memset(session, 0x00, sizeof(*session));
-    }
-    else {
-        LOG_I("Session Open Succeed");
-    }
-
-    return retval;
 }
 
 void amSessionClose(ex_sss_boot_ctx_t *pboot_ctx)

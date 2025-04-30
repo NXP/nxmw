@@ -1,5 +1,5 @@
 
-# Copyright 2024 NXP
+# Copyright 2024-2025 NXP
 # SPDX-License-Identifier: BSD-3-Clause
 
 PROJECT(nxclitool)
@@ -28,3 +28,7 @@ ADD_CUSTOM_COMMAND(
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${NXMW_TOP_DIR}/binaries/tmp
     COMMENT "Copy binary to ${NXMW_TOP_DIR}/binaries/tmp"
 )
+
+IF(SSS_HAVE_HOST_LINUX_LIKE)
+    INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
+ENDIF()

@@ -66,131 +66,123 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     LOG_I("Successful !!!");
 
     if (versionInfo.vendorID1 == 0x04) {
-        LOG_I("HW Vendor ID: NXP Semiconductors");
+        LOG_I("HW Vendor ID: 0x%02X (NXP Semiconductors)", versionInfo.vendorID1);
     }
     else {
-        LOG_I("HW Vendor ID: 0x%x", versionInfo.vendorID1);
+        LOG_I("HW Vendor ID: 0x%02X", versionInfo.vendorID1);
     }
 
     if (versionInfo.hwType == 0x04) {
-        LOG_I("HW type: NTAG");
+        LOG_I("HW type: 0x%02X (NTAG)", versionInfo.hwType);
     }
     else if (versionInfo.hwType == 0x0A) {
-        LOG_I("HW type: IoT");
+        LOG_I("HW type: 0x%02X (IoT)", versionInfo.hwType);
     }
     else {
-        LOG_I("HW type: 0x%x", versionInfo.hwType);
+        LOG_I("HW type: 0x%02X", versionInfo.hwType);
     }
 
     if (versionInfo.hwSubType == 0x41) {
-        LOG_I("HW subtype: 17 pF, Tag Tamper");
+        LOG_I("HW subtype: 0x%02X (17 pF, Tag Tamper)", versionInfo.hwSubType);
     }
     else if (versionInfo.hwSubType == 0x43) {
-        LOG_I("HW subtype: 50 pF, Tag Tamper");
+        LOG_I("HW subtype: 0x%02X (50 pF, Tag Tamper)", versionInfo.hwSubType);
     }
     else {
-        LOG_I("HW subtype 0x%x", versionInfo.hwSubType);
+        LOG_I("HW subtype: 0x%02X", versionInfo.hwSubType);
     }
 
-    if (versionInfo.hwMajorVersion == 0xA0) {
-        LOG_I("HW major version: NX (Zen-V)");
-    }
-    else {
-        LOG_I("HW major version: 0x%x", versionInfo.hwMajorVersion);
-    }
+    LOG_I("HW major version: 0x%02X", versionInfo.hwMajorVersion);
 
-    LOG_I("HW minor version 0x%x", versionInfo.hwMinorVersion);
+    LOG_I("HW minor version: 0x%02X", versionInfo.hwMinorVersion);
 
     if (versionInfo.hwStorageSize == 0x1A) {
-        LOG_I("HW storage size: 8 kB");
+        LOG_I("HW storage size: 0x%02X (8 kB)", versionInfo.hwStorageSize);
     }
     else if (versionInfo.hwStorageSize == 0x1C) {
-        LOG_I("HW storage size: 16 kB");
+        LOG_I("HW storage size: 0x%02X (16 kB)", versionInfo.hwStorageSize);
     }
     else {
-        LOG_I("HW storage size: 0x%x", versionInfo.hwStorageSize);
+        LOG_I("HW storage size: 0x%02X", versionInfo.hwStorageSize);
     }
 
     if (versionInfo.hwProtocol == 0x15) {
-        LOG_I("HW protocol type: ISO/IEC 14443-4 support with Silent Mode support");
+        LOG_I("HW protocol type: 0x%02X (ISO/IEC 14443-4 support with Silent Mode support)", versionInfo.hwProtocol);
     }
     else if (versionInfo.hwProtocol == 0x20) {
-        LOG_I("HW protocol type: I2C");
+        LOG_I("HW protocol type: 0x%02X (I2C)", versionInfo.hwProtocol);
     }
     else if (versionInfo.hwProtocol == 0x35) {
-        LOG_I("HW protocol type: I2C and ISO/IEC 14443-4 support with Silent Mode support");
+        LOG_I("HW protocol type: 0x%02X (I2C and ISO/IEC 14443-4 support with Silent Mode support)",
+            versionInfo.hwProtocol);
     }
     else {
-        LOG_I("HW protocol type: 0x%x", versionInfo.hwProtocol);
+        LOG_I("HW protocol type: 0x%02X", versionInfo.hwProtocol);
     }
 
     if (versionInfo.vendorID2 == 0x04) {
-        LOG_I("SW Vendor ID: NXP Semiconductors");
+        LOG_I("SW Vendor ID: 0x%02X (NXP Semiconductors)", versionInfo.vendorID2);
     }
     else {
-        LOG_I("SW Vendor ID: 0x%x", versionInfo.vendorID2);
+        LOG_I("SW Vendor ID: 0x%02X", versionInfo.vendorID2);
     }
 
     if (versionInfo.swType == 0x04) {
-        LOG_I("SW type: NTAG");
+        LOG_I("SW type: 0x%02X (NTAG X DNA)", versionInfo.swType);
     }
     else if (versionInfo.swType == 0x0A) {
-        LOG_I("SW type: IoT");
+        LOG_I("SW type: 0x%02X (A30)", versionInfo.swType);
     }
     else {
-        LOG_I("SW type: 0x%x", versionInfo.swType);
+        LOG_I("SW type: 0x%02X", versionInfo.swType);
     }
 
     if (versionInfo.swSubType == 0x01) {
-        LOG_I("SW subtype: Standalone");
+        LOG_I("SW subtype: 0x%02X (Standalone)", versionInfo.swSubType);
     }
     else {
-        LOG_I("SW subtype 0x%x", versionInfo.swSubType);
+        LOG_I("SW subtype: 0x%02X", versionInfo.swSubType);
     }
 
-    if (versionInfo.swMajorVersion == 0x00) {
-        LOG_I("SW major version: EV0");
-    }
-    else {
-        LOG_I("SW major version: 0x%x", versionInfo.swMajorVersion);
-    }
+    LOG_I("SW major version: 0x%02X", versionInfo.swMajorVersion);
 
-    LOG_I("SW minor version 0x%x", versionInfo.swMinorVersion);
+    LOG_I("SW minor version: 0x%02X", versionInfo.swMinorVersion);
 
     if (versionInfo.swStorageSize == 0x1A) {
-        LOG_I("SW storage size: 8 kB");
+        LOG_I("SW storage size: 0x%02X (8 kB)", versionInfo.swStorageSize);
     }
     else if (versionInfo.swStorageSize == 0x1C) {
-        LOG_I("SW storage size: 16 kB");
+        LOG_I("SW storage size: 0x%02X (16 kB)", versionInfo.swStorageSize);
     }
     else {
-        LOG_I("SW storage size: 0x%x", versionInfo.swStorageSize);
+        LOG_I("SW storage size: 0x%02X", versionInfo.swStorageSize);
     }
 
     if (versionInfo.swProtocol == 0x15) {
-        LOG_I("SW protocol type: ISO/IEC 14443-4 support with Silent Mode support");
+        LOG_I("SW protocol type: 0x%02X (ISO/IEC 14443-4 support with Silent Mode support)", versionInfo.swProtocol);
     }
     else if (versionInfo.swProtocol == 0x20) {
-        LOG_I("SW protocol type: I2C");
+        LOG_I("SW protocol type: 0x%02X (I2C)", versionInfo.swProtocol);
     }
     else if (versionInfo.swProtocol == 0x35) {
-        LOG_I("SW protocol type: I2C and ISO/IEC 14443-4 support with Silent Mode support");
+        LOG_I("SW protocol type: 0x%02X (I2C and ISO/IEC 14443-4 support with Silent Mode support)",
+            versionInfo.swProtocol);
     }
     else {
-        LOG_I("SW protocol type: 0x%x", versionInfo.swProtocol);
+        LOG_I("SW protocol type: 0x%02X", versionInfo.swProtocol);
     }
 
     if (versionInfo.uidFormat != NX_VERSION_UID_FORMAT_INVALID) {
-        LOG_I("UIDFormat: 0x%x", versionInfo.uidFormat);
-        LOG_I("UIDLength: 0x%x", versionInfo.uidLength);
+        LOG_I("UIDFormat: 0x%02X", versionInfo.uidFormat);
+        LOG_I("UIDLength: 0x%02X", versionInfo.uidLength);
     }
     LOG_MAU8_I("Card UID", versionInfo.uid, versionInfo.uidLength);
-    LOG_I("BatchNo: 0x%x", versionInfo.batchNo);
-    LOG_I("FabKey identifier: 0x%x", versionInfo.fabKeyID);
-    LOG_I("Calendar week of card production in BCD coding: 0x%x", versionInfo.cwProd);
-    LOG_I("The year of production in BCD coding: 0x%x", versionInfo.yearProd);
+    LOG_I("BatchNo: 0x%06X", versionInfo.batchNo);
+    LOG_I("FabKey identifier: 0x%04X", versionInfo.fabKeyID);
+    LOG_I("Calendar week of card production in BCD coding: 0x%02X", versionInfo.cwProd);
+    LOG_I("The year of production in BCD coding: 0x%02X", versionInfo.yearProd);
     if (getFabID) {
-        LOG_I("Fab Identifier: 0x%x", versionInfo.fabID);
+        LOG_I("Fab Identifier: 0x%02X", versionInfo.fabID);
     }
 
 cleanup:

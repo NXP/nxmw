@@ -83,7 +83,6 @@ sss_status_t amSessionOpen(
     int argc, char **argv, ex_sss_boot_ctx_t *pboot_ctx, nx_auth_type_t auth_type, char *portName);
 void amSessionClose(ex_sss_boot_ctx_t *pboot_ctx);
 void amGetPortName(int argc, char **argv, char **portname);
-sss_status_t amSessionResume(ex_sss_boot_ctx_t *pboot_ctx, nx_auth_type_t auth_type, char *portName);
 
 #define UNIX_SOCKET_FILE "/var/run/am"
 

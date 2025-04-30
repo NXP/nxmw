@@ -211,7 +211,8 @@ static sss_status_t add_uncompressed_cert_tag(
     taggedCert[0]  = NX_TAG_CERT_DATA;
     pCert          = &taggedCert[1];
     *taggedCertLen = 1;
-    tlvRet         = TLVSET_u8buf("cert", &pCert, taggedCertLen, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen);
+    tlvRet =
+        TLVSET_u8buf("cert", &pCert, taggedCertLen, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(tlvRet == 0);
 
     status = kStatus_SSS_Success;

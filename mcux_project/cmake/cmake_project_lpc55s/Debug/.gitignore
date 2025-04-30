@@ -1,0 +1,8 @@
+crt_infolist.dtd
+cmake_project_lpc55s_LinkServer_Debug.swd
+LPC55S69.xml
+LPC55S69_cm33_core0_internal_peripheral.xml
+LPC55S69_part.xml
+cmake_project_lpc55s_LinkServer_Debug.swd
+*.axf
+*.bin

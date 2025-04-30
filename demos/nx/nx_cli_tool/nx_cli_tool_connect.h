@@ -67,7 +67,7 @@ int nxclitool_fetch_connect_parameters(int argc,
             i++;
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
             host_name_flag = TRUE;
-            strcpy(host_name, argv[i]);
+            strncpy(host_name, argv[i], MAX_HOST_NAME_LEN - 1); // To maintain end-of-string as null character
             i++;
             continue;
         }
@@ -75,7 +75,7 @@ int nxclitool_fetch_connect_parameters(int argc,
             i++;
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
             port_name_flag = TRUE;
-            strcpy(port_name, argv[i]);
+            strncpy(port_name, argv[i], MAX_PORT_NAME_LEN - 1); // To maintain end-of-string as null character
             i++;
             continue;
         }
@@ -172,7 +172,7 @@ int nxclitool_fetch_connect_parameters(int argc,
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
-            LOG_W("Ignoring the unrecognised command \"%s\" for this operation", argv[i]);
+            LOG_W("Ignoring the unrecognised option \"%s\" for this command", argv[i]);
             i++;
         }
     }
@@ -369,7 +369,7 @@ int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
     }
 
     fscanf_status = fscanf(fh,
-        "%s %u %u %hhd %d %u %u %u %u %hhd %hd\n",
+        "%19s %u %u %hhd %d %u %u %u %u %hhd %hd\n",
         host_name,
         &auth_type,
         &secure_tunnel_type,
@@ -381,7 +381,7 @@ int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
         &compress_type,
         &se_cert_repo_id,
         &cert_ac_map);
-    ptr           = fgets(port_name, MAX_PORT_NAME_LEN, fh);
+    ptr           = fgets(port_name, MAX_PORT_NAME_LEN - 1, fh);
     if (ptr == NULL) {
         LOG_E("Failed to read the port name from connection file!");
         if (0 != fclose(fh)) {

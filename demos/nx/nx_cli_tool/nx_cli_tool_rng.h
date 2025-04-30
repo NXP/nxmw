@@ -19,6 +19,7 @@ sss_status_t nxclitool_do_rng(nxclitool_sss_boot_ctx_t *pboot_ctx, nx_connect_ct
         LOG_E("Error in dynamic allocation!!");
         goto cleanup;
     }
+    memset(rng_data, 0, rng_data_len);
 
     LOG_I("Requesting %d bytes of random data...", rng_bytes);
 

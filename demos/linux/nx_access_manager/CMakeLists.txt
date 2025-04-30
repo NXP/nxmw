@@ -18,7 +18,7 @@ ADD_EXECUTABLE(
 )
 
 TARGET_LINK_LIBRARIES(
-    ${PROJECT_NAME} smCom SSS_APIs ex_common
+    ${PROJECT_NAME} smCom ex_common
 )
 
 CREATE_BINARY(${PROJECT_NAME})

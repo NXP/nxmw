@@ -77,7 +77,7 @@ IF(SSS_HAVE_HOST_PCLINUX64 AND SSS_HAVE_SMCOM_T1OI2C_GP1_0)
 ENDIF()
 
 
-IF((SSS_HAVE_MBEDTLS_3_X OR SSS_HAVE_MBEDTLS_2_X) AND WithSharedLIB)
+IF(SSS_HAVE_HOSTCRYPTO_MBEDTLS AND (SSS_HAVE_MBEDTLS_3_X OR SSS_HAVE_MBEDTLS_2_X) AND WithSharedLIB)
     MESSAGE(FATAL_ERROR
                     "Shared Library is not supported for MbedTLS Host Crypto. Please disable shared library option"
             )

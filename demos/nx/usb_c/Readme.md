@@ -56,7 +56,7 @@ This function performs the CHALLENGE operation and returns the signature
     <img src="../../../doc/img/usb_c/challenge.jpeg" width="600" height="1000">
 </p>
 
-usb_c_responder_auth/usb_c_responder.c
+Refer - `usb_c_responder_auth/usb_c_responder.c`
 
 
 ## Building the Demo

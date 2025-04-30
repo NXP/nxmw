@@ -14,6 +14,9 @@
 #include "nx_host_gpio.h"
 #include "nx_apdu.h"
 #include "nx_enums.h"
+#if defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED)
+#include "board.h"
+#endif
 
 /* ************************************************************************** */
 /* Local Defines                                                              */
@@ -60,20 +63,26 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     Nx_GPIO_Status_t gpio2CurrentStatus            = Nx_GPIO_STATUS_INVALID;
 
     U8 resp = 0;
+
 #if SSS_HAVE_HOST_RASPBIAN
     U8 gpioPIN          = NX_HOST_RPI_INPUT_PIN_GPIO1; //PIN2
     uint8_t gpiostatus  = FALSE;
     U16 respLen         = 0;
     uint8_t setInOutDir = NX_HOSTGPIOInput; //Set Input direction
+
 #elif (defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)) || \
     (defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)) // Other MCU (K64F)
+
     uint8_t setInOutDir      = NX_HOSTGPIOInput; //Set Input direction
     gpio_pin_config_t config = {setInOutDir, 0};
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    U8 gpioPIN = NX_HOSTGPIO_PTB2; //PIN2
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    U8 gpioPIN = NX_HOSTGPIO_PIO1_5; //PIN5
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    U8 gpioPIN               = BOARD_PIO1_5_GPIO_PIN; //PIN5
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    U8 gpioPIN = BOARD_PIO0_25_GPIO_PIN; //PIN25
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    U8 gpioPIN = BOARD_P2_12_GPIO_PIN; //PIN12
 #endif
+
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     U8 gpioPIN          = NX_HOSTGPIO_I01;
     U16 respLen         = 0;
@@ -97,13 +106,18 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     gpiostatus = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(gpiostatus == TRUE);
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
+
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    GPIO_PinInit(GPIOB, gpioPIN, &config);
-    resp = (uint8_t)GPIO_PinRead(GPIOB, gpioPIN);
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    GPIO_PinInit(GPIO, NX_HOSTPGIO_PORT1, gpioPIN, &config);
-    resp = (uint8_t)GPIO_PinRead(GPIO, NX_HOSTPGIO_PORT1, gpioPIN);
+
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, gpioPIN, &config);
+    resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    GPIO_PinInit(GPIO0, gpioPIN, &config);
+    resp    = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    GPIO_PinInit(GPIO2, gpioPIN, &config);
+    resp    = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
 #endif
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 
@@ -116,6 +130,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     status = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
 #endif
+
     if (resp == NX_HOSTGPIO_Read_Low) {
         LOG_I("Read HOST GPIO (PTB2): Low");
     }
@@ -137,10 +152,12 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP(status == TRUE);
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    resp = (uint8_t)GPIO_PinRead(GPIOB, gpioPIN);
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    resp = (uint8_t)GPIO_PinRead(GPIO, NX_HOSTPGIO_PORT1, gpioPIN);
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    resp    = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    resp    = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
 #endif
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
@@ -170,10 +187,12 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
     ENSURE_OR_GO_CLEANUP(status == TRUE);
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    resp = (uint8_t)GPIO_PinRead(GPIOB, gpioPIN);
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    resp = (uint8_t)GPIO_PinRead(GPIO, NX_HOSTPGIO_PORT1, gpioPIN);
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    resp    = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    resp    = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
 #endif
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
@@ -202,19 +221,26 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP(status == TRUE);
 
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    gpioPIN = NX_HOSTGPIO_PTB3; //PIN2
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    gpioPIN = NX_HOSTGPIO_PIO1_8; //PIN8
+
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    gpioPIN             = NX_HOSTGPIO_PIO1_8; //PIN8
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    gpioPIN = BOARD_PIO0_26_GPIO_PIN; //PIN26
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    gpioPIN = BOARD_P2_16_GPIO_PIN; //PIN16
 #endif
     config.pinDirection = kGPIO_DigitalOutput;
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    GPIO_PinInit(GPIOB, gpioPIN, &config);
-    GPIO_PortClear(GPIOB, 1U << gpioPIN);
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    GPIO_PinInit(GPIO, NX_HOSTPGIO_PORT1, gpioPIN, &config);
-    GPIO_PortClear(GPIO, NX_HOSTPGIO_PORT1, 1U << gpioPIN);
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, gpioPIN, &config);
+    GPIO_PortClear(GPIO, BOARD_GPIO_PORT1, 1U << gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    GPIO_PinInit(GPIO0, gpioPIN, &config);
+    GPIO_PortClear(GPIO0, 1U << gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    GPIO_PinInit(GPIO2, gpioPIN, &config);
+    GPIO_PortClear(GPIO2, 1U << gpioPIN);
 #endif
+
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     LOG_I("Set HOST GPIO (PTB3): Low");
     gpioPIN     = NX_HOSTGPIO_I02;
@@ -247,10 +273,13 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     status = nx_host_GPIOSet(NULL, gpioPIN);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_FRDMK64F) && (SSS_HAVE_HOST_FRDMK64F)
-    GPIO_PortSet(GPIOB, 1U << gpioPIN);
-#elif defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    GPIO_PortSet(GPIO, NX_HOSTPGIO_PORT1, 1U << gpioPIN);
+
+#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
+    GPIO_PortSet(GPIO, BOARD_GPIO_PORT1, 1U << gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
+    GPIO_PortSet(GPIO0, 1U << gpioPIN);
+#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
+    GPIO_PortSet(GPIO2, 1U << gpioPIN);
 #endif
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     //SET PTB3 High

@@ -25,7 +25,6 @@ TARGET_INCLUDE_DIRECTORIES(
 TARGET_LINK_LIBRARIES(
     ${PROJECT_NAME}
     ex_common
-    SSS_APIs
     usb_c_initiator_auth
     usb_c_responder_auth
 )

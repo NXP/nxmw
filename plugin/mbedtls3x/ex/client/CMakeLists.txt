@@ -28,7 +28,6 @@ ELSE() # KSDK
         ${PROJECT_NAME}
         mbedtls
         smCom
-        SSS_APIs
         ex_common
     )
 ENDIF()

@@ -65,18 +65,18 @@ static void addPaddingDiversifyInput(uint8_t *diversifyInput, size_t diversifyIn
 
 sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 {
-    sss_status_t status                  = kStatus_SSS_Fail;
-    sss_algorithm_t algorithm            = kAlgorithm_SSS_CMAC_AES;
-    sss_mode_t mode                      = kMode_SSS_Mac;
-    sss_mac_t macCtx                     = {0};
-    sss_object_t diversifyKeyObj         = {0};
-    sss_object_t masterKeyObj            = {0};
-    static nx_connect_ctx_t *pConnectCtx = NULL;
-    static nx_connect_ctx_t nx_open_ctx  = {0};
-    pConnectCtx                          = &nx_open_ctx;
-    sss_key_part_t keyPart               = kSSS_KeyPart_Default;
-    sss_cipher_type_t cipherType         = kSSS_CipherType_AES;
-    uint32_t keyId                       = MAKE_TEST_ID(__LINE__);
+    sss_status_t status           = kStatus_SSS_Fail;
+    sss_algorithm_t algorithm     = kAlgorithm_SSS_CMAC_AES;
+    sss_mode_t mode               = kMode_SSS_Mac;
+    sss_mac_t macCtx              = {0};
+    sss_object_t diversifyKeyObj  = {0};
+    sss_object_t masterKeyObj     = {0};
+    nx_connect_ctx_t *pConnectCtx = NULL;
+    nx_connect_ctx_t nx_open_ctx  = {0};
+    pConnectCtx                   = &nx_open_ctx;
+    sss_key_part_t keyPart        = kSSS_KeyPart_Default;
+    sss_cipher_type_t cipherType  = kSSS_CipherType_AES;
+    uint32_t keyId                = MAKE_TEST_ID(__LINE__);
 
     uint8_t diversifyInput[DIVERSIFY_INPUT_SIZE]  = {0};
     size_t diversifyInputLen                      = 0;
@@ -345,23 +345,24 @@ cleanup:
 static void addPaddingDiversifyInput(uint8_t *diversifyInput, size_t diversifyInputBufSize, size_t *diversifyInputLen)
 {
     uint16_t zeroBytesToPad = 0;
-    ENSURE_OR_GO_EXIT((UINT_MAX - EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE) > (*diversifyInputLen));
+    ENSURE_OR_GO_EXIT(diversifyInputLen != NULL);
+    ENSURE_OR_GO_EXIT(diversifyInput != NULL);
+    ENSURE_OR_GO_EXIT((UINT16_MAX - EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE) > (*diversifyInputLen));
 
     zeroBytesToPad = (EX_DIVERSIFY_INPUT_SIZE -
                          ((*diversifyInputLen + EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE) % EX_DIVERSIFY_INPUT_SIZE)) %
                      EX_DIVERSIFY_INPUT_SIZE;
 
-    ENSURE_OR_GO_EXIT(diversifyInputLen != NULL);
-    ENSURE_OR_GO_EXIT(diversifyInput != NULL);
-    ENSURE_OR_GO_EXIT((UINT_MAX - 1) > (*diversifyInputLen));
     ENSURE_OR_GO_EXIT(*diversifyInputLen < EX_DIVERSIFY_INPUT_SIZE); // supports only 32Byte padding
-    ENSURE_OR_GO_EXIT(zeroBytesToPad + (*diversifyInputLen) <= diversifyInputBufSize);
+    ENSURE_OR_GO_EXIT((UINT16_MAX - (*diversifyInputLen)) - EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE > zeroBytesToPad);
+    ENSURE_OR_GO_EXIT(
+        (*diversifyInputLen) + EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE + zeroBytesToPad <= diversifyInputBufSize);
 
     // pad and adjust the length of the diversify key input data
     diversifyInput[(*diversifyInputLen)] = EX_DIVERSIFY_INPUT_PAD_BYTE;
     *diversifyInputLen += EX_DIVERSIFY_INPUT_PAD_BYTE_SIZE;
-    ENSURE_OR_GO_EXIT((UINT_MAX - (*diversifyInputLen)) > zeroBytesToPad);
     memset(&diversifyInput[(*diversifyInputLen)], 0x00, zeroBytesToPad);
+    *diversifyInputLen += zeroBytesToPad;
 
 exit:
     return;

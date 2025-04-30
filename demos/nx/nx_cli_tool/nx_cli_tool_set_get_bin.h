@@ -241,7 +241,7 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
-            LOG_W("Ignoring the unrecognised command \"%s\" for this operation", argv[i]);
+            LOG_W("Ignoring the unrecognised option \"%s\" for this command", argv[i]);
             i++;
         }
     }

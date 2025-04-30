@@ -274,7 +274,8 @@ static sss_status_t nxclitool_add_uncompressed_cert_tag(
     tagged_cert[0]   = NX_TAG_CERT_DATA;
     pCert            = &tagged_cert[1];
     *tagged_cert_len = 0;
-    tlvRet           = TLVSET_u8buf("cert", &pCert, tagged_cert_len, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen);
+    tlvRet           = TLVSET_u8buf(
+        "cert", &pCert, tagged_cert_len, NX_TAG_UNCOMPRESSED_CERT, certBuf, certBufLen, MAX_CERT_BUF_LEN - 1);
     ENSURE_OR_GO_CLEANUP(tlvRet == 0);
     ENSURE_OR_GO_CLEANUP(*tagged_cert_len < UINT_MAX);
     *tagged_cert_len = *tagged_cert_len + 1;
@@ -288,7 +289,8 @@ cleanup:
     return status;
 }
 
-bool nxclitool_parse_for_cert_type(const uint8_t *input, size_t inLen, uint8_t *identifier, size_t identifierLen, size_t identifierIndex)
+bool nxclitool_parse_for_cert_type(
+    const uint8_t *input, size_t inLen, uint8_t *identifier, size_t identifierLen, size_t identifierIndex)
 {
     size_t i = 0;
 
@@ -296,7 +298,7 @@ bool nxclitool_parse_for_cert_type(const uint8_t *input, size_t inLen, uint8_t *
         return FALSE;
     }
 
-    while(identifierLen) {
+    while (identifierLen) {
         if (input[i + identifierIndex] != identifier[i]) {
             return FALSE;
         }
@@ -1345,15 +1347,15 @@ sss_status_t nxclitool_crt_repo_read_cert(int argc, const char *argv[], nxclitoo
     uint8_t buffer[MAX_CERT_BUF_LEN]  = {0};
     uint8_t *pbuffer                  = buffer;
     size_t buffer_len                 = sizeof(buffer);
-    size_t offset                     = 0; // Certificate offset from where actual certificate starts (after the NXP specific TLV)
-    char file_path[MAX_FILE_PATH_LEN] = {0};
-    bool file_flag                    = 0;
-    sss_nx_session_t *pSession        = (sss_nx_session_t *)&pCtx->session;
+    size_t offset = 0; // Certificate offset from where actual certificate starts (after the NXP specific TLV)
+    char file_path[MAX_FILE_PATH_LEN]   = {0};
+    bool file_flag                      = 0;
+    sss_nx_session_t *pSession          = (sss_nx_session_t *)&pCtx->session;
     uint8_t pkcs7SignedDataIdentifier[] = {0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x07, 0x02};
-    size_t identifierIndex = 4;
-    char name[20] = {0};
-    size_t nameLen = 0;
-    bool isPkcs7 = FALSE;
+    size_t identifierIndex              = 4;
+    char name[20]                       = {0};
+    size_t nameLen                      = 0;
+    bool isPkcs7                        = FALSE;
 
     if (nxclitool_fetch_parameters(argc,
             argv,
@@ -1430,7 +1432,8 @@ sss_status_t nxclitool_crt_repo_read_cert(int argc, const char *argv[], nxclitoo
     LOG_MAU8_I("Fetched certificate (DER)", pbuffer, buffer_len);
 
     // Parse the certificate for X509 or PKCS7
-    isPkcs7 = nxclitool_parse_for_cert_type(pbuffer, buffer_len, pkcs7SignedDataIdentifier, sizeof(pkcs7SignedDataIdentifier), identifierIndex);
+    isPkcs7 = nxclitool_parse_for_cert_type(
+        pbuffer, buffer_len, pkcs7SignedDataIdentifier, sizeof(pkcs7SignedDataIdentifier), identifierIndex);
     if (isPkcs7) {
         strcpy(name, "PKCS7");
         nameLen = 6;

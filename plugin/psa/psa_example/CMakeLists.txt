@@ -26,7 +26,6 @@ IF(SSS_HAVE_KSDK)
     TARGET_LINK_LIBRARIES(
         ${PROJECT_NAME}
         board
-        SSS_APIs
         ex_common
         mbedtls
         psa_alt_lib
@@ -34,7 +33,6 @@ IF(SSS_HAVE_KSDK)
 ELSE()
     TARGET_LINK_LIBRARIES(
         ${PROJECT_NAME}
-        SSS_APIs
         ex_common
         mbedtls
         psa_alt_lib

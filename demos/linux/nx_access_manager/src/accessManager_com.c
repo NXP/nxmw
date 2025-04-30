@@ -48,7 +48,7 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
     size_t i          = 0;
 
     // Breakdown the received APDU into hdr, cmdHdr, cmdData, hasLe and isExtended
-    if (cmdLen - i < 4) {
+    if ((cmdLen - i < 4) || (cmdLen > NX_MAX_BUF_SIZE_CMD)) {
         return status;
     }
     hdr->hdr[0] = cmd[i++];
@@ -121,22 +121,22 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
 
 smStatus_t amTxRxAPDU(SeSession_t *pSessionCtx, U8 *cmd, U16 cmdLen, U8 *resp, U16 *respLen, nx_auth_type_t auth_type)
 {
-    smStatus_t txStatus                    = SM_NOT_OK;
-    U32 status                             = 0;
-    U16 cmdLenLocal                        = 0;
-    U32 respLenLocal                       = *respLen;
-    size_t respBufLen                      = *respLen;
-    tlvHeader_t hdr                        = {0};
-    uint8_t cmdHeader[NX_MAX_BUF_SIZE_CMD] = {0};
-    size_t cmdHeaderLen                    = sizeof(cmdHeader);
-    uint8_t cmdData[NX_MAX_BUF_SIZE_CMD]   = {0};
-    size_t cmdDataLen                      = sizeof(cmdData);
-    nx_ev2_comm_mode_t commMode            = EV2_CommMode_PLAIN;
-    uint8_t hasLe                          = 0;
-    uint8_t isExtended                     = 0;
-    size_t i                               = 0;
-    U8 cmdByte                             = 0;
-    uint8_t option                         = 0;
+    smStatus_t txStatus                           = SM_NOT_OK;
+    U32 status                                    = 0;
+    U16 cmdLenLocal                               = 0;
+    U32 respLenLocal                              = *respLen;
+    size_t respBufLen                             = *respLen;
+    tlvHeader_t hdr                               = {0};
+    uint8_t cmdHeader[NX_MAX_BUF_SIZE_CMD_HEADER] = {0};
+    size_t cmdHeaderLen                           = sizeof(cmdHeader);
+    uint8_t cmdData[NX_MAX_BUF_SIZE_CMD]          = {0};
+    size_t cmdDataLen                             = sizeof(cmdData);
+    nx_ev2_comm_mode_t commMode                   = EV2_CommMode_PLAIN;
+    uint8_t hasLe                                 = 0;
+    uint8_t isExtended                            = 0;
+    size_t i                                      = 0;
+    U8 cmdByte                                    = 0;
+    uint8_t option                                = 0;
 
     LOG_D("FN: %s", __FUNCTION__);
 

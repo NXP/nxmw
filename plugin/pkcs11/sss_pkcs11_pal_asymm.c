@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -180,7 +180,7 @@ exit:
 CK_RV pkcs11_ecRandSToSignature(uint8_t *rands, const size_t rands_len, uint8_t *output, size_t *outputLen)
 {
     CK_RV xResult          = CKR_FUNCTION_FAILED;
-    uint8_t signature[256] = {0};
+    uint8_t signature[260] = {0};
     size_t signatureLen    = sizeof(signature);
     size_t componentLen    = (rands_len) / 2;
     uint8_t tag            = ASN_TAG_INT;

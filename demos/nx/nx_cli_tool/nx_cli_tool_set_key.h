@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
-#define MAX_KEY_LEN 1024
-
 void nxclitool_show_command_help_set_key()
 {
     printf("\nUSAGE: nxclitool setkey [OPTIONS]\n");
@@ -17,8 +15,21 @@ void nxclitool_show_command_help_set_key()
     printf("\t\t  none\n");
     printf("\t\t  ecdh\n");
     printf("\t\t  sign\n");
-    printf("  -in\t\tPath to the certificate/key in PEM format\n");
-    printf("  -keyid\tECC private key ID associated with the repository\n");
+    printf("  -in\t\tPath to the key in PEM format\n");
+    printf("  -keyid\tECC private key ID to set the key\n");
+    printf("  -waccess\tWrite Access for key policy. Accepted values:\n");
+    printf("\t\t  0x00 to 0x0C\tAuth Required\n");
+    printf("\t\t  0x0D\t\tFree over I2C\n");
+    printf("\t\t  0x0E\t\tFree Access\n");
+    printf("\t\t  0x0F\t\tNo Access\n");
+    printf("\n");
+}
+
+void nxclitool_show_command_help_list_eckey()
+{
+    printf("\nUSAGE: nxclitool list-eckey\n");
+    printf("\n");
+    printf("NOTE: list-eckey command does not require any additional arguments.\n");
     printf("\n");
 }
 
@@ -28,6 +39,7 @@ sss_status_t nxclitool_set_key(int argc,
     uint32_t key_id,
     Nx_ECCurve_t curve_type,
     NXCLITOOL_OPERATION_t operation,
+    uint8_t write_acc_cond,
     char *file)
 {
     sss_status_t status           = kStatus_SSS_Fail;
@@ -36,11 +48,12 @@ sss_status_t nxclitool_set_key(int argc,
     sss_cipher_type_t cipher_type = kSSS_CipherType_NONE;
     size_t key_pair_len           = MAX_KEY_LEN;
     size_t key_len                = 256;
-    unsigned char input_key[MAX_CERT_BUF_LEN + 1] = {0};
-    uint8_t key_pair[MAX_KEY_LEN]                 = {0};
-    uint8_t key[MAX_KEY_LEN]                      = {0};
-    size_t input_len                              = sizeof(input_key);
-    FILE *fp                                      = NULL;
+    uint8_t key_pair[MAX_KEY_LEN] = {0};
+    uint8_t key[MAX_KEY_LEN]      = {0};
+    FILE *fp                      = NULL;
+    char name[]                   = "EC PRIVATE KEY";
+
+    ENSURE_OR_GO_CLEANUP(write_acc_cond <= 0x0F);
 
     // Initial policy with sign and ECDH disabled
     sss_policy_u keyGenPolicy  = {.type = KPolicy_GenECKey,
@@ -53,7 +66,7 @@ sss_status_t nxclitool_set_key(int argc,
                        .ecdhEnabled           = 0, // can be changed using command line
                        .eccSignEnabled        = 0, // can be changed using command line
                        .writeCommMode         = kCommMode_FULL,
-                       .writeAccessCond       = Nx_AccessCondition_Free_Access,
+                       .writeAccessCond       = write_acc_cond,
                        .userCommMode          = Nx_CommMode_NA,
                    }}};
     sss_policy_t ec_key_policy = {.nPolicies = 1, .policies = {&keyGenPolicy}};
@@ -94,9 +107,39 @@ sss_status_t nxclitool_set_key(int argc,
         goto cleanup;
     }
 
+    switch (write_acc_cond) {
+    case 0x00:
+    case 0x01:
+    case 0x02:
+    case 0x03:
+    case 0x04:
+    case 0x05:
+    case 0x06:
+    case 0x07:
+    case 0x08:
+    case 0x09:
+    case 0x0A:
+    case 0x0B:
+    case 0x0C:
+        LOG_I("Using write access condition as AUTH REQUIRED 0x%X", write_acc_cond);
+        break;
+    case 0x0D:
+        LOG_I("Using write access condition as FREE OVER I2C");
+        break;
+    case 0x0E:
+        LOG_I("Using write access condition as FREE ACCESS");
+        break;
+    case 0x0F:
+        LOG_I("Using write access condition as NO ACCESS");
+        break;
+    default:
+        LOG_E("Invalid write access condition");
+        break;
+    }
+
     if ((fp = fopen(file, "rb")) != NULL) {
         LOG_I("Using certificate/key at path \"%s\"", file);
-        if (convert_pem_to_der(fp, input_key, input_len, key_pair, &key_pair_len) != 0) {
+        if (nxclitool_convert_pem_to_der(fp, key_pair, &key_pair_len, name) != 0) {
             LOG_E("Unable to convert from PEM to DER");
             if (0 != fclose(fp)) {
                 LOG_W("Failed to close the file handle");
@@ -110,7 +153,6 @@ sss_status_t nxclitool_set_key(int argc,
     }
     else {
         LOG_E("Unable to open the certificate/key file at path \"%s\"", file);
-        input_len = 0;
         goto cleanup;
     }
 
@@ -141,5 +183,100 @@ cleanup:
     if (key_object.keyStore != NULL) {
         sss_key_object_free(&key_object);
     }
+    return status;
+}
+
+sss_status_t nxclitool_list_eckey(int argc, const char *argv[], nxclitool_sss_boot_ctx_t *pCtx)
+{
+    sss_status_t status                                                        = kStatus_SSS_Fail;
+    smStatus_t sm_status                                                       = SM_NOT_OK;
+    sss_nx_session_t *pSession                                                 = NULL;
+    uint8_t entry_count                                                        = NX_KEY_SETTING_ECC_KEY_MAX_ENTRY;
+    int i                                                                      = 0;
+    nx_ecc_key_meta_data_t eccPrivateKeyList[NX_KEY_SETTING_ECC_KEY_MAX_ENTRY] = {0};
+    nx_ecc_key_meta_data_t empty_key_info                                      = {0};
+
+    ENSURE_OR_GO_EXIT(NULL != pCtx)
+    pSession = (sss_nx_session_t *)&pCtx->session;
+
+    sm_status = nx_GetKeySettings_ECCPrivateKeyList(&pSession->s_ctx, &entry_count, eccPrivateKeyList);
+    ENSURE_OR_GO_EXIT(sm_status == SM_OK);
+
+    printf("\n");
+    LOG_I("EC Key List:");
+
+    for (i = 0; i < NX_KEY_SETTING_ECC_KEY_MAX_ENTRY; i++) {
+        printf("\n");
+        LOG_MAU8_D(
+            "Plain ECC Private Key Info", (unsigned char *)&eccPrivateKeyList[i], sizeof(nx_ecc_key_meta_data_t));
+        if (memcmp(&eccPrivateKeyList[i], &empty_key_info, sizeof(Nx_ECC_meta_data_t)) == 0) {
+            // Nothing to print if the buffer is empty i.e. Key is not present
+            continue;
+        }
+        LOG_I("   Key ID: 0x%0X", eccPrivateKeyList[i].keyId);
+
+        switch (eccPrivateKeyList[i].curveId) {
+        case Nx_ECCurve_NA:
+            LOG_I("   Curve: NA");
+            break;
+        case Nx_ECCurve_NIST_P256:
+            LOG_I("   Curve: NIST P256");
+            break;
+        case Nx_ECCurve_Brainpool256:
+            LOG_I("   Curve: BRAINPOOL 256");
+            break;
+        default:
+            LOG_I("   Curve: INVALID CURVE");
+            break;
+        }
+
+        LOG_I("   Policy: 0x%0X", eccPrivateKeyList[i].keyPolicy);
+
+        switch (eccPrivateKeyList[i].writeCommMode) {
+        case Nx_CommMode_Plain:
+            LOG_I("   Comm Mode: PLAIN");
+            break;
+        case Nx_CommMode_MAC:
+            LOG_I("   Comm Mode: MAC");
+            break;
+        case Nx_CommMode_FULL:
+            LOG_I("   Comm Mode: FULL");
+            break;
+        case Nx_CommMode_NA:
+            LOG_I("   Comm Mode: NA");
+            break;
+
+        default:
+            LOG_I("   Comm Mode: INVALID");
+            break;
+        }
+
+        switch (eccPrivateKeyList[i].writeAccessCond) {
+        case Nx_AccessCondition_Free_Over_I2C:
+            LOG_I("   Write access: FREE OVER I2C");
+            break;
+        case Nx_AccessCondition_Free_Access:
+            LOG_I("   Write access: FREE ACCESS");
+            break;
+        case Nx_AccessCondition_No_Access:
+            LOG_I("   Write access: NO ACCESS");
+            break;
+
+        default:
+            if (eccPrivateKeyList[i].writeAccessCond < 0x0D) {
+                LOG_I("   Write access: AUTH REQUIRED 0x%0X", eccPrivateKeyList[i].writeAccessCond);
+            }
+            else {
+                LOG_I("   Write access: INVALID");
+            }
+            break;
+        }
+
+        LOG_I("   Key Usage Counter Limit: %d", eccPrivateKeyList[i].kucLimit);
+        LOG_I("   Key Usage Counter: %d", eccPrivateKeyList[i].keyUsageCtr);
+    }
+    status = kStatus_SSS_Success;
+
+exit:
     return status;
 }

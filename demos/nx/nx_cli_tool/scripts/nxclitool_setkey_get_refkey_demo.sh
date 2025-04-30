@@ -55,7 +55,9 @@ else
 $TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -curve $AUTH_CURVE -repoid $REPO_ID
 fi
 
-$TOOL_PATH/nxclitool setkey -keyid $KEY_ID -curve prime256v1 -in $PRIV_KEY_PATH -enable sign
+$TOOL_PATH/nxclitool setkey -keyid $KEY_ID -curve prime256v1 -in $PRIV_KEY_PATH -enable sign -waccess 0x0E
+
+$TOOL_PATH/nxclitool list-eckey
 
 $TOOL_PATH/nxclitool disconnect
 

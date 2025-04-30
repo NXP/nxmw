@@ -1,0 +1,7 @@
+*.jlink
+*.launch
+*.hex
+bin/
+*.bin
+*.axf
+*.settings

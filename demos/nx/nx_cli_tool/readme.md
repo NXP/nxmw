@@ -34,6 +34,9 @@ It supports following commands:
 | setbin         | Set data to a standard data file inside SA                              |
 | getbin         | Get data from standard data file in SA                                  |
 | list-fileid    | Fetches the list of file IDs inside SA                                  |
+| list-eckey     | Fetches the list and properties of EC keys inside SA                    |
+| set-i2c_mgnt   | Set certificate configuration                                           |
+| set-cert_mgnt  | Set certificate configuration                                           |
 
 
 Refer individual command sections for more details.
@@ -128,6 +131,24 @@ nxclitool get-uid
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
 ./nxclitool get-uid
+./nxclitool disconnect
+```
+
+
+## List EC Key Command
+
+Fetches the list and properties of EC keys inside Secure Authenticator. This command does not require any options.
+
+**Command Format**
+
+```
+nxclitool list-eckey
+```
+
+**Example**
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool list-eckey
 ./nxclitool disconnect
 ```
 
@@ -536,10 +557,10 @@ nxclitool setbin [OPTIONS]
 
 **Options**
 
--   **[-bytes]**: No. of bytes to store (optional). Default: No. of bytes from offset to EOF
+-   **\[-bytes\]**: No. of bytes to store (optional). Default: No. of bytes from offset to EOF
 -   **-id**: File ID in hex format
 -   **-in**: Path to the file to read
--   **[-offset]**: Offset of data to read from and store at in SA (optional). Default: 0
+-   **\[-offset\]**: Offset of data to read from and store at in SA (optional). Default: 0
 
 
 **Example**
@@ -568,10 +589,10 @@ nxclitool getbin [OPTIONS]
 
 **Options**
 
--   **[-bytes]**: No. of bytes to store (optional). Default: No. of bytes from offset to EOF
+-   **\[-bytes\]**: No. of bytes to store (optional). Default: No. of bytes from offset to EOF
 -   **-id**: File ID in hex format
--   **[-offset]**: Offset of data to read from SA standard file (optional). Default: 0
--   **[-out]**: Stores the fetched data to a file on this path (optional)
+-   **\[-offset\]**: Offset of data to read from SA standard file (optional). Default: 0
+-   **\[-out\]**: Stores the fetched data to a file on this path (optional)
 
 
 **Example**
@@ -649,4 +670,66 @@ the path to the certificates and run the ex_ecc example.
 ```
 set NX_AUTH_CERT_DIR=<CERT_FOLDER_PATH>
 <PATH_TO_EXECUTABLE>\ex_ecc.exe
+```
+## Set-Config I2C Management
+
+set config i2c management like i2c support, i2c address
+and select protocol options
+
+
+**Command Format**
+```
+nxclitool set-i2c_mgnt [OPTIONS]
+```
+
+**Options**
+
+-   **-i2csupport**: I2C disabled/enabled
+-   **-i2caddr**: The address used for the I2C target (default 0x20):
+-   **-protocoloptions**: The crypto protocols supported over I2C, refer NTAGECC_RefArch:
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool set-i2c_mgnt -i2csupport 0x01 -i2caddr 0x20 -protocoloptions 0x1B85
+./nxclitool disconnect
+```
+
+## Set-Config Certificate Management
+
+set config Certificate management like LeafCacheSize, IntermCacheSize, FeatureSelection
+and ManageCertRepo-AccessCondition
+
+
+**Command Format**
+```
+nxclitool set-cert_mgnt [OPTIONS]
+```
+
+**Options**
+
+-   **-leafcachesize**: End Leaf certificate cache size 0x01...0x08
+-   **-intermcachesize**: Intermediate certificate cache size 0x02...0x08
+-   **-featureselection**: Enable SIGMA-I cache
+    -   `0x01`: Enable SIGMA-I cache
+    -   `0x00`: Disable SIGMA-I cache
+-   **ManageCertRepoAccessCondition \[OPTIONS\]**
+    -   **-wcomm**: ManageCertRepo communication mode. Accepted values:
+        - `full`
+        - `mac`
+        - `plain`
+        - `na`
+    -   **-waccess**: Write Access Rights respectively. Accepted values:
+        -   `0x00 to 0x0C`: Auth required
+        -   `0x0D`: Free over I2C
+        -   `0x0E`: Free Access
+        -   `0x0F`: No Access
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool set-cert_mgnt -leafcachesize 0x08 -intermcachesize 0x08 -featureselection 0x01 -wcomm plain -waccess 0x00
+./nxclitool disconnect
 ```
