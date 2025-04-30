@@ -45,10 +45,15 @@ Refer [**NX Middleware**](doc/stack/readme.md) for more details on the middlewar
 
 ## Getting Started
 
-Refer the following sections to build NX Middleware and run example
+Refer the following sections to build NX Middleware and run demos.
 
-For Linux - Refer [**Linux build**](doc/linux/readme.md)
+For Linux, refer [**Getting started on Linux**](doc/linux/readme.md)
 
+For Windows, refer [**Getting Started on Windows**](doc/windows/readme.md)
+
+For MCU Projects, refer [**Getting Started on MCUs Using Standalone MCUXpresso Projects**](doc/mcu_projects/readme.md)
+
+For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmake/readme.md)
 
 ## Folder Structure
 
@@ -59,7 +64,7 @@ For Linux - Refer [**Linux build**](doc/linux/readme.md)
 | demos              | Examples / Use cases / Access manager                                   |
 | doc                | Documentation                                                           |
 | lib                | Session Manager Code, SSS APIs, NX APIs to use NX SA                    |
-| plugin             | Standard plugins like OpenSSL Engine / Provider                         |
+| plugin             | Standard plugins like OpenSSL Engine, provider, psa, pkcs11             |
 | scripts            | Scripts for building                                                    |
 | ChangeLog.md       | Change Log file                                                         |
 | CMakeLists.txt     | Root Cmake file                                                         |
@@ -70,11 +75,11 @@ For Linux - Refer [**Linux build**](doc/linux/readme.md)
 
 ## Useful Links
 
-Demos - [**Demos**](demos/)
-
 OpenSSL Provider - [**OpenSSL Provider**](plugin/openssl_provider/readme.md)
 
 OpenSSL Engine - [**OpenSSL Engine**](plugin/openssl/readme.md)
+
+Platform Security Architecture - [**Platform Security Architecture**](plugin/psa/README.md)
 
 Access Manager for Linux - [**Access Manager**](demos/linux/nx_access_manager/readme.md)
 

@@ -80,6 +80,12 @@ ADD_SUBDIRECTORY(demos)
 ADD_SUBDIRECTORY(plugin)
 
 
+# ############ Add mbedtls ############
+IF(SSS_HAVE_HOSTCRYPTO_MBEDTLS)
+    ADD_SUBDIRECTORY(mcu_sdk)
+ENDIF()
+
+
 ############ example init code ############
 ADD_SUBDIRECTORY(lib/sss/ex/src)
 
@@ -87,18 +93,11 @@ ADD_SUBDIRECTORY(lib/sss/ex/src)
 
 ############ NXP Internal ############
 IF(NXPInternal)
-    IF(
-        "${CMAKE_CXX_COMPILER_ID}"
-        STREQUAL
-        "MSVC"
-    )
-    # Macros won't work for MSVC
-    ELSE()
-        ADD_SUBDIRECTORY(exhaledocs)
-    ENDIF()
 
     CONFIGURE_FILE(tst/sss/inc/nx_tst_ftr.h.in nx_tst_ftr.h)
-    ADD_SUBDIRECTORY(tst)
-    ADD_SUBDIRECTORY(ext)
+    IF (NOT SSS_HAVE_HOST_FRDMMCXA153)
+        ADD_SUBDIRECTORY(tst)
+        ADD_SUBDIRECTORY(ext)
+    ENDIF()
 
 ENDIF()
