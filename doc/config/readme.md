@@ -1,7 +1,7 @@
 # CMake Options
 
 
-### NXMW_NX_Type: The NX Secure Authenticator Type
+## NXMW_NX_Type: The NX Secure Authenticator Type
 
 You can compile host library for different OS Applications of NX Secure Authenticator listed below.
 
@@ -12,7 +12,7 @@ You can compile host library for different OS Applications of NX Secure Authenti
 ``-DNXMW_NX_Type=NX_PICC``: MF (DF name 0xD2760000850100)
 
 
-### NXMW_Host: Host where the software stack is running
+## NXMW_Host: Host where the software stack is running
 
 For e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 
@@ -27,7 +27,7 @@ For e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 ``-DNXMW_Host=Raspbian``: Embedded Linux on RaspBerry PI
 
 
-### NXMW_SMCOM: Communication Interface
+## NXMW_SMCOM: Communication Interface
 
 How the host library communicates to the Secure Authenticator.
 This may be directly over an I2C interface on embedded platform.
@@ -46,7 +46,7 @@ Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
     from the Linux PC.
 
 
-### NXMW_HostCrypto: Counterpart Crypto on Host
+## NXMW_HostCrypto: Counterpart Crypto on Host
 
 What is being used as a cryptographic library on the host.
 As of now only OpenSSL / mbedTLS is supported
@@ -60,7 +60,7 @@ As of now only OpenSSL / mbedTLS is supported
     needs to be assessed from system security point of view
 
 
-### NXMW_RTOS: Choice of Operating system
+## NXMW_RTOS: Choice of Operating system
 
 Default would mean nothing special.
 i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
@@ -70,7 +70,7 @@ i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
 ``-DNXMW_RTOS=FreeRTOS``: Free RTOS for embedded systems
 
 
-### NXMW_Auth: NX Authentication
+## NXMW_Auth: NX Authentication
 
 This settings is used by examples to connect using various options to authenticate with the NX SE.
 
@@ -83,7 +83,7 @@ This settings is used by examples to connect using various options to authentica
 ``-DNXMW_Auth=SYMM_Auth``: Symmetric Authentication
 
 
-### NXMW_Log: Logging
+## NXMW_Log: Logging
 
 Set the logging level using this setting
 
@@ -94,7 +94,7 @@ Set the logging level using this setting
 ``-DNXMW_Log=Silent``: Totally silent logging
 
 
-### CMAKE_BUILD_TYPE
+## CMAKE_BUILD_TYPE
 
 Refer: https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
 
@@ -110,7 +110,7 @@ For MSVC builds, build type is selected from IDE As well
 ``-DCMAKE_BUILD_TYPE=``: Empty Allowed
 
 
-### NXMW_Secure_Tunneling: Secure Tunneling (Secure Messaging)
+## NXMW_Secure_Tunneling: Secure Tunneling (Secure Messaging)
 
 Successful Symmetric authentication and SIGMA-I mutual authentication results in the establishment of
 session keys and session IVs.
@@ -125,20 +125,20 @@ These are used to encrypt and integrity protect the payloads to be exchanged.
 ``-DNXMW_Secure_Tunneling=NTAG_AES256_EV2``: Only NTAG AES - 256 (EV2) Secure Channel
 
 
-### NXMW_Auth_Asymm_Host_PK_Cache: Host public key cache
+## NXMW_Auth_Asymm_Host_PK_Cache: Host public key cache**
 
 Support a cache of validated public keys and parent certificates on host.
 This is utilized to accelerate protocol execution time by removing the need
 to validate public key and certificates that have been previously verified.
 
-Secure authenticator cache is enabled by Cmd.SetConfiguration. Refer [**Enable Certificate Cache Example**](../../demos/nx/cert_cache/README.md) for more information.
+Secure authenticator cache is enabled by Cmd.SetConfiguration. Refer [**Enable Certificate Cache Example**](../../demos/nx/cert_cache/readme.md) for more information.
 
 ``-DNXMW_Auth_Asymm_Host_PK_Cache=Disabled``: Host's Public Key And Parent Certificates Cache Disabled
 
 ``-DNXMW_Auth_Asymm_Host_PK_Cache=Enabled``: Host's Public Key And Parent Certificates Cache Enabled
 
 
-### NXMW_Auth_Asymm_Cert_Repo_Id: Certificate Repository Id
+## NXMW_Auth_Asymm_Cert_Repo_Id: Certificate Repository Id
 
 Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication.
 In personalization, it indicates repository to be initialized. In demos, it indicates repository to be used for Sigma-I authentication
@@ -160,7 +160,7 @@ In personalization, it indicates repository to be initialized. In demos, it indi
 ``-DNXMW_Auth_Asymm_Cert_Repo_Id=7``: Certificate Repository 7
 
 
-### NXMW_Auth_Asymm_Cert_SK_Id: Certificate Private Key Id
+## NXMW_Auth_Asymm_Cert_SK_Id: Certificate Private Key Id
 
 Id of ECC private key associated with this
 repository. Used in personalization for Sigma-I.
@@ -176,7 +176,7 @@ repository. Used in personalization for Sigma-I.
 ``-DNXMW_Auth_Asymm_Cert_SK_Id=4``: Certificate Private KeyId 4
 
 
-### NXMW_Auth_Asymm_CA_Root_Key_Id: Key ID of CA Root Public Key
+## NXMW_Auth_Asymm_CA_Root_Key_Id: Key ID of CA Root Public Key
 
 Id of CA root public key associated with this repository. Used in personalization for Sigma-I.
 
@@ -191,7 +191,7 @@ Id of CA root public key associated with this repository. Used in personalizatio
 ``-DNXMW_Auth_Asymm_CA_Root_Key_Id=4``: CA Root KeyId 4
 
 
-### NXMW_Auth_Symm_App_Key_Id: Application Key ID
+## NXMW_Auth_Symm_App_Key_Id: Application Key ID
 
 Indicate application key which is used in symmetric authentication.
 
@@ -206,7 +206,7 @@ Indicate application key which is used in symmetric authentication.
 ``-DNXMW_Auth_Symm_App_Key_Id=4``: Application KeyId 4
 
 
-### NXMW_Auth_Asymm_Host_Curve: Host EC domain curve type
+## NXMW_Auth_Asymm_Host_Curve: Host EC domain curve type
 
 EC domain curve used for session key generation and
 session signature. Used in demos with Sigma-I authentication.
@@ -216,7 +216,7 @@ session signature. Used in demos with Sigma-I authentication.
 ``-DNXMW_Auth_Asymm_Host_Curve=BRAINPOOL``: EC Curve Brainpool
 
 
-### NXMW_OpenSSL: For PC, OpenSSL version to pick up
+## NXMW_OpenSSL: For PC, OpenSSL version to pick up
 
 On Linux based builds, this option has no impact, because the build system
 picks up the default available/installed OpenSSL from the system directly.
@@ -227,7 +227,7 @@ Also, this option has no impact if NXMW_HostCrypto is not selected as OPENSSL.
 ``-DNXMW_OpenSSL=3_0``: Use 3.0 version (Only applicable on PC)
 
 
-### NXMW_MBedTLS: Which MBedTLS version to choose
+## NXMW_MBedTLS: Which MBedTLS version to choose
 
 This option has no impact if NXMW_HostCrypto is not selected as MBEDTLS.
 
@@ -236,7 +236,7 @@ This option has no impact if NXMW_HostCrypto is not selected as MBEDTLS.
 ``-DNXMW_MBedTLS=3_X``: Use 3.X version
 
 
-### NXMW_Auth_Symm_Diversify: Diversification of symmetric authentication key
+## NXMW_Auth_Symm_Diversify: Diversification of symmetric authentication key
 
 When enabled, key used for symmetric authentication is diversification key derived from master key.
 
@@ -247,7 +247,7 @@ Otherwise master key is used.
 ``-DNXMW_Auth_Symm_Diversify=Enabled``: Symm Auth Key Diversification Enabled
 
 
-### NXMW_All_Auth_Code: Enable all authentication code
+## NXMW_All_Auth_Code: Enable all authentication code
 When enabled, all the authentication code is enabled in nx library.
 
 ``-DNXMW_All_Auth_Code=Disabled``: Enable only required authentication code (Based on NXMW_Auth Cmake option)
@@ -255,12 +255,12 @@ When enabled, all the authentication code is enabled in nx library.
 ``-DNXMW_All_Auth_Code=Enabled``: Enable all authentication code
 
 
-### NXMW_mbedTLS_ALT: ALT Engine implementation for mbedTLS
+## NXMW_mbedTLS_ALT: ALT Engine implementation for mbedTLS
 
 When set to None, mbedTLS would not use ALT Implementation to connect to / use Secure Authenticator.
 This needs to be set to PSA for PSA example over SSS APIs
 
-
+``-DNXMW_mbedTLS_ALT=SSS``: Enable SSS as ALT
 
 ``-DNXMW_mbedTLS_ALT=PSA``: Enable TF-M based on PSA as ALT
 
@@ -269,7 +269,7 @@ This needs to be set to PSA for PSA example over SSS APIs
 **NOTE**: When this is set as PSA, cloud demos can not work with mbedTLS
 
 
-### NXMW_SA_Type: Enable host certificates of A30 for Sigma-I Authentication
+## NXMW_SA_Type: Enable host certificates of A30 for Sigma-I Authentication
 
 When Secure Authenticator type is selected, respective host certificates are enabled in NX library.
 

@@ -32,20 +32,20 @@ After the successful authentication, commands are required to be sent using any 
 
 
 <p align=left>
-<img src="session_cmd_diagram.jpeg" alt="drawing" width="800"/>
+<img src="../img/stack/session_cmd_diagram.jpeg" alt="drawing" width="800"/>
 </p>
 
 
 All of the above session authentication and command encryption modes can be selected using the cmake options.
 For more details on cmake options - refer [**cmake options**](../config/readme.md),
 <p align=left>
-<img src="session_auth_cmake_image.jpeg" alt="drawing" width="800"/>
+<img src="../img/stack/session_auth_cmake_image.jpeg" alt="drawing" width="800"/>
 </p>
 
 
 Following table shows valid combinations of session auth and secure tunneling modes.
 <p align=left>
-<img src="nx_auth_secure_tunneling.jpeg" alt="drawing" width="800"/>
+<img src="../img/stack/nx_auth_secure_tunneling.jpeg" alt="drawing" width="600"/>
 </p>
 
 
@@ -59,26 +59,24 @@ The cache feature can be enabled/disabled by cmake option NXMW_Auth_Asymm_Host_P
 
 Also, to setup Sigma-I session, host will provide its certificates chains to Secure Authenticator for verification. The certificates chains are stored based on the host OS type.
 
-On Windows (Support to be added in subsequent releases) / Linux systems, the middleware will looks for certificate chain in following priority:
+On Windows / Linux systems, the middleware will looks for certificate chain in following priority:
 
     - Folder indicated by ENV variable "NX_AUTH_CERT_DIR"
     - Folder "C:\nxp\configuration\cert_depth3_x509_rev1\"(Windows) or "/tmp/configuration/cert_depth3_x509_rev1/" (Linux)
-    - Hard coded certificates defined in :file:`nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h`
+    - Hard coded certificates defined in file: "nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h"
 
-Other micro-controllers: (Support to be added in subsequent releases)
+Other micro-controllers:
 
-    - Hard coded certificates defined in :file:`nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h`
+    - Hard coded certificates defined in file: "nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h"
 
 
-```
-NOTE:
+>**Note:** <span style="color:blue;">
     The hard coded certificates and related private keys are stored in plain text for demonstration purposes only. During actual product deployment, customer has to adopt secure means as per their security needs (note that the potential issue is more with the private keys than certificates).
-```
+</span>
 
-```
-NOTE:
+>**Note:** <span style="color:blue;">
     T=1oI2C: When using the T=1oI2C smcom interface, at the beginning of session open, we do a dummy read (function - `phNxpEse_clearReadBuffer`) from the secure authenticator if any previous session data is pending and discard the data.
-```
+</span>
 
 
 <br />
@@ -150,7 +148,7 @@ NX Middleware provides 2 set of crypto APIs to access the NX secure authenticato
     - nx APIs
 
 <p align=left>
-<img src="sss_nx_api.jpeg" alt="drawing" width="800"/>
+<img src="../img/stack/sss_nx_api.jpeg" alt="drawing" width="400"/>
 </p>
 
 #### SSS APIs
@@ -159,7 +157,7 @@ Not all NX Secure Authenticator features are covered using SSS APIs.
 Only the crypto functionality which can be switched between host and Nx secure authenticator are supported using SSS APIs.
 For all other use cases, use Nx APIs.
 
-``SSS`` is an acronym for **S**\ ecure **S**\ ub **S**\ ystem
+``SSS`` is an acronym for **S**ecure **S**ub **S**ystem
 
 The SSS APIs are functional APIs to abstract the access to various types of Cryptographic Sub Systems.  Such secure
 subsystems could be (but not limited to):

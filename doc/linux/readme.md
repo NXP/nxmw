@@ -17,7 +17,7 @@ Run the following commands to build and run examples on Linux / Raspberry Pi 4
 	</p>
 
 	<p align=left>
-	<img src="raspi_a30_2.jpg" alt="drawing" width="800"/>
+	<img src="raspi_a30_2.jpg" alt="drawing" width="600"/>
 	</p>
 
 - Enable I2C if not yet enabled on your board. (If ``ls /sys/bus/i2c/devices`` does not list ``i2c-1``)
@@ -36,12 +36,12 @@ sudo apt-get install cmake cmake-curses-gui cmake-gui libssl-dev libsystemd-dev
 ```
 
 
-## Build instructions
+## Build Instructions
 
 Execute the below commands to build and install the nx middleware
 
 ```console
-git clone ssh://git@github.com:NXP/nxmw.git nx-mw-top
+git clone  --recurse-submodules https://github.com/NXP/nxmw.git nx-mw-top
 cd nx-mw-top/scripts
 python create_cmake_projects.py
 cd ../../nx-mw-top_build/raspbian_native_nx_t1oi2c
@@ -59,9 +59,9 @@ If required cmake options can be changed and libraries can be rebuilt and instal
 cd nx-mw-top_build/raspbian_native_nx_t1oi2c
 ccmake .
 ```
-Refer [**cmake options**](../config/readme.md) for more details
+Refer [**CMake Options**](../config/readme.md) for more details
 
-Single example (target) can be built using the following command:
+Single demo (target) can be built using the following command:
 ```
 cmake --build . --target <TARGET_NAME>
 ```
@@ -71,16 +71,17 @@ make <TARGET_NAME>
 ```
 
 
-Run the required example as -
+Run the required demo as:
 
 ```console
-./<example>.bin
+./<TARGET_NAME>.bin
 ````
 
 
 ---
 **NOTE**
 
+```
 A precondition for enabling Sigma-I authentication (setting the CMAKE option NXMW_Auth to SIGMA_I_Verifier or SIGMA_I_Prover) is to provision secure authenticator and the host with the required Sigma-I credentials using one of the following options:
 
 1.	Using of the NXP pre-provisioned A30 Sigma-I credentials.
@@ -88,6 +89,6 @@ A precondition for enabling Sigma-I authentication (setting the CMAKE option NXM
 
 2. On-chip EC key generation and import of the related A30 certificates into the X.509 Certificate Repository.
 
-3. Import of private EC key and import of the related A30 certificates into the X.509 Certificate Repository. ( Refer to nx_personalization example - [**nx_personalization**](../../demos/nx/nx_Personalization/readme.md).
-	- Alternative the nx_cli_tool and the script file nxclitool_perso_x509.sh can be used. )
+3. Import of private EC key and import of the related A30 certificates into the X.509 Certificate Repository. (Refer the [**NX Personalization Example**](../../demos/nx/nx_Personalization/readme.md) or Personalization of SA Using NX CLI Tool section in [**NX CLI Tool**](../../demos/nx/nx_cli_tool/readme.md)).
+```
 ---
