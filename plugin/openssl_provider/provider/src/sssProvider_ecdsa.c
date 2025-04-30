@@ -4,7 +4,7 @@
  * @version 1.0
  * @par License
  *
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: Apache-2.0
  *
  * @par Description
@@ -303,7 +303,7 @@ static int sss_ecdsa_signature_digest_update(void *ctx, const unsigned char *dat
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
         datalen = datalen - templen;
-        ENSURE_OR_GO_CLEANUP((UINT_MAX - offset) >= templen);
+        ENSURE_OR_GO_CLEANUP((SIZE_MAX - offset) >= templen);
         offset = offset + templen;
     }
 
@@ -481,7 +481,7 @@ static int sss_ecdsa_signature_digest_sign(
                 ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
                 datalenTmp = datalenTmp - templen;
-                ENSURE_OR_GO_CLEANUP((UINT_MAX - offset) >= templen);
+                ENSURE_OR_GO_CLEANUP((SIZE_MAX - offset) >= templen);
                 offset = offset + templen;
             }
 
@@ -565,7 +565,7 @@ static int sss_ecdsa_signature_digest_sign(
                 ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
                 datalenTmp = datalenTmp - templen;
-                ENSURE_OR_GO_CLEANUP((UINT_MAX - offset) >= templen);
+                ENSURE_OR_GO_CLEANUP((SIZE_MAX - offset) >= templen);
                 offset = offset + templen;
             }
 
@@ -826,7 +826,7 @@ static int sss_ecdsa_signature_digest_verify(
             ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
             datalenTmp = datalenTmp - templen;
-            ENSURE_OR_GO_CLEANUP((UINT_MAX - offset) >= templen);
+            ENSURE_OR_GO_CLEANUP((SIZE_MAX - offset) >= templen);
             offset = offset + templen;
         }
 
@@ -899,7 +899,7 @@ static int sss_ecdsa_signature_digest_verify(
             ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
             datalenTmp = datalenTmp - templen;
-            ENSURE_OR_GO_CLEANUP((UINT_MAX - offset) >= templen);
+            ENSURE_OR_GO_CLEANUP((SIZE_MAX - offset) >= templen);
             offset = offset + templen;
         }
 
@@ -991,7 +991,8 @@ static int sss_ecdsa_set_ctx_params(void *ctx, const OSSL_PARAM params[])
             if (p->data == NULL) {
                 return 0;
             }
-            if (strcmp(p->data, "SHA256") == 0) {
+            if ((0 == SSS_CMP_STR(p->data, "sha256")) || (0 == SSS_CMP_STR(p->data, "SHA256")) ||
+                (0 == SSS_CMP_STR(p->data, "SHA2-256"))) {
                 pEcdsaCtx->sha_algorithm = kAlgorithm_SSS_SHA256;
             }
             else {

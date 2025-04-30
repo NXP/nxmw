@@ -89,13 +89,20 @@ def main():
     log.info("\n########### Create CA root key and certificates using openssl ###############")
     run("%s ecparam -name %s -out %s" %(openssl, args.key_type, rootca_type))
     run("%s ecparam -in %s -genkey -noout -out %s" %(openssl, rootca_type, rootca_key))
-    run("%s req -x509 -new -nodes -key %s -subj \"/OU=NXP Plug Trust CA/CN=NXP RootCAvExxx\" -days 4380 -out %s " %(openssl, rootca_key, rootca_cer))
+    if sys.platform.startswith("win"):
+        run("%s req -x509 -new -nodes -key %s -subj \"/OU=NXP Plug Trust CA/CN=NXP RootCAvExxx\" -days 4380 -out %s -config %s " %(openssl, rootca_key, rootca_cer, conf_file))
+    else:
+        run("%s req -x509 -new -nodes -key %s -subj \"/OU=NXP Plug Trust CA/CN=NXP RootCAvExxx\" -days 4380 -out %s " %(openssl, rootca_key, rootca_cer))
 
     log.info("\n########### Generate EC Keys Using Openssl Provider at 0x2 location ###############")
     run("%s ecparam --provider %s --provider default -name %s:0x2 -genkey -out %s -propquery '?provider=nxp_prov'" %(openssl, provider, args.key_type, ref_ec_key_0x2))
 
     log.info("\n########### Create CSR and Certificate for ket at location 0x2 using openssl provider ###############")
-    run("%s req -new --provider %s --provider default -key %s -out %s %s -propquery '?provider=nxp_prov'" %(openssl, provider, ref_ec_key_0x2, output_csr, subject))
+    if sys.platform.startswith("win"):
+        run("%s req -new --provider %s --provider default -key %s -out %s %s -propquery '?provider=nxp_prov' -config %s " %(openssl, provider, ref_ec_key_0x2, output_csr, subject, conf_file))
+    else: 
+        run("%s req -new --provider %s --provider default -key %s -out %s %s -propquery '?provider=nxp_prov'" %(openssl, provider, ref_ec_key_0x2, output_csr, subject))
+
     run("%s x509 -req --provider %s --provider default -in %s -CAcreateserial -out %s -days 5000 -CA %s -CAkey %s -propquery '?provider=nxp_prov'" %(openssl, provider, output_csr, output_crt, rootca_cer, rootca_key))
     run("%s x509 -in %s -text -noout" %(openssl, output_crt))
 

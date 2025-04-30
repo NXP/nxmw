@@ -70,7 +70,7 @@
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
 #else
-EC_KEY_METHOD *EmbSe_EC = NULL;
+EC_KEY_METHOD *EmbSe_EC               = NULL;
 const EC_KEY_METHOD *EmbSe_EC_Default = NULL;
 #endif
 
@@ -144,12 +144,12 @@ static U16 getEcKeyReference(const EC_KEY *eckey, uint32_t *keyId)
     U16 sw = ERR_PATTERN_COMPARE_FAILED;
     const BIGNUM *prv_key_bn;
     U8 tmpBuf[EMBSE_MAX_ECC_PUBKEY_BUF] = {0};
-    int privKeylen = 0;
-    U8 Ident = 0;
-    U8 Index = 0;
-    U32 Coeff[2] = {0, 0};
-    int i = 0;
-    int j = 0;
+    int privKeylen                      = 0;
+    U8 Ident                            = 0;
+    U8 Index                            = 0;
+    U32 Coeff[2]                        = {0, 0};
+    int i                               = 0;
+    int j                               = 0;
 
     *keyId = 0;
     /* Test for private key */
@@ -230,11 +230,11 @@ static U16 decoratePublicKey(int nid, U8 *decoratedKey, U16 *decoratedKeyLen, co
 
     switch (nid) {
     case NID_X9_62_prime256v1:
-        decoration = gecc_der_header_nist256;
+        decoration    = gecc_der_header_nist256;
         decorationLen = der_ecc_nistp256_header_len;
         break;
     case NID_brainpoolP256r1:
-        decoration = gecc_der_header_bp256;
+        decoration    = gecc_der_header_bp256;
         decorationLen = der_ecc_bp256_header_len;
         break;
     default:
@@ -297,7 +297,7 @@ static ECDSA_SIG *EmbSe_ECDSA_Do_Sign(
 
     sw = getEcKeyReference(eckey, &keyId);
     if (sw == SW_OK) {
-        int dgstLenMatchingKey = 0;
+        int dgstLenMatchingKey              = 0;
         sss_algorithm_t shaAlgo_matchOnSize = kAlgorithm_SSS_ECDSA_SHA256;
 
         dgstLenMatchingKey = dgst_len;
@@ -352,7 +352,7 @@ static ECDSA_SIG *EmbSe_ECDSA_Do_Sign(
         }
         EmbSe_Print(LOG_FLOW_ON, "SSS based sign called successfully (sigDERLen=%zu)\n", sigDERLen);
         /* sig is DER encoded. Transform to ECDSA_SIG and return this */
-        pp = (U8 *)sigDER;
+        pp   = (U8 *)sigDER;
         pSig = ECDSA_SIG_new();
 
         if (pSig == NULL) {
@@ -434,21 +434,21 @@ static int EmbSe_ECDSA_Sign_Setup(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv, BIG
 
 static int EmbSe_ECDSA_Do_Verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig, EC_KEY *eckey)
 {
-    const EC_POINT *pub_key = NULL;
+    const EC_POINT *pub_key   = NULL;
     const EC_GROUP *key_group = NULL;
     U16 sw;
     sss_status_t status;
     sss_object_t pubKey;
     sss_asymmetric_t asymm;
-    int nRet = 0;
+    int nRet            = 0;
     size_t pubKeyBufLen = 0;
-    U8 *pubKeyBuf = NULL;
+    U8 *pubKeyBuf       = NULL;
     U8 pubKeyDerBuf[256];
     U16 pubKeyDerBufLen = sizeof(pubKeyDerBuf);
-    U32 pubKeyBitLen = 256;
-    U8 pubKeyByteLen = pubKeyBitLen / 8;
-    int flagHandleKey = AX_ENGINE_INVOKE_NOTHING;
-    EC_KEY *dup_eckey = NULL;
+    U32 pubKeyBitLen    = 256;
+    U8 pubKeyByteLen    = pubKeyBitLen / 8;
+    int flagHandleKey   = AX_ENGINE_INVOKE_NOTHING;
+    EC_KEY *dup_eckey   = NULL;
     U8 *pSignatureDER = NULL, *pSigTmp = NULL;
     int sigLen;
     uint32_t keyId;
@@ -497,6 +497,10 @@ static int EmbSe_ECDSA_Do_Verify(const unsigned char *dgst, int dgst_len, const 
         nRet = -1;
         goto clean_mem_up;
     }
+
+    // Initialize pubKeyBuf
+    memset(pubKeyBuf, 0, pubKeyBufLen * sizeof(U8));
+
     // Get public key data
     if (!EC_POINT_point2oct(key_group, pub_key, POINT_CONVERSION_UNCOMPRESSED, pubKeyBuf, pubKeyBufLen, NULL)) {
         EmbSe_Print(LOG_ERR_ON, "ECDH public key data error (EC_POINT_point2oct).\n");
@@ -551,8 +555,8 @@ static int EmbSe_ECDSA_Do_Verify(const unsigned char *dgst, int dgst_len, const 
 
     if (flagHandleKey == AX_ENGINE_INVOKE_SE) {
         U8 dgstBuf[96];
-        U16 dgstBufLen = sizeof(dgstBuf);
-        int dgstLenMatchingKey = 0;
+        U16 dgstBufLen                      = sizeof(dgstBuf);
+        int dgstLenMatchingKey              = 0;
         sss_algorithm_t shaAlgo_matchOnSize = kAlgorithm_SSS_SHA256;
 
         dgstLenMatchingKey = dgst_len;
@@ -597,7 +601,8 @@ static int EmbSe_ECDSA_Do_Verify(const unsigned char *dgst, int dgst_len, const 
         sw = decoratePublicKey(nid, pubKeyDerBuf, &pubKeyDerBufLen, pubKeyBuf, pubKeyBufLen);
         if (sw != SW_OK) {
             EmbSe_Print(LOG_ERR_ON, "ECDH: decoratePublicKey failed (err=0x%04X).\n", sw);
-            return -1;
+            nRet = -1;
+            goto clean_mem_up;
         }
 
         EmbSe_PrintPayload(LOG_DBG_ON, pubKeyDerBuf, pubKeyDerBufLen, "pubKeyDerBuf");
@@ -730,12 +735,12 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
 {
     U16 sw;
     sss_status_t status;
-    sss_object_t keyPair = {0};
+    sss_object_t keyPair              = {0};
     sss_derive_key_t deriveKeyContext = {0};
-    int field_size_bits = 0;
-    const EC_GROUP *key_group = NULL;
-    U8 *pubKeyBuf = NULL;
-    U16 pubKeyBufLen = 0;
+    int field_size_bits               = 0;
+    const EC_GROUP *key_group         = NULL;
+    U8 *pubKeyBuf                     = NULL;
+    U16 pubKeyBufLen                  = 0;
     U8 pubKeyDerBuf[256];
     U16 pubKeyDerBufLen = sizeof(pubKeyDerBuf);
 
@@ -744,13 +749,13 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
 #else
     int ret = 0;
 #endif
-    U8 *shSecBuf = NULL;
+    U8 *shSecBuf            = NULL;
     size_t shSecBufLen_Bits = 0;
-    size_t shSecBufLen = 0;
+    size_t shSecBufLen      = 0;
     uint32_t keyId;
     int nid;
     size_t maxSharedSecretByteCount = 66;
-    uint32_t cipherType = 0;
+    uint32_t cipherType             = 0;
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
     EmbSe_Print(LOG_FLOW_ON, "EmbSe_Compute_Key invoked (ecdh)\n");
@@ -828,10 +833,10 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
     sw = getEcKeyReference(ecdh, &keyId);
     if (sw == SW_OK) {
         sss_session_t cpSession = {0};
-        sss_key_store_t cpKs = {0};
+        sss_key_store_t cpKs    = {0};
         sss_object_t extPubkey;
         sss_object_t derivedKey;
-        uint32_t keyId_extPubKey = 0x03;  /* Key id on host */
+        uint32_t keyId_extPubKey  = 0x03; /* Key id on host */
         uint32_t keyId_derivedKey = 0x04; /* Key id on host */
 
         EmbSe_Print(LOG_FLOW_ON,
@@ -942,7 +947,7 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
     else if (sw == ERR_PATTERN_COMPARE_FAILED) {
 #ifdef ECDH_PRIVATE_KEY_HANDOVER_TO_SW
         EC_KEY *dup_ecdh = NULL;
-        int ecdh_ret = -1;
+        int ecdh_ret     = -1;
 
         // Delegate to OpenSSL SW implementation
         EmbSe_Print(LOG_FLOW_ON, "No matching key in SE. Invoking OpenSSL API: ECDH_compute_key.\n");
@@ -975,27 +980,27 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
             goto err;
         }
 #else
-        sss_session_t cpSession = {0};
-        sss_key_store_t cpKs = {0};
-        sss_object_t pubKeyObject = {0};
-        sss_object_t derivedKey = {0};
+        sss_session_t cpSession             = {0};
+        sss_key_store_t cpKs                = {0};
+        sss_object_t pubKeyObject           = {0};
+        sss_object_t derivedKey             = {0};
         U8 tmpBuf[EMBSE_MAX_ECC_PUBKEY_BUF] = {0};
-        U16 privKeylen = 0;
-        const BIGNUM *prv_key_bn = NULL;
-        uint32_t keyId_privateKey = 3;
-        uint32_t keyId_derivedKey = __LINE__; /* On host */
-        sss_policy_u keyGenPolicy = {.type = KPolicy_GenECKey,
-            .policy = {.genEcKey = {
-                           .sdmEnabled = 0,
-                           .sigmaiEnabled = 0,
-                           .ecdhEnabled = 1,
-                           .eccSignEnabled = 0,
-                           .writeCommMode = kCommMode_SSS_Full,
+        U16 privKeylen                      = 0;
+        const BIGNUM *prv_key_bn            = NULL;
+        uint32_t keyId_privateKey           = 3;
+        uint32_t keyId_derivedKey           = __LINE__; /* On host */
+        sss_policy_u keyGenPolicy           = {.type = KPolicy_GenECKey,
+            .policy                        = {.genEcKey = {
+                           .sdmEnabled      = 0,
+                           .sigmaiEnabled   = 0,
+                           .ecdhEnabled     = 1,
+                           .eccSignEnabled  = 0,
+                           .writeCommMode   = kCommMode_SSS_Full,
                            .writeAccessCond = Nx_AccessCondition_Auth_Required_0x1,
-                           .userCommMode = kCommMode_SSS_NA,
+                           .userCommMode    = kCommMode_SSS_NA,
                        }}};
-        sss_policy_t ec_key_policy = {.nPolicies = 1, .policies = {&keyGenPolicy}};
-        pSeSession_t session_ctx = NULL;
+        sss_policy_t ec_key_policy          = {.nPolicies = 1, .policies = {&keyGenPolicy}};
+        pSeSession_t session_ctx            = NULL;
 
         // Create host sw context & keystore on the fly
 // This is used to contain the public key and the calculated shared secret
@@ -1185,9 +1190,9 @@ static int EmbSe_Simple_Compute_Key(unsigned char **pout, size_t *poutlen, const
         ret = sec_len;
     }
 #else
-    *pout = shSecBuf;
+    *pout    = shSecBuf;
     *poutlen = shSecBufLen;
-    ret = 1;
+    ret      = 1;
 #endif
 
     // Never print shared secret
@@ -1248,9 +1253,9 @@ static int my_ossl_ecdsa_verify(
     AX_UNUSED_ARG(type);
     ECDSA_SIG *s;
     const unsigned char *p = sigbuf;
-    unsigned char *der = NULL;
-    int derlen = -1;
-    int ret = -1;
+    unsigned char *der     = NULL;
+    int derlen             = -1;
+    int ret                = -1;
 
     s = ECDSA_SIG_new();
     if (s == NULL) {
@@ -1283,7 +1288,7 @@ int EmbSe_Simple_Key_gen(EC_KEY *key)
 int setup_ec_key_method(void)
 {
     EmbSe_EC_Default = EC_KEY_get_default_method();
-    EmbSe_EC = EC_KEY_METHOD_new(NULL);
+    EmbSe_EC         = EC_KEY_METHOD_new(NULL);
     if (EmbSe_EC == NULL) {
         return 0;
     }

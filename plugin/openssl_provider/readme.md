@@ -342,9 +342,9 @@ activate = 1
 ...
 ```
 
-The order in which the providers are written in [provider_sect] section, defines the priority of the providers loaded.
+The order in which the providers are written in `[provider_sect]` section, defines the priority of the providers loaded.
 The one included first, will have the higher priority.
 
 
 **NOTE:** It is not recommended to modify the default OpenSSL config file. Create a new config file to load custom providers and set the OPENSSL_CONF env variable to config file path. Example -
-  export OPENSSSL_CONF=<CONFIG_FILE_PATH>
+  export OPENSSL_CONF=<CONFIG_FILE_PATH>

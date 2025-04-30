@@ -73,7 +73,7 @@ def nxclitool_disconnect(nxclitool):
     os.system(command)
 
 def nxclitool_setkey(nxclitool, key_id, curve, in_path, operation):
-    command = f"{nxclitool} setkey -keyid {key_id} -curve {curve} -in {in_path} -enable {operation}"
+    command = f"{nxclitool} setkey -keyid {key_id} -curve {curve} -in {in_path} -enable {operation} -waccess 0x0E"
     log.info(f"Running: {command}")
     os.system(command)
 

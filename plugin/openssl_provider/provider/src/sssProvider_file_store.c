@@ -19,6 +19,7 @@
 #include <openssl/store.h>
 #include "sssProvider_main.h"
 #include <limits.h>
+#include <string.h>
 
 /* ********************** Public funtions ******************* */
 

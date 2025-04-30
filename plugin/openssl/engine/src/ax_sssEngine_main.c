@@ -83,7 +83,7 @@ static int EMBSE_LogControl = (LOG_ERR_ON | LOG_DBG_ON | LOG_FLOW_ON); // Full l
 static sss_status_t engineSessionOpen();
 
 /* engine name */
-static const char *embSe_id = OPENSSL_ENGINE_EMBSE_ID;
+static const char *embSe_id   = OPENSSL_ENGINE_EMBSE_ID;
 static const char *embSe_name = "se hardware engine support";
 
 const int Version1 = 0; //-> Release Version1.Version2.Version3
@@ -206,7 +206,7 @@ static int EmbSe_Ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 }
 
 const RSA_METHOD *EmbSe_default_RSA = NULL;
-RSA_METHOD *EmbSe_RSA = NULL;
+RSA_METHOD *EmbSe_RSA               = NULL;
 
 int setup_rsa_key_method(void)
 {
@@ -320,7 +320,7 @@ cleanup:
 #if defined(_MSC_VER)
     if (portName) {
         char *dummy_portName = NULL;
-        size_t dummy_sz = 0;
+        size_t dummy_sz      = 0;
         _dupenv_s(&dummy_portName, &dummy_sz, EX_SSS_BOOT_SSS_PORT);
         if (NULL != dummy_portName) {
             free(dummy_portName);

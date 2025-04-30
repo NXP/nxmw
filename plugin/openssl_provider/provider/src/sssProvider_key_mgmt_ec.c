@@ -4,7 +4,7 @@
  * @version 1.0
  * @par License
  *
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: Apache-2.0
  *
  * @par Description
@@ -169,6 +169,8 @@ static int sss_ec_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
     OSSL_PARAM *p                        = NULL;
     int ret                              = 0;
     int keylen_bits                      = 0;
+    int pkey_bits                        = 0;
+    int pkey_security_bits               = 0;
     uint8_t public_key[256]              = {0};
     size_t public_key_len                = sizeof(public_key);
     unsigned char privkey[66]            = {0}; /*max key bitLen 521 */
@@ -194,8 +196,11 @@ static int sss_ec_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
         for almost all operations that can be done with pkey */
         pStoreCtx->maxSize = EVP_PKEY_size(pStoreCtx->pEVPPkey);
 
+        pkey_bits = EVP_PKEY_bits(pStoreCtx->pEVPPkey);
+        ENSURE_OR_GO_CLEANUP(pkey_bits > 0);
+
         p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS);
-        if (p != NULL && !OSSL_PARAM_set_int(p, EVP_PKEY_bits(pStoreCtx->pEVPPkey))) {
+        if (p != NULL && !OSSL_PARAM_set_int(p, pkey_bits)) {
             goto cleanup;
         }
         p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE);
@@ -206,8 +211,12 @@ static int sss_ec_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
         if (p != NULL && !EVP_PKEY_get_params(pStoreCtx->pEVPPkey, params)) {
             goto cleanup;
         }
+
+        pkey_security_bits = EVP_PKEY_security_bits(pStoreCtx->pEVPPkey);
+        ENSURE_OR_GO_CLEANUP(pkey_security_bits > 0);
+
         p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS);
-        if (p != NULL && !OSSL_PARAM_set_int(p, EVP_PKEY_security_bits(pStoreCtx->pEVPPkey))) {
+        if (p != NULL && !OSSL_PARAM_set_int(p, pkey_security_bits)) {
             goto cleanup;
         }
         p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_GROUP_NAME);
@@ -836,7 +845,8 @@ static void *sss_keymgmt_ec_gen(void *keydata, OSSL_CALLBACK *osslcb, void *cbar
             &pStoreCtx->object, pStoreCtx->keyid, kSSS_KeyPart_Pair, cipherType, keyLen, kKeyObject_Mode_Persistent);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
-        sssProv_Print(LOG_FLOW_ON, "Generate ECC key inside Secure Authenticator with default policy (Sign enabled) \n");
+        sssProv_Print(
+            LOG_FLOW_ON, "Generate ECC key inside Secure Authenticator with default policy (Sign enabled) \n");
         sssProv_Print(LOG_DBG_ON, "(At key id 0x%X from Secure Authenticator) \n", pStoreCtx->keyid);
 
         status =

@@ -20,6 +20,7 @@ if sys.platform.startswith("win"):
     provider_path=os.path.join(cur_dir,'..','bin')
     provider=os.path.join(cur_dir,'..','bin',library_name)
     openssl = os.path.join(cur_dir, '..', '..', '..', 'ext', 'openssl-30', 'bin', 'openssl.exe')
+    conf_file = os.path.join(cur_dir, '..', '..', '..', 'ext', 'openssl', 'ssl', 'openssl.cnf')
 else:
     openssl = 'openssl'
     library_name = "libsssProvider.so"

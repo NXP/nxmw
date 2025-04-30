@@ -1,0 +1,6 @@
+*.pem
+*.der
+*.crt
+*.cer
+*.srl
+*.csr

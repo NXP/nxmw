@@ -70,10 +70,10 @@ unsigned short gRandStatus = 1;
  */
 static int EmbSe_Rand(unsigned char *buf, int num)
 {
-    int ret = 0;
-    int requested = 0;
-    int offset = 0;
-    int chunk = 0;
+    int ret             = 0;
+    int requested       = 0;
+    int offset          = 0;
+    int chunk           = 0;
     sss_status_t status = kStatus_SSS_Fail;
     sss_rng_context_t rng;
 
