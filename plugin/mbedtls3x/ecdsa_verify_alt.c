@@ -76,7 +76,7 @@ static SE_ECSignatureAlgo_t nx_get_ec_sign_hash_mode(sss_algorithm_t algorithm)
     }
     return mode;
 }
-
+// LCOV_EXCL_START
 /*
  * Compute ECDSA signature of a hashed message
  */
@@ -212,6 +212,7 @@ cleanup:
 
     return ret;
 }
+// LCOV_EXCL_STOP
 
 int mbedtls_ecdsa_verify_o(mbedtls_ecp_group *grp,
     const unsigned char *buf,
@@ -222,7 +223,6 @@ int mbedtls_ecdsa_verify_o(mbedtls_ecp_group *grp,
 {
     return mbedtls_ecdsa_verify_restartable(grp, buf, blen, Q, r, s, NULL);
 }
-
 /*
 grp – The ECP group to use. This must be initialized and have group parameters set, for example through mbedtls_ecp_group_load().
 buf – The hashed content that was signed. This must be a readable buffer of length blen Bytes. It may be NULL if blen is zero.
@@ -239,19 +239,18 @@ int mbedtls_ecdsa_verify(mbedtls_ecp_group *grp,
     const mbedtls_mpi *r,
     const mbedtls_mpi *s)
 {
-
-    int ret                      = 1;
-    uint8_t signature[256]       = {0};
-    uint8_t rs_buf[80]           = {0};
-    size_t signatureLen          = 0;
-    size_t rs_buf_len            = 0;
-    uint8_t publickey[256]       = {0};
-    size_t publickeylen          = 0;
-    size_t rawPublickeylen       = 0;
-    sss_algorithm_t algorithm    = kAlgorithm_None;
-    sss_status_t status          = kStatus_SSS_Fail;
-    char *portName               = NULL;
-    uint16_t result              = Nx_ECVerifyResult_Fail;
+    int ret                                        = 1;
+    uint8_t signature[256]                         = {0};
+    uint8_t rs_buf[80]                             = {0};
+    size_t signatureLen                            = 0;
+    size_t rs_buf_len                              = 0;
+    uint8_t publickey[256]                         = {0};
+    size_t publickeylen                            = 0;
+    size_t rawPublickeylen                         = 0;
+    sss_algorithm_t algorithm                      = kAlgorithm_None;
+    sss_status_t status                            = kStatus_SSS_Fail;
+    char *portName                                 = NULL;
+    uint16_t result                                = Nx_ECVerifyResult_Fail;
     sss_status_t asn_retval                        = kStatus_SSS_Fail;
     smStatus_t retStatus                           = SM_NOT_OK;
     SE_ECSignatureAlgo_t ecSignAlgo                = kSE_ECSignatureAlgo_NA;

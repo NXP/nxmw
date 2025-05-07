@@ -445,12 +445,12 @@ static TlsTransportStatus_t prvConnectToServerWithBackoffRetries(NetworkContext_
     }
 
     memset(certLabel, 0, sizeof(certLabel));
-    if (snprintf(certLabel, sizeof(certLabel), "sss:%08lx", SSS_CERTIFICATE_INDEX_CLIENT) < 0) {
+    if (snprintf(certLabel, sizeof(certLabel), "sss:%08x", SSS_CERTIFICATE_INDEX_CLIENT) < 0) {
         LogError("snprintf error");
         return TLS_TRANSPORT_INVALID_CREDENTIALS;
     }
     memset(keyLabel, 0, sizeof(keyLabel));
-    if (snprintf(keyLabel, sizeof(keyLabel), "sss:%08lx", SSS_KEYPAIR_INDEX_CLIENT_PRIVATE) < 0) {
+    if (snprintf(keyLabel, sizeof(keyLabel), "sss:%08x", SSS_KEYPAIR_INDEX_CLIENT_PRIVATE) < 0) {
         LogError("snprintf error");
         return TLS_TRANSPORT_INVALID_CREDENTIALS;
     }

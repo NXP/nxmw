@@ -383,7 +383,7 @@ static sss_status_t nx_provision_get_host_cert(
     else // Get default value.
     {
         LOG_I(
-            "Using certificate/key from nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h "
+            "Using certificate/key from nxmw/demos/nx/nx_Personalization/nx_Personalization.h "
             "(cert_depth3_x509_rev1)");
         status = nx_provision_get_default_host_cert(level, curveType, buffer, &maxBuffLen);
     }
@@ -397,7 +397,7 @@ static sss_status_t nx_provision_get_host_cert(
 
     // Get default value.
     LOG_I(
-        "Using certificate/key from nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h"
+        "Using certificate/key from nxmw/demos/nx/nx_Personalization/nx_Personalization.h"
         "(cert_depth3_x509_rev1)");
     status = nx_provision_get_default_host_cert(level, curveType, buffer, &maxBuffLen);
 #endif
@@ -572,7 +572,7 @@ static sss_status_t nx_provision_get_se_leaf_keypair(Nx_ECCurve_t curveType, uin
     }
     else {
         // Get default value.
-        LOG_D("Using certificate/key from nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h");
+        LOG_D("Using certificate/key from nxmw/demos/nx/nx_Personalization/nx_Personalization.h");
         status = nx_provision_get_default_se_leaf_keypair(curveType, buffer, &maxBuffLen);
     }
 #else
@@ -583,7 +583,7 @@ static sss_status_t nx_provision_get_se_leaf_keypair(Nx_ECCurve_t curveType, uin
     maxBuffLen = *bufferLen;
 
     // Get default value.
-    LOG_D("Using certificate/key from nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h");
+    LOG_D("Using certificate/key from nxmw/demos/nx/nx_Personalization/nx_Personalization.h");
     status = nx_provision_get_default_se_leaf_keypair(curveType, buffer, &maxBuffLen);
 #endif
 
@@ -968,7 +968,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     LOG_I("******************************* NOTE ********************************************");
     LOG_I("Default top level certificate directory is: %s", EX_SSS_SIGMA_I_CERT_INCLUDE_DIR);
     LOG_I("To override this directory path, you need to set env variable as follows:");
-    LOG_I("NX_AUTH_CERT_DIR=..\\nx-mw-top\\binaries\\configuration\\cert_depth3_x509_rev1");
+    LOG_I("NX_AUTH_CERT_DIR=..\\nxmw\\binaries\\configuration\\cert_depth3_x509_rev1");
     LOG_I("********************************************************************************* \n");
 #endif
 

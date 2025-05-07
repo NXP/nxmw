@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -635,7 +635,13 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         goto exit;
     }
 
+#if defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)
+    status = ex_sss_boot_open_host_session(pCtx);
+    ENSURE_OR_GO_EXIT(kStatus_SSS_Success == status);
+#endif
+
     LOG_I("Note: The demo is supposed to be run after Cmd.ChangeFileSettings. So SDMReadCtr is reset to 0x000000!");
+
 
     pSession = (sss_nx_session_t *)&pCtx->session;
 

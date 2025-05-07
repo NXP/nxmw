@@ -75,6 +75,8 @@ Select host crypto as Mbedtls.
 
 - Project: `sa_qi_receiver`
 
+>**Note:** <span style="color:blue;">Qi Demo on MCXA153 currently supports only Symmetric Autentication.</span>
+
 ## Running the Example
 
 If you have built a binary, flash the binary on to the board and reset
@@ -87,6 +89,7 @@ sa_qi_receiver.exe <PORT NAME>
 ```
 
 Where **\<PORT NAME\>** is the VCOM COM port.
+
 
 ## Console output
 

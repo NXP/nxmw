@@ -46,17 +46,14 @@ The required key is manually created / stored for the demo at located - `demos/n
 
 On RPI, you can use following command:
 ```
-cd nx-mw-top/demos/nx/tls_client/scripts
+cd nxmw/demos/nx/tls_client/scripts
 python tlsProvision.py -smcom t1oi2c -port /dev/i2c-1 -curve prime256v1 -keypath ../credentials/prime256v1/tls_client_key.pem
 ```
-**NOTE:**
-- This command will store the key [**tls_client_key.pem**](./credentials/prime256v1/tls_client_key.pem) inside the SA at key ID 0x02.
+>**Note:** <span style="color:blue;">This command will store the key [**tls_client_key.pem**](./credentials/prime256v1/tls_client_key.pem) inside the SA at key ID 0x02.</span>
 
 ## Start up the server
 
-**NOTE:**
-The server can run e.g. on a PC. The server must be reachable over the
-TCP/IP network for the Client.
+>**Note:** <span style="color:blue;">The server can run e.g. on a PC. The server must be reachable over the TCP/IP network for the Client.</span>
 
 Server can be executed using the following generic command:
 ```
@@ -67,7 +64,7 @@ Execute the following command on the server platform to use the EC based
 server credentials, make a note of the IP address of the server:
 
 ```
-cd nx-mw-top/demos/nx/tls_client/scripts
+cd nxmw/demos/nx/tls_client/scripts
 python tlsServer.py ECDHE_SHA256 prime256v1
 ```
 ## Establish a TLS link from the client to the server
@@ -82,7 +79,7 @@ python tlsSeClient.py <SERVER_IP_ADDRESS> <ECDHE|ECDHE_256>
 
 Execute following command in a separate terminal to run TLS client:
 ```
-cd nx-mw-top/demos/nx/tls_client/scripts
+cd nxmw/demos/nx/tls_client/scripts
 python tlsSeClient.py 127.0.0.1 ECDHE_SHA256 prime256v1
 ```
 Any message entered on the client terminal now will be received by server terminal and vice versa.

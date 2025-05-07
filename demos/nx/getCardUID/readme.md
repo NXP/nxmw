@@ -13,7 +13,12 @@ It uses the following APIs and data types:
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
 	- Project : `ex_get_uid`
 	- Select NXMW_Auth to SIGMA_I_Verifier, SIGMA_I_Prover or Symm_Auth.-
 	- NXMW_Secure_Tunneling to NTAG_AES128_EV2, NTAG_AES256_EV2 or NTAG_AES128_AES256_EV2.

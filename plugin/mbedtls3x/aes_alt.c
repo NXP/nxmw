@@ -71,7 +71,7 @@ void sss_mbedtls_set_keystore_aes(sss_key_store_t *ssskeystore)
 {
     g_aes_keystore = ssskeystore;
 }
-
+// LCOV_EXCL_START
 /*
  * This is a convenience shorthand macro to check if we need reverse S-box and
  * reverse tables. It's private and only defined in this file.
@@ -803,7 +803,7 @@ MBEDTLS_MAYBE_UNUSED static uint32_t round_constants[10];
  * Tables generation code
  */
 #define ROTL8(x) (((x) << 8) & 0xFFFFFFFF) | ((x) >> 24)
-#define XTIME(x) (((x) << 1) ^ (((x)&0x80) ? 0x1B : 0x00))
+#define XTIME(x) (((x) << 1) ^ (((x) & 0x80) ? 0x1B : 0x00))
 #define MUL(x, y) (((x) && (y)) ? pow[(log[(x)] + log[(y)]) % 255] : 0)
 
 MBEDTLS_MAYBE_UNUSED static int aes_init_done = 0;
@@ -876,7 +876,7 @@ MBEDTLS_MAYBE_UNUSED static void aes_gen_tables(void)
 #endif /* !MBEDTLS_AES_FEWER_TABLES */
 
 #if defined(MBEDTLS_AES_NEED_REVERSE_TABLES)
-        x      = RSb[i];
+        x = RSb[i];
 
         RT0[i] = ((uint32_t)MUL(0x0E, x)) ^ ((uint32_t)MUL(0x09, x) << 8) ^ ((uint32_t)MUL(0x0D, x) << 16) ^
                  ((uint32_t)MUL(0x0B, x) << 24);
@@ -1384,6 +1384,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx, const unsigned char i
     return 0;
 }
 #endif /* !MBEDTLS_AES_DECRYPT_ALT && !MBEDTLS_BLOCK_CIPHER_NO_DECRYPT */
+// LCOV_EXCL_STOP
 
 #if defined(MBEDTLS_AES_DECRYPT_ALT) || defined(MBEDTLS_AES_ENCRYPT_ALT)
 int mbedtls_aes_crypt_ecb_nx(mbedtls_aes_context *ctx, int mode, const unsigned char *input, unsigned char *output)
@@ -1579,7 +1580,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx, const unsigned char i
     }
 }
 #endif //MBEDTLS_AES_DECRYPT_ALT && !MBEDTLS_BLOCK_CIPHER_NO_DECRYPT
-
+// LCOV_EXCL_START
 /* VIA Padlock and our intrinsics-based implementation of AESNI require
  * the round keys to be aligned on a 16-byte boundary. We take care of this
  * before creating them, but the AES context may have moved (this can happen
@@ -3717,7 +3718,7 @@ exit:
 
     return ret;
 }
-
+// LCOV_EXCL_STOP
 #endif /* MBEDTLS_SELF_TEST */
 
 #endif /* MBEDTLS_AES_C */

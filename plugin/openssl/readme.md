@@ -79,14 +79,19 @@ ASN1 OID: prime256v1
 ```
 
 
-**Note:**
-
+>**Note:** <span style="color:blue;">
 The key identifier `0x00000002` (stored in big-endian convention) is
-in front of the magic number `0xA5A6B5B6A5A6B5B6` - The padding of the
-private key value and the magic number make it unlikely a normal private
-key value matches a reference key. - Ensure the value reserved for
-public key and ASN1 OID contain the values matching the stored key.
+in front of the magic number `0xA5A6B5B6A5A6B5B6`.
+</span>
 
+>**Note:** <span style="color:blue;">
+The padding of the private key value and the magic number makes it unlikely a normal private
+key value matches a reference key.
+</span>
+
+>**Note:** <span style="color:blue;">
+Ensure the value reserved for public key and ASN1 OID contain the values matching the stored key.
+</span>
 
 ## Building the OpenSSL engine
 
@@ -100,7 +105,7 @@ Project: `sss_engine`
 
 The cmake build system will create an OpenSSL engine for supported
 platforms. The resulting OpenSSL engine will be copied to the SW tree in
-directory `nx-mw-top/plugin/openssl/bin`.
+directory `nxmw/plugin/openssl/bin`.
 
 Ensure the following flag is defined when building an application that
 will be linked against the engine: `-DOPENSSL_LOAD_CONF`
@@ -108,7 +113,7 @@ will be linked against the engine: `-DOPENSSL_LOAD_CONF`
 
 ## Sample scripts to demo OpenSSL Engine
 
-The directory `nx-mw-top/plugin/openssl/scripts` ([**here**](./scripts/)) contains a set of
+The directory `nxmw/plugin/openssl/scripts` ([**here**](./scripts/)) contains a set of
 python scripts. These scripts use the OpenSSL Engine in the context of
 standard OpenSSL utilities. They illustrate using the OpenSSL Engine for
 fetching random data and supported EC crypto operations. The scripts that illustrate
@@ -122,21 +127,24 @@ can be used to provision the SA with required key,
 python openssl_provision.py -smcom <SMCOM> -port <PORT_NAME> -curve <CURVE> -keypath <PATH_TO_KEY>
 ```
 
-Some keys are placed in the path `nx-mw-top/plugin/openssl/keys` for demonstration purpose. User can provision the SA for OpenSSL Engine using following command:
+Some keys are placed in the path `nxmw/plugin/openssl/keys` for demonstration purpose. User can provision the SA for OpenSSL Engine using following command:
 ```
-cd nx-mw-top/plugin/openssl/scripts
+cd nxmw/plugin/openssl/scripts
 python openssl_provision.py -smcom t1oi2c -port /dev/i2c-1 -curve prime256v1 -keypath ../keys/prime256v1/ecc_key_kp.pem
 ```
 
-**NOTE:**
-- The provisioning script uses NX CLI Tool to provision the SA and assumes some of the inputs to the CLI tool for simplicity. For e.g. `NXMW_Secure_Tunneling` is set to `NTAG_AES128_EV2` and `NXMW_Auth` is set to `SYMM_Auth` by default and, these can be changed in the script as per user's preference.
-- This script provisions the key with signing policy enabled at key ID 0x02 and the key with ECDH policy enabled at ID 0x03. User must make sure no other keys are present in these key IDs before provisioning.
+>**Note:** <span style="color:blue;">
+The provisioning script uses NX CLI Tool to provision the SA and assumes some of the inputs to the CLI tool for simplicity. For e.g. `NXMW_Secure_Tunneling` is set to `NTAG_AES128_EV2` and `NXMW_Auth` is set to `SYMM_Auth` by default and, these can be changed in the script as per user's preference.
+</span>
 
+>**Note:** <span style="color:blue;">
+This script provisions the key with signing policy enabled at key ID 0x02 and the key with ECDH policy enabled at ID 0x03. User must make sure no other keys are present in these key IDs before provisioning.
+</span>
 
 To generate the random numbers, invoke following script:
 
 ```
-cd nx-mw-top/plugin/openssl/scripts
+cd nxmw/plugin/openssl/scripts
 python3 openssl_rnd.py --connection_data none
 ```
 

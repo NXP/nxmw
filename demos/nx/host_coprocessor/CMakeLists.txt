@@ -17,6 +17,19 @@ FILE(
     ${NXMW_TOP_DIR}/boards/platform/platform.c
 )
 
+IF (SSS_HAVE_HOST_FRDMMCXA153)
+LIST(
+    REMOVE_ITEM
+    files
+    ${NXMW_TOP_DIR}/boards/frdmmcxa153/pin_mux.c
+)
+LIST(
+    APPEND
+    files
+    ${NXMW_TOP_DIR}/boards/frdmmcxa153/host_coprocessor/pin_mux.c
+)
+ENDIF()
+
 ADD_EXECUTABLE(
     ${PROJECT_NAME}
     ${KSDK_STARTUP_FILE} ${files}
@@ -37,4 +50,3 @@ TARGET_INCLUDE_DIRECTORIES(
 )
 
 CREATE_BINARY(${PROJECT_NAME})
-

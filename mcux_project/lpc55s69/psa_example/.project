@@ -353,17 +353,12 @@
 		<link>
 			<name>component/debug_console/fsl_debug_console.c</name>
 			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/mcuxsdk/components/debug_console/fsl_debug_console.c</locationURI>
+			<locationURI>PARENT-4-PROJECT_LOC/mcuxsdk/components/debug_console_lite/fsl_debug_console.c</locationURI>
 		</link>
 		<link>
 			<name>component/debug_console/fsl_debug_console.h</name>
 			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/mcuxsdk/components/debug_console/fsl_debug_console.h</locationURI>
-		</link>
-		<link>
-			<name>component/debug_console/fsl_debug_console_conf.h</name>
-			<type>1</type>
-			<locationURI>PARENT-4-PROJECT_LOC/mcuxsdk/components/debug_console/config/fsl_debug_console_conf.h</locationURI>
+			<locationURI>PARENT-4-PROJECT_LOC/mcuxsdk/components/debug_console_lite/fsl_debug_console.h</locationURI>
 		</link>
 		<link>
 			<name>component/lists/fsl_component_generic_list.c</name>

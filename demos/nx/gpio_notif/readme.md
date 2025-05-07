@@ -6,7 +6,7 @@ Refer [**Get GPIO Notification Example**](./ex_sss_gpio_notif.c)
 
 ## Prerequisites
 
--   Hardware: NX SA should be connected to FRDM-K64F board or Raspberry Pi.
+-   Hardware: NX SA should be connected to FRDM-MCXN947 board or Raspberry Pi.
 -   GPIO1 should be already configured to output and also enable GPIO1
     has GPIONotif. "nx_tool_setconfig"(Refer `nx_tool_setconfig`) or
     "ex_set_config" (GPIO1 notification should be enabled by setting
@@ -31,10 +31,14 @@ It uses the following APIs and data types:
 
 ## Building the Example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
   - Project - `ex_gpio_notif`
-  - `NXMW_Auth=SIGMA_I_Verifier` `NXMW_Secure_Tunneling=NTAG_AES128_EV2`
-    and `NXMW_All_Auth_Code=Enabled` should be selected according to IC configuration.
+  - `NXMW_All_Auth_Code=Enabled` and `NXMW_Auth` as either `SYMM_Auth`, `SIGMA_I_Verifier` or `SIGMA_I_Prover` should be selected according to IC configuration.
 
 
 ## How to Run Example

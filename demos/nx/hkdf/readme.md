@@ -27,7 +27,12 @@ Transient or Static Buffers, similarly as shown in the ECDH example
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
 	- Project - `ex_hkdf`
 
 The access condition of the authentication should match access condition

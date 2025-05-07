@@ -392,8 +392,9 @@ class CMakeOptionsValue:  # pylint: disable=too-many-instance-attributes
         self.cm_f.open()
         self.cm_hin = self.cm_f.get_h_file()
         for f in (self.cm_sh, self.cm_val, self.cm_makin, self.cm_cmiin):
-            f.write(("\n#".join(COPYRIGHT)).strip())
-            f.write("\n")
+            if f is not None:
+                f.write(("\n#".join(COPYRIGHT)).strip())
+                f.write("\n")
         for option, default_value, description, option_list in ALL_VALUES:
             self.write_option(option, default_value, description, option_list)
         for option, default_value, description, option_list in ALL_VALUES:
@@ -411,21 +412,30 @@ class CMakeOptionsValue:  # pylint: disable=too-many-instance-attributes
         #self.cm_f.write_features()
 
         for sh in (self.cm_makin, self.cm_cmiin, self.cm_rst_v, self.cm_hin):
-            sh.write("\n\n")
-        self.cm_cmiin.write("# ")
-        import cmake_options_check  # pylint: disable=import-error
+            if sh is not None:
+                sh.write("\n\n")
+        if self.cm_cmiin is not None:
+            self.cm_cmiin.write("# ")
 
-        cmake_options_check.generate_cmake_options_check_file(
-            self.cm_hin, self.cm_cmiin)
+        if os.path.exists("cmake_options_check.py"):
+            import cmake_options_check  # pylint: disable=import-error
 
-        self.cm_hin.write("/** ")
+            cmake_options_check.generate_cmake_options_check_file(
+                self.cm_hin, self.cm_cmiin)
+
+        if self.cm_hin is not None:
+            self.cm_hin.write("/** ")
 
         for sh in (self.cm_makin, self.cm_cmiin,):
-            sh.write("\n# ")
+            if sh is not None:
+                sh.write("\n# ")
         for f in (self.cm_makin, self.cm_cmiin, self.cm_hin):
-            f.write("Deprecated items. Used here for backwards compatibility.")
-        self.cm_hin.write(" */")
-        self.cm_rst_v.write("""
+            if f is not None:
+                f.write("Deprecated items. Used here for backwards compatibility.")
+        if self.cm_hin is not None:
+            self.cm_hin.write(" */")
+        if self.cm_rst_v is not None:
+            self.cm_rst_v.write("""
 .. _deprecated-defines:
 
 Deprecated Defines
@@ -436,13 +446,18 @@ some future release.
 
 """)
         for sh in (self.cm_makin, self.cm_cmiin, self.cm_rst_v, self.cm_hin):
-            sh.write("\n\n")
+            if sh is not None:
+                sh.write("\n\n")
         for old_name, new_name in DEPREATCED_LIST:
-            self.cm_rst_v.write(
+            if self.cm_rst_v is not None:
+                self.cm_rst_v.write(
                 "- ``%s`` is renamed to ``%s``\n" % (old_name, new_name))
-            self.cm_makin.write("%s := ${%s}\n" % (old_name, new_name))
-            self.cm_cmiin.write("SET(%s %s)\n" % (old_name, new_name))
-            self.cm_hin.write("#define %s (%s)\n" % (old_name, new_name))
+            if self.cm_makin is not None:
+                self.cm_makin.write("%s := ${%s}\n" % (old_name, new_name))
+            if self.cm_cmiin is not None:
+                self.cm_cmiin.write("SET(%s %s)\n" % (old_name, new_name))
+            if self.cm_hin is not None:
+                self.cm_hin.write("#define %s (%s)\n" % (old_name, new_name))
 
         self.cm_f.close()
 
@@ -455,7 +470,8 @@ some future release.
 
         for value, _, public in option_list:
             option_values_internal.append(value)
-            self.cm_gv.write("\ndoWith%s_%s_ON=\" -D%s=%s\"\n" % (
+            if self.cm_gv is not None:
+                self.cm_gv.write("\ndoWith%s_%s_ON=\" -D%s=%s\"\n" % (
                 option, value, option, value))
 
             if public:
@@ -464,10 +480,11 @@ some future release.
             raise Exception("option_list=%s does not have default_value=%s" % (
                 str(option_list), default_value))
         cm_description = description[0]
-        self.cm_val.write(SET_AND_SET_PROPERTY % (
-            option, default_value, cm_description, option, ";".join(
-                option_values_internal),
-            option, ";".join(option_values_public)))
+        if self.cm_val is not None:
+            self.cm_val.write(SET_AND_SET_PROPERTY % (
+                option, default_value, cm_description, option, ";".join(
+                    option_values_internal),
+                option, ";".join(option_values_public)))
 
     def write_path_option(self, option, default_value, description):
         """
@@ -504,9 +521,10 @@ some future release.
         write cmake names
         """
         option_values = []
-        self.cm_makin.write("\n# ")
-        self.cm_makin.write("\n# ".join(description, ))
-        self.cm_makin.write("\n")
+        if self.cm_makin is not None:
+            self.cm_makin.write("\n# ")
+            self.cm_makin.write("\n# ".join(description, ))
+            self.cm_makin.write("\n")
         for value, _, _ in option_list:
             option_values.append(value)
         for option_value in option_values:
@@ -515,32 +533,37 @@ some future release.
             # if option_value:
             #     uoption_value = option_value.upper()
             sss_have_opt_val = self.get_sss_have_opt_val(option, option_value)
-            self.cm_makin.write("%s := ${%s}\n" %
+            if self.cm_makin is not None:
+                self.cm_makin.write("%s := ${%s}\n" %
                                 (sss_have_opt_val, sss_have_opt_val))
-            self.cm_val.write(
-                "IF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
-            self.cm_val.write("    # SET(With%s_%s ON)\n" %
-                              (option, option_value))
-            self.cm_val.write("    SET(%s \"1\")\n" % (sss_have_opt_val,))
-            self.cm_val.write("ELSE()\n")
-            self.cm_val.write("    # SET(With%s_%s OFF)\n" %
-                              (option, option_value))
-            self.cm_val.write("    SET(%s \"0\")\n" % (sss_have_opt_val,))
-            self.cm_val.write("ENDIF()\n\n")
+            if self.cm_val is not None:
+                self.cm_val.write(
+                    "IF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
+                self.cm_val.write("    # SET(With%s_%s ON)\n" %
+                                  (option, option_value))
+                self.cm_val.write("    SET(%s \"1\")\n" % (sss_have_opt_val,))
+                self.cm_val.write("ELSE()\n")
+                self.cm_val.write("    # SET(With%s_%s OFF)\n" %
+                                  (option, option_value))
+                self.cm_val.write("    SET(%s \"0\")\n" % (sss_have_opt_val,))
+                self.cm_val.write("ENDIF()\n\n")
         for option_value in option_values[:1]:
-            self.cm_val.write(
-                "IF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
-            self.cm_val.write("    # OK\n")
+            if self.cm_val is not None:
+                self.cm_val.write(
+                    "IF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
+                self.cm_val.write("    # OK\n")
         for option_value in option_values[1:]:
-            self.cm_val.write(
-                "ELSEIF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
-            self.cm_val.write("    # OK\n")
-        self.cm_val.write("ELSE()\n")
-        self.cm_val.write("    MESSAGE(SEND_ERROR \"For '%s' '${%s}' is invalid.\")\n"
-                          % (option, option))
-        self.cm_val.write("    MESSAGE(STATUS \"Only supported values are '%s'\")\n"
-                          % (", ".join(option_values)))
-        self.cm_val.write("ENDIF()\n\n")
+            if self.cm_val is not None:
+                self.cm_val.write(
+                    "ELSEIF(\"${%s}\" STREQUAL \"%s\")\n" % (option, option_value))
+                self.cm_val.write("    # OK\n")
+        if self.cm_val is not None:
+            self.cm_val.write("ELSE()\n")
+            self.cm_val.write("    MESSAGE(SEND_ERROR \"For '%s' '${%s}' is invalid.\")\n"
+                              % (option, option))
+            self.cm_val.write("    MESSAGE(STATUS \"Only supported values are '%s'\")\n"
+                              % (", ".join(option_values)))
+            self.cm_val.write("ENDIF()\n\n")
 
     def write_path_with_cmake_names(self, option, description):
         """
@@ -559,56 +582,68 @@ some future release.
         """
         Cmake option description
         """
-        self.cm_rst_v.write("\n")
-        self.cm_rst_v.write(".. _cmake-option-%s:\n\n" % (option,))
-        self.cm_rst_v.write("%s\n" % (option,))
-        self.cm_rst_v.write("%s\n" % ("=" * (20 + len(option)),))
+        if self.cm_rst_v is not None:
+            self.cm_rst_v.write("\n")
+            self.cm_rst_v.write(".. _cmake-option-%s:\n\n" % (option,))
+            self.cm_rst_v.write("%s\n" % (option,))
+            self.cm_rst_v.write("%s\n" % ("=" * (20 + len(option)),))
         if tuple == type(o_description):
             sh_description = "\n# ".join(o_description)
             rst_description = "\n    ".join(o_description)
         else:
             sh_description = o_description
             rst_description = o_description
-        self.cm_cmiin.write("\n# %s\n" % (sh_description,))
-        self.cm_sh.write("\n\n### %s : %s\n" % (option, sh_description))
+        if self.cm_cmiin is not None:
+            self.cm_cmiin.write("\n# %s\n" % (sh_description,))
+        if self.cm_sh is not None:
+            self.cm_sh.write("\n\n### %s : %s\n" % (option, sh_description))
         if self.isHFileOption(option):
-            self.cm_hin.write("\n\n/** %s : %s\n */\n" %
-                              (option, sh_description.replace("\n#", "\n *")))
-        self.cm_rst_v.write("\n")
-        self.cm_rst_v.write(".. option:: %s\n" % (option,))
-        self.cm_rst_v.write("\n")
-        self.cm_rst_v.write("    %s\n" % (rst_description,))
-        self.cm_rst_v.write("\n")
+            if self.cm_hin is not None:
+                self.cm_hin.write("\n\n/** %s : %s\n */\n" %
+                    (option, sh_description.replace("\n#", "\n *")))
+        if self.cm_rst_v is not None:
+            self.cm_rst_v.write("\n")
+            self.cm_rst_v.write(".. option:: %s\n" % (option,))
+            self.cm_rst_v.write("\n")
+            self.cm_rst_v.write("    %s\n" % (rst_description,))
+            self.cm_rst_v.write("\n")
         for option_value, o_value_description, public in option_list:
             if public:
-                self.cm_rst_v.write("    ``-D%s=%s``" %
-                                    (option, option_value,))
+                if self.cm_rst_v is not None:
+                    self.cm_rst_v.write("    ``-D%s=%s``" %
+                                        (option, option_value,))
             if tuple == type(o_value_description):
                 sh_value_description = "\n# ".join(o_value_description)
                 rst_value_description = "\n        ".join(o_value_description)
                 if not public:
                     sh_value_description += "\n# NXP Internal\n"
-                self.cm_sh.write("\n#")
-                self.cm_sh.write(sh_value_description)
-                self.cm_sh.write("\n")
+                if self.cm_sh is not None:
+                    self.cm_sh.write("\n#")
+                    self.cm_sh.write(sh_value_description)
+                    self.cm_sh.write("\n")
             else:
                 sh_value_description = o_value_description
                 rst_value_description = o_value_description
             for er in (self.cm_makin, self.cm_cmiin):
-                if sh_value_description:
-                    er.write("\n# ")
-                    er.write(sh_value_description)
-                    er.write("\n")
+                if er is not None:
+                    if sh_value_description:
+                        er.write("\n# ")
+                        er.write(sh_value_description)
+                        er.write("\n")
 
             if public:
                 if rst_value_description:
-                    self.cm_rst_v.write(": %s" % (rst_value_description,))
-            self.cm_rst_v.write("\n\n")
+                    if self. cm_rst_v is not None:
+                        self.cm_rst_v.write(": %s" % (rst_value_description,))
+            if self.cm_rst_v is not None:
+                self.cm_rst_v.write("\n\n")
             if tuple == type(o_value_description):
-                self.cm_sh.write("\ndo%s_%s_ON=\"-D%s=%s\"\n" %
+                if self.cm_sh is not None:
+                    self.cm_sh.write("\ndo%s_%s_ON=\"-D%s=%s\"\n" %
                                  (option, option_value, option, option_value))
             else:
-                self.cm_sh.write("\ndo%s_%s_ON=\"-D%s=%s\" #%s\n" % (option,
+                if self.cm_sh is not None:
+                    self.cm_sh.write("\ndo%s_%s_ON=\"-D%s=%s\" #%s\n" % (option,
                                                                      option_value,
                                                                      option,
                                                                      option_value,
@@ -617,33 +652,41 @@ some future release.
                 sss_have_opt_val = self.get_sss_have_opt_val(
                     option, option_value)
                 if self.isHFileOption(option):
-                    self.cm_hin.write("\n/** %s */\n" %
-                                      sh_value_description.replace("\n#", "\n *"))
-                    self.cm_hin.write("#cmakedefine01 %s\n" %
-                                      (sss_have_opt_val,))
-                self.cm_cmiin.write("SET(%s ${%s})\n" % (
-                    sss_have_opt_val, sss_have_opt_val))
-                self.cm_makin.write("%s := ${%s}\n" % (
-                    sss_have_opt_val, sss_have_opt_val))
+                    if self.cm_hin is not None:
+                        self.cm_hin.write("\n/** %s */\n" %
+                                          sh_value_description.replace("\n#", "\n *"))
+                        self.cm_hin.write("#cmakedefine01 %s\n" %
+                                          (sss_have_opt_val,))
+                if self.cm_cmiin is not None:
+                    self.cm_cmiin.write("SET(%s ${%s})\n" % (
+                        sss_have_opt_val, sss_have_opt_val))
+                if self.cm_makin is not None:
+                    self.cm_makin.write("%s := ${%s}\n" % (
+                        sss_have_opt_val, sss_have_opt_val))
         if self.isHFileOption(option):
-            self.cm_hin.write("\n#if (( 0                             \\\n")
+            if self.cm_hin is not None:
+                self.cm_hin.write("\n#if (( 0                             \\\n")
             for option_value, _, _ in option_list:
                 sss_have_opt_val = self.get_sss_have_opt_val(
                     option, option_value)
-                self.cm_hin.write("    + %-30s \\\n" % (sss_have_opt_val))
-            self.cm_hin.write("    ) > 1)\n")
-            self.cm_hin.write(
-                "#        error \"Enable only one of '%s'\"\n" % (option,))
-            self.cm_hin.write("#endif\n\n")
-            self.cm_hin.write("\n#if (( 0                             \\\n")
+                if self.cm_hin is not None:
+                    self.cm_hin.write("    + %-30s \\\n" % (sss_have_opt_val))
+            if self.cm_hin is not None:
+                self.cm_hin.write("    ) > 1)\n")
+                self.cm_hin.write(
+                    "#        error \"Enable only one of '%s'\"\n" % (option,))
+                self.cm_hin.write("#endif\n\n")
+                self.cm_hin.write("\n#if (( 0                             \\\n")
             for option_value, _, _ in option_list:
                 sss_have_opt_val = self.get_sss_have_opt_val(
                     option, option_value)
-                self.cm_hin.write("    + %-30s \\\n" % (sss_have_opt_val))
-            self.cm_hin.write("    ) == 0)\n")
-            self.cm_hin.write(
-                "#        error \"Enable at-least one of '%s'\"\n" % (option,))
-            self.cm_hin.write("#endif\n\n")
+                if self.cm_hin is not None:
+                    self.cm_hin.write("    + %-30s \\\n" % (sss_have_opt_val))
+            if self.cm_hin is not None:
+                self.cm_hin.write("    ) == 0)\n")
+                self.cm_hin.write(
+                    "#        error \"Enable at-least one of '%s'\"\n" % (option,))
+                self.cm_hin.write("#endif\n\n")
 
     def write_path_option_description(self, option, o_description):
         """
@@ -695,27 +738,41 @@ some future release.
             return False
         return True
 
-
 def generate_cmake_options_value_files():
     """
     Generate cmake options value files
     """
-    cm_gv = open("jenkins/cmake_options_check.groovy", "w")
-    cm_val = open("cmake_options_values.cmake", "w")
-    cm_rst_v = open("cmake_options_values.rst.txt", "w")
-    cm_sh = open("cmake_options.sh", "w")
-    cm_makin = open("cmake_options.mak.in", "w")
-    cm_cmiin = open("cmake_options_installed.cmake.in", "w")
+    cm_gv = None
+    if os.path.exists("jenkins/cmake_options_check.groovy"):
+        cm_gv = open("jenkins/cmake_options_check.groovy", "w")
+    cm_val = None
+    if os.path.exists("cmake_options_value.cmake"):
+        cm_val = open("cmake_options_value.cmake", "w")
+    cm_rst_v = None
+    if os.path.exists("cmake_options_values.rst.txt"):
+        cm_rst_v = open("cmake_options_values.rst.txt", "w")
+    cm_sh = None
+    if os.path.exists("cmake_options.sh"):
+        cm_sh = open("cmake_options.sh", "w")
+    cm_makin = None
+    if os.path.exists("cmake_options.mak.in"):
+        cm_makin = open("cmake_options.mak.in", "w")
+    cm_cmiin = None
+    if os.path.exists("cmake_options_installed.cmake.in"):
+        cm_cmiin = open("cmake_options_installed.cmake.in", "w")
+
     cm_check = CMakeOptionsValue(
         cm_val, cm_gv, cm_rst_v, cm_sh, cm_makin, cm_cmiin)
     cm_check.run()
     CMakeOptionsFileToRST(cm_gv, cm_sh).run()
-    cm_gv.write(CMAKE_OPTIONS_CHECK_GROOVY_FOOTER)
-    cm_gv.write("\nreturn this;\n")
+    if cm_gv is not None:
+        cm_gv.write(CMAKE_OPTIONS_CHECK_GROOVY_FOOTER)
+    if cm_gv is not None:
+        cm_gv.write("\nreturn this;\n")
 
     for k in (cm_gv, cm_val, cm_rst_v, cm_sh):
-        k.close()
-
+        if k is not None:
+            k.close()
 
 class CMakeOptionsFileToRST:
     """
@@ -744,17 +801,22 @@ class CMakeOptionsFileToRST:
             if l.startswith("##"):
                 pass
             elif l.startswith("# "):
-                self.cm_rst.write(l[2:])
+                if self.cm_rst is not None:
+                    self.cm_rst.write(l[2:])
             elif l.strip() == "#":
-                self.cm_rst.write("\n")
+                if self.cm_rst is not None:
+                    self.cm_rst.write("\n")
             elif l.startswith("#> "):
-                self.to_write.append(l[3:])
+                if self.cm_rst is not None:
+                    self.to_write.append(l[3:])
             elif l.startswith("#"):
-                self.cm_rst.write(l[1:])
+                if self.cm_rst is not None:
+                    self.cm_rst.write(l[1:])
             elif l.startswith("OPTION("):
                 self.cmake_option_to_rst(l)
             elif l.strip() == "":
-                self.cm_rst.write("\n")
+                if self.cm_rst is not None:
+                    self.cm_rst.write("\n")
             else:
                 pass
 
@@ -774,26 +836,34 @@ class CMakeOptionsFileToRST:
         else:
             value = "Unknown"
 
-        self.cm_rst.write(".. option:: %s\n\n" % (option,))
-        self.cm_rst.write("    - %s" % (description,))
-        self.cm_rst.write("\n")
-        self.cm_rst.write("    - Default is %s\n" % (value,))
-        if self.to_write:
+        if self.cm_rst is not None:
+            self.cm_rst.write(".. option:: %s\n\n" % (option,))
+            self.cm_rst.write("    - %s" % (description,))
             self.cm_rst.write("\n")
+            self.cm_rst.write("    - Default is %s\n" % (value,))
+        if self.to_write:
+            if self.cm_rst is not None:
+                self.cm_rst.write("\n")
             while self.to_write:
                 v = self.to_write.pop().strip()
                 if v.startswith(":") or v.startswith("."):
-                    self.cm_rst.write("    %s" % (v,))
+                    if self.cm_rst is not None:
+                        self.cm_rst.write("    %s" % (v,))
                 else:
-                    self.cm_rst.write("    - %s" % (v,))
+                    if self.cm_rst is not None:
+                        self.cm_rst.write("    - %s" % (v,))
+            if self.cm_rst is not None:
+                self.cm_rst.write("\n")
+        if self.cm_rst is not None:
             self.cm_rst.write("\n")
-        self.cm_rst.write("\n")
-        self.cm_rst.write("\n")
-        self.cm_gv.write('do%s_ON="-D%s=ON"\n' % (option, option,))
-        self.cm_gv.write('do%s_OFF="-D%s=OFF"\n' % (option, option,))
-        self.cm_sh.write("\n# %s\n" % description)
-        self.cm_sh.write('do%s_ON="-D%s=ON"\n' % (option, option,))
-        self.cm_sh.write('do%s_OFF="-D%s=OFF"\n' % (option, option,))
+            self.cm_rst.write("\n")
+        if self.cm_gv is not None:
+            self.cm_gv.write('do%s_ON="-D%s=ON"\n' % (option, option,))
+            self.cm_gv.write('do%s_OFF="-D%s=OFF"\n' % (option, option,))
+        if self.cm_sh is not None:
+            self.cm_sh.write("\n# %s\n" % description)
+            self.cm_sh.write('do%s_ON="-D%s=ON"\n' % (option, option,))
+            self.cm_sh.write('do%s_OFF="-D%s=OFF"\n' % (option, option,))
 
 
 SET_AND_SET_PROPERTY = """

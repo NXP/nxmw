@@ -37,7 +37,11 @@ For MCU like K64F, it means changing the certificates defined in `sss/ex/inc/ex_
 
 ## Building the Example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
 
 	-   Project: `ex_cert_ar_file_op`
 	-   Select NXMW_Auth to `NXMW_Auth=SIGMA_I_Verifier` or `NXMW_Auth=SIGMA_I_Prover`

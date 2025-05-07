@@ -16,12 +16,14 @@ Initiator can issue to the an Auth Responder :
     keys and certificates for USB-C Authentication. Keys and
     certificates can be provisioned for test purpose by updating keys in
     `demos/nx/usb_c/usb_c_provisioning/usb_c_credentials.c` and running example
-    `ex-nx-usb_c-provisioning`.
+    `usb_c_provisioning`.
 -   By default USB-IF Root certificate is used in the certificate chain.
-    If example `ex-nx-usb_c-provisioning`
+    If example `usb_c_provisioning`
     is run, you would need to disable macro `USE_ROOT_USBIF` in
     `usb_c_rootcert.c` to use test
     RootCA: usb_c_auth/usb_c_rootcert.c
+
+>**Note:** <span style="color:blue;">If building and running this demo with SIGMA-I, make sure to personalize the SA on repo ID other than 0x00 as this ID is used by `usb_c_provisioning` to inject keys and certificates which will overwrite the certificate repository. For details on personalization, refer [**NX Personalization**](../../nx/nx_Personalization/readme.md)</span>
 
 ## GetCertificateChainDigest (GET_DIGESTS)
 
@@ -61,9 +63,15 @@ Refer - `usb_c_responder_auth/usb_c_responder.c`
 
 ## Building the Demo
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
 
   - Project - `usb_c_auth`
+
+>**Note:** <span style="color:blue;">USB-C Demo on MCXA153 currently supports Sigma Authentication with Mbedtls2. Symmetric Authentication is supported with Mbedtls 2 and Mbedtls 3. </span>
 
 ## Running the Example
 

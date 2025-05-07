@@ -36,7 +36,7 @@ Run the commands below to build OpenSSL provider for NX secure authenticator
 git clone ssh://git@bitbucket.sw.nxp.com/kmw/nxmw-github.git
 cd scripts
 python create_cmake_projects.py
-cd ../../nx-mw-top_build/raspbian_native_nx_t1oi2c
+cd ../../nxmw_build/raspbian_native_nx_t1oi2c
 cmake -DNXMW_OpenSSL=3_0 -DWithSharedLIB=OFF -DNXMW_All_Auth_Code=Enabled .
 sudo make all
 sudo make install
@@ -70,10 +70,17 @@ Supported curves
   - prime256v1 (secp256r1)
   - brainpoolP256r1
 
-**NOTE:**
-- The key will be generated with default policy i.e. only sign enabled.
-- Key generation on secure authenticator using nxp provider can be done only by loading nxp provider with highest priority.
-- Rest of the commands in this section which require an EC key will assume that a key is present at key ID 0x02 and "nx_prime256v1_ref.pem" is the corresponding reference key.
+>**Note:** <span style="color:blue;">
+The key will be generated with default policy i.e. only sign enabled.
+</span>
+
+>**Note:** <span style="color:blue;">
+Key generation on secure authenticator using nxp provider can be done only by loading nxp provider with highest priority.
+</span>
+
+>**Note:** <span style="color:blue;">
+Rest of the commands in this section which require an EC key will assume that a key is present at key ID 0x02 and "nx_prime256v1_ref.pem" is the corresponding reference key.
+</span>
 
 ### ECDSA - Sign Operation
 
@@ -103,9 +110,9 @@ openssl ec -in output/nx_prime256v1_ref.pem -pubout -out output/pubkey.pem
 openssl pkeyutl -verify --provider default -inkey output/pubkey.pem -pubin -rawin -in input_data/input_data.txt -sigfile output/signature.bin -digest sha256
 
 ```
-**NOTE:**
+>**Note:** <span style="color:blue;">
 Here verify operation is performed by host and not the SA as SA does not have public key required for this operation stored inside.
-
+</span>
 
 ### ECDH Operation
 
@@ -149,7 +156,8 @@ The solution is to populate the OpenSSL Key data structure with only a reference
 
 OpenSSL crypto APIs are then invoked with these data structure objects as parameters. When the crypto API is routed to the provider, the NX OpenSSL provider implementation decodes these key references and invokes the secure authenticator APIs with correct key references for a cryptographic operation. If the input key is not a reference key, execution will roll back to OpenSSL software implementation.
 
-**NOTE:** When using this method, the sss provider has to be loaded first. This will ensure that the sss provider can decode the key id information present in the reference key.
+>**Note:** <span style="color:blue;">When using this method, the sss provider has to be loaded first. This will ensure that the sss provider can decode the key id information present in the reference key.
+</span>
 
 
 #### EC Reference Key Format
@@ -194,7 +202,7 @@ ASN1 OID: prime256v1
 In this method, the reference key file (described in previous section) with full path can be passed in string format with "nxp:" as prefix.
 Example - nxp:"path to reference key file".
 
-**NOTE:** When using this approach, there is no need to load the sss provider first. Default provider can have the higher priority.
+>**Note:** <span style="color:blue;">When using this approach, there is no need to load the sss provider first. Default provider can have the higher priority.</span>
 
 
 ### 3. Labels with key id.
@@ -202,7 +210,7 @@ Example - nxp:"path to reference key file".
 In this method, the 4 byte key id of the Key created / stored in secure authenticator is passed as is in string format with "nxp:" as prefix.
 Example - nxp:0x12345678
 
-**NOTE:** When using this approach, there is no need to load the sss provider first. Default provider can have the higher priority.
+>**Note:** <span style="color:blue;">When using this approach, there is no need to load the sss provider first. Default provider can have the higher priority.</span>
 
 
 ## OSSL Algorithms property definitions
@@ -346,5 +354,6 @@ The order in which the providers are written in `[provider_sect]` section, defin
 The one included first, will have the higher priority.
 
 
-**NOTE:** It is not recommended to modify the default OpenSSL config file. Create a new config file to load custom providers and set the OPENSSL_CONF env variable to config file path. Example -
-  export OPENSSL_CONF=<CONFIG_FILE_PATH>
+>**Note:** <span style="color:blue;">It is not recommended to modify the default OpenSSL config file. Create a new config file to load custom providers and set the OPENSSL_CONF env variable to config file path. Example:
+    export OPENSSL_CONF=<CONFIG_FILE_PATH>
+</span>

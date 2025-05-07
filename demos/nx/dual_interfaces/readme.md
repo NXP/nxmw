@@ -6,7 +6,7 @@ Refer [**Dual Interface Example**](./ex_dual_interfaces.c)
 
 ## Prerequisites
 
-- Hardware: NX SA should be connected to FRDM-K64F board.
+- Hardware: NX SA should be connected to a supported MCU
   or Raspberry Pi.
 - Nx middleware stack.
 - NTAG configuration tool (e.g. RFIDDiscover) is available on NFC
@@ -28,7 +28,7 @@ release the NFC Pause.
 NTAG configuration tool (e.g. RFIDDiscover) on NFC host is used to
 trigger NFC pause and this example will release NFC pause.
 
-1. Initialize MCU GPIO as input pin. On FRDM-K64F, it is PTB3.
+1. Initialize MCU GPIO as input pin. On FRDM-MCXN947, it is PTB3.
 2. Read current GPIO status as initial GPIO status.
 3. Read GPIO status at 1s interval and wait until status changes.
 4. NFC host(RFIDDiscover) selects NTAGECC application from NFC interface.
@@ -49,7 +49,11 @@ It uses the following APIs and data types:
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
 
     - Project: `ex_dual_interfaces`
     - Select NXMW_Auth to None

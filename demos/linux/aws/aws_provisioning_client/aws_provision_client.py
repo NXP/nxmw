@@ -1,4 +1,4 @@
-# Copyright 2024 NXP
+# Copyright 2024-2025 NXP
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os, logging, argparse
@@ -27,7 +27,7 @@ def nxclitool_disconnect():
     os.system(command)
 
 def nxclitool_setkey(key_id, curve, in_path, operation):
-    command = f"{nxclitool} setkey -keyid {key_id} -curve {curve} -in {in_path} -enable {operation}"
+    command = f"{nxclitool} setkey -keyid {key_id} -curve {curve} -in {in_path} -enable {operation} -waccess 0x0E"
     logging.info(f"Running: {command}")
     os.system(command)
 

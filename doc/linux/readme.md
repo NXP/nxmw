@@ -41,10 +41,10 @@ sudo apt-get install cmake cmake-curses-gui cmake-gui libssl-dev libsystemd-dev
 Execute the below commands to build and install the nx middleware
 
 ```console
-git clone  --recurse-submodules https://github.com/NXP/nxmw.git nx-mw-top
-cd nx-mw-top/scripts
+git clone  --recurse-submodules https://github.com/NXP/nxmw.git nxmw
+cd nxmw/scripts
 python create_cmake_projects.py
-cd ../../nx-mw-top_build/raspbian_native_nx_t1oi2c
+cd ../../nxmw_build/raspbian_native_nx_t1oi2c
 
 # Change the cmake options if required by running ccmake .
 
@@ -56,7 +56,7 @@ sudo ldconfig /usr/local/lib
 If required cmake options can be changed and libraries can be rebuilt and installed as
 
 ```console
-cd nx-mw-top_build/raspbian_native_nx_t1oi2c
+cd nxmw_build/raspbian_native_nx_t1oi2c
 ccmake .
 ```
 Refer [**CMake Options**](../config/readme.md) for more details

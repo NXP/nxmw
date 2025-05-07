@@ -20,11 +20,13 @@ For e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 
 ``-DNXMW_Host=PCLinux64``: PC/Laptop Linux64
 
-``-DNXMW_Host=frdmk64f``: Embedded Kinetis Freedom K64F
-
 ``-DNXMW_Host=lpcxpresso55s``: Embedded LPCXpresso55s
 
 ``-DNXMW_Host=Raspbian``: Embedded Linux on RaspBerry PI
+
+``-DNXMW_Host=frdmmcxn947``: Embedded Freedom MCXN947
+
+``-DNXMW_Host=frdmmcxn947``: Embedded Freedom MCXA153
 
 
 ## NXMW_SMCOM: Communication Interface
@@ -42,8 +44,8 @@ Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
 ``-DNXMW_SMCOM=PCSC``: CCID PC/SC reader interface
 
 ``-DNXMW_SMCOM=JRCP_V1_AM``: Socket Interface Implementation.
-    This is the interface used from Host PC when when we run jrcpv1_server
-    from the Linux PC.
+   This is the interface used by the clients to connect from
+   Host PC to access manager (which is run as a server in the Linux PC)
 
 
 ## NXMW_HostCrypto: Counterpart Crypto on Host
@@ -266,7 +268,7 @@ This needs to be set to PSA for PSA example over SSS APIs
 
 ``-DNXMW_mbedTLS_ALT=None``: Not using any mbedTLS_ALT
 
-**NOTE**: When this is set as PSA, cloud demos can not work with mbedTLS
+>**NOTE**: When this is set as PSA, cloud demos can not work with mbedTLS
 
 
 ## NXMW_SA_Type: Enable host certificates of A30 for Sigma-I Authentication

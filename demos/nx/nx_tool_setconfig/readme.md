@@ -27,7 +27,12 @@ Options supported:
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
     - Project - `nx_tool_setconfig`
     - Select NXMW_Auth to SIGMA_I_Verifier or SIGMA_I_Prover or SYMM_Auth
     - NXMW_Secure_Tunneling to NTAG_AES128_EV2 or NTAG_AES128_EV2 or NTAG_AES128_AES256_EV2 (Only with Sigma-I)

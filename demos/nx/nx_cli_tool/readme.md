@@ -4,7 +4,9 @@ This tool is a command line utility to evaluate the secure authenticator on Wind
 
 ## Build
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
 
   - Select CMake options:
     - `NXMW_All_Auth_Code=Enabled`
@@ -35,7 +37,7 @@ It supports following commands:
 | getbin         | Get data from standard data file in SA                                  |
 | list-fileid    | Fetches the list of file IDs inside SA                                  |
 | list-eckey     | Fetches the list and properties of EC keys inside SA                    |
-| set-i2c_mgnt   | Set certificate configuration                                           |
+| set-i2c_mgnt   | Set I2C configuration                                                   |
 | set-cert_mgnt  | Set certificate configuration                                           |
 
 
@@ -571,12 +573,18 @@ nxclitool setbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
-**Note:**
--   If **-offset** option is not specified, default value used is 0 (zero).
--   If **-offset** option is specified, CLI tool will read data from input file from the start
-    and store it in standard data file inside SA at the offset value specified.
--   If **-bytes** option is not specified, default value used is the size of file in bytes.
+>**Note:** <span style="color:blue;">
+If **-offset** option is not specified, default value used is 0 (zero).
+</span>
 
+>**Note:** <span style="color:blue;">
+If **-offset** option is specified, CLI tool will read data from input file from the start
+    and store it in standard data file inside SA at the offset value specified.
+</span>
+
+>**Note:** <span style="color:blue;">
+If **-bytes** option is not specified, default value used is the size of file in bytes.
+</span>
 
 ## Get Binary Command
 
@@ -603,13 +611,19 @@ nxclitool getbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
-**Note:**
--   If **-offset** option is not specified, default value used is 0 (zero).
--   If **-offset** option is specified, CLI tool will read data from standard data file
-    in the SA from the offset specified and store it in the output file.
--   If **-bytes** option is not specified, default value used is the number of bytes from
-    offset value to EOF of standard data file
+>**Note:** <span style="color:blue;">
+If **-offset** option is not specified, default value used is 0 (zero).
+</span>
 
+>**Note:** <span style="color:blue;">
+If **-offset** option is specified, CLI tool will read data from standard data file
+    in the SA from the offset specified and store it in the output file.
+</span>
+
+>**Note:** <span style="color:blue;">
+If **-bytes** option is not specified, default value used is the number of bytes from
+    offset value to EOF of standard data file
+</span>
 
 
 ## Personalization of SA Using NX CLI Tool

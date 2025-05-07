@@ -1109,6 +1109,15 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     sss_status_t status = kStatus_SSS_Success;
     sss_status_t ex_status = kStatus_SSS_Success;
 
+#if (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)) && (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE==1))
+    status = ex_sss_boot_open_host_session(pCtx);
+    if (status != kStatus_SSS_Success) {
+        ex_status = kStatus_SSS_Fail;
+        LOG_E("ex_sss_boot_open_host_session Failed");
+        goto exit;
+    }
+#endif
+
 #ifdef MBEDTLS_ECDSA_SIGN_ALT
     LOG_I("\n\n");
     LOG_I("******** Testing ECDSA Sign ALT ******** ");
@@ -1225,6 +1234,9 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     sss_mbedtls_set_keystore_aes(NULL);
     LOG_I("\n\n");
 #endif
+#endif
+#if  (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)) && (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE==1))
+exit :
 #endif
     if (ex_status == kStatus_SSS_Success) {
         LOG_I("ex_mbedtls_3_x_alt Example Success !!!...");

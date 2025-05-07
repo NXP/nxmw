@@ -42,7 +42,7 @@ void sss_mbedtls_set_keystore_rng(sss_key_store_t *ssskeystore)
 {
     g_rng_keystore = ssskeystore;
 }
-
+// LCOV_EXCL_START
 #if defined(MBEDTLS_CTR_DRBG_USE_PSA_CRYPTO)
 static psa_status_t ctr_drbg_setup_psa_context(
     mbedtls_ctr_drbg_psa_context *psa_ctx, unsigned char *key, size_t key_len)
@@ -680,7 +680,7 @@ exit:
     mbedtls_platform_zeroize(&locals, sizeof(locals));
     return ret;
 }
-
+// LCOV_EXCL_STOP
 int mbedtls_ctr_drbg_random_nx(void *p_rng, unsigned char *output, size_t output_len)
 {
     LOG_D("mbedtls_ctr_drbg_random (%s)", __FILE__);
@@ -708,7 +708,6 @@ exit:
 
     return ret;
 }
-
 int mbedtls_ctr_drbg_random(void *p_rng, unsigned char *output, size_t output_len)
 {
     if (g_rng_keystore != NULL) {
@@ -735,6 +734,7 @@ int mbedtls_ctr_drbg_random(void *p_rng, unsigned char *output, size_t output_le
     }
 }
 
+// LCOV_EXCL_START
 #if defined(MBEDTLS_FS_IO)
 int mbedtls_ctr_drbg_write_seed_file(mbedtls_ctr_drbg_context *ctx, const char *path)
 {
@@ -1542,6 +1542,7 @@ int mbedtls_ctr_drbg_self_test(int verbose)
 
     return 0;
 }
+// LCOV_EXCL_STOP
 #endif /* MBEDTLS_SELF_TEST */
 
 #endif /* MBEDTLS_CTR_DRBG_C */

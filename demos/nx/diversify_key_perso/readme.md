@@ -17,7 +17,7 @@ The input parameter and master key can be set according to MCU type.
         EX_DIVERSIFY_INPUT_AID
         EX_DIVERSIFY_INPUT_SID
 
-**Refer**: `nx-mw-top/lib/sss/ex/inc/ex_sss_nx_auth.h`
+**Refer**: `nxmw/lib/sss/ex/inc/ex_sss_nx_auth.h`
 
 2. Update the master key using macro with `NXMW_Auth=SYMM_Auth`.
     case1 16-byte master key: EX_SYMM_AUTH_AES128_KEY
@@ -32,7 +32,7 @@ The input parameter and master key can be set according to MCU type.
         Define EX_SIGMA_I_AUTH_DEFAULT_AESKEY as EX_SYMM_AUTH_AES256_KEY Define
                EX_SIGMA_I_AUTH_DEFAULT_AESKEY_LEN as EX_SYMM_AUTH_AES256_KEY_SIZE
 
-**Refer** -  `nx-mw-top/lib/sss/ex/inc/ex_sss_nx_auth.h`
+**Refer** -  `nxmw/lib/sss/ex/inc/ex_sss_nx_auth.h`
 
 **MCU with file system**
 1. Update the diversification key input parameters in configuration file.
@@ -40,14 +40,14 @@ The input parameter and master key can be set according to MCU type.
     AID 3042F5
     SID 4E585020416275
 
-    **Refer** - `nx-mw-top/binaries/configuration/diversify_key_inputs/plain_dkey_input.txt`
+    **Refer** - `nxmw/binaries/configuration/diversify_key_inputs/plain_dkey_input.txt`
 
 2. Update the master key in configuration file.
 
     case1 16-byte master key : APPKEY 00000000000000000000000000000000
     case2 32-byte master key : APPKEY 0000000000000000000000000000000000000000000000000000000000000000
 
-    **Refer** - `nx-mw-top/binaries/configuration/symmetric_keys/plain_appkey.txt`
+    **Refer** - `nxmw/binaries/configuration/symmetric_keys/plain_appkey.txt`
 
 To inject the newly generated key (keyID1), old key value is also
 required. Old key value is defined as MACRO
@@ -55,7 +55,7 @@ required. Old key value is defined as MACRO
 -   case1 16-byte aes old key: EX_AES128_KEYID_1_OLD_KEY
 -   case2 32-byte aes old key: EX_AES256_KEYID_1_OLD_KEY
 
-    **Refer** - `nx-mw-top/lib/sss/ex/inc/ex_sss_nx_auth.h`
+    **Refer** - `nxmw/lib/sss/ex/inc/ex_sss_nx_auth.h`
 
 >**Note:** <span style="color:blue;">This example implements the master key diversification in the host MCU for demonstration purposes. In real life use cases, depending on the security requirements of the system, master key storage and diversification should be done in a Secure Authenticator.</span>
 
@@ -74,7 +74,11 @@ It uses the following APIs and data types:
 ## Building the Example
 
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
 
   - Select CMake options:
     - `NXMW_Auth_Symm_Diversify=Disabled`

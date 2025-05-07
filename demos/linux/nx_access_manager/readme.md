@@ -36,9 +36,9 @@ Run the commands below to build access manager for NX secure authenticator. For 
 
 ```console
 git clone ssh://git@bitbucket.sw.nxp.com/kmw/nxmw-github.git
-cd nx-mw-top/scripts
+cd nxmw/scripts
 python create_cmake_projects.py
-cd ../../nx-mw-top_build/raspbian_native_nx_t1oi2c
+cd ../../nxmw_build/raspbian_native_nx_t1oi2c
 cmake -DNXMW_Auth=SYMM_Auth -DNXMW_SMCOM=T1oI2C_GP1_0 -DNXMW_Secure_Tunneling=NTAG_AES128_EV2 .
 make accessManager
 ```

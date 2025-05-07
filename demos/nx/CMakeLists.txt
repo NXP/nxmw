@@ -1,5 +1,5 @@
 #
-# Copyright 2022-2024 NXP
+# Copyright 2022-2025 NXP
 # SPDX-License-Identifier: BSD-3-Clause
 #
 #
@@ -28,8 +28,10 @@ IF(SSS_HAVE_NX_TYPE)
     ADD_SUBDIRECTORY(getVersion)
 
 	IF ((SSS_HAVE_HOST_FRDMMCXA153 OR SSS_HAVE_HOST_FRDMMCXN947) AND SSS_HAVE_AUTH_NONE)
-		ADD_SUBDIRECTORY(host_coprocessor)
-	ENDIF()
+        IF (NOT SSS_HAVE_RTOS_FREERTOS)
+		    ADD_SUBDIRECTORY(host_coprocessor)
+        ENDIF()
+    ENDIF()
 
     IF (SSS_HAVE_HOST_FRDMMCXN947 AND SSS_HAVE_HOSTCRYPTO_MBEDTLS AND SSS_HAVE_AUTH_NONE AND SSS_HAVE_ALL_AUTH_CODE_ENABLED)
         IF (NOT SSS_HAVE_RTOS_FREERTOS)
@@ -60,8 +62,12 @@ IF(SSS_HAVE_NX_TYPE)
                 ADD_SUBDIRECTORY(nx_tool_setconfig)
             ENDIF()
 
-            IF (SSS_HAVE_SMCOM_VCOM OR SSS_HAVE_SMCOM_T1OI2C_GP1_0)
-                ADD_SUBDIRECTORY(gpio_notif)
+            IF (SSS_HAVE_ALL_AUTH_CODE_ENABLED)
+                IF (SSS_HAVE_SMCOM_VCOM OR SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+                    IF (NOT SSS_HAVE_RTOS_FREERTOS)
+                        ADD_SUBDIRECTORY(gpio_notif)
+                    ENDIF()
+                ENDIF()
             ENDIF()
 
             IF(SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED)

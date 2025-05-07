@@ -168,10 +168,10 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 
 cleanup:
     if (kStatus_SSS_Success == status) {
-        LOG_I("ex_tls_provision_client Example Success !!!...");
+        LOG_I("ex_aws_provision_client Example Success !!!...");
     }
     else {
-        LOG_E("ex_tls_provision_client Example Failed !!!...");
+        LOG_E("ex_aws_provision_client Example Failed !!!...");
     }
     if (fpPrvKeyFile != NULL) {
         if (0 != fclose(fpPrvKeyFile)) {

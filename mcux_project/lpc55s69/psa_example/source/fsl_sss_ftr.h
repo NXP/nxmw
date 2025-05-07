@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023 NXP
+ * Copyright 2023,2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -699,12 +699,12 @@
 #define SSS_HAVE_MBEDTLS_ALT_SSS 0
 
 /** Enable TF-M based on PSA as ALT */
-#define SSS_HAVE_MBEDTLS_ALT_PSA 0
+#define SSS_HAVE_MBEDTLS_ALT_PSA 1
 
 /** Not using any mbedTLS_ALT
  *
  * When this is selected, cloud demos can not work with mbedTLS */
-#define SSS_HAVE_MBEDTLS_ALT_NONE 1
+#define SSS_HAVE_MBEDTLS_ALT_NONE 0
 
 #if (( 0                             \
     + SSS_HAVE_MBEDTLS_ALT_SSS       \

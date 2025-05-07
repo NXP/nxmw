@@ -64,7 +64,7 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 | demos              | Examples / Use cases / Access manager                                   |
 | doc                | Documentation                                                           |
 | lib                | Session Manager Code, SSS APIs, NX APIs to use NX SA                    |
-| plugin             | Standard plugins like OpenSSL Engine, provider, psa, pkcs11             |
+| plugin             | Standard plugins like OpenSSL Engine, OpenSSL provider, psa, pkcs11     |
 | scripts            | Scripts for building                                                    |
 | ChangeLog.md       | Change Log file                                                         |
 | CMakeLists.txt     | Root Cmake file                                                         |

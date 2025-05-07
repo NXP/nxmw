@@ -116,22 +116,22 @@ the following -
 >**Note:** <span style="color:blue;">
     AES ECB/CBC encryption/decryption is offloaded to NX Secure authenticator only if the key store
     is passed using sss_mbedtls_set_keystore_aes() API.
-    Only plain authentication mode(``NXMW_Auth=None``) is supported.
+    Only plain authentication mode (``NXMW_Auth=None``) is supported.
     set access condition plain mode for Cmd.CryptoRequest and which can be configured
-    through Cmd.SetConfiguration Option 0x15(**Refer** [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md).
-    example - 
+    through Cmd.SetConfiguration Option 0x15 (Refer [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md)).
+    Example:
 
-          - nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
+          nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
 </span>
 
 >**Note:** <span style="color:blue;">
     To run ecdsa, ecdh and rng alt example on plain commMode or none authentication.
     set access condition plain mode for Cmd.CryptoRequest, Cmd.Managekeypair and which can be configured
-    through Cmd.SetConfiguration Option 0x15 and 0x12(**Refer** [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md).
-    example -
+    through Cmd.SetConfiguration Option 0x15 and 0x12 (Refer [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md)).
+    Example:
 
-          - nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
-          - nx_tool_setconfig.exe -keypairCM plain -keypairAC 0xE COM10
+          nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
+          nx_tool_setconfig.exe -keypairCM plain -keypairAC 0xE COM10
 </span>
 
 ## Building the Example

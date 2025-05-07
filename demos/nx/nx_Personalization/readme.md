@@ -23,11 +23,11 @@ The example will provision the below keys / certificates
 - Folder indicated by ENV variable \"NX_AUTH_CERT_DIR\"
 - Folder : "C:\\nxp\\configuration\\cert_depth3_x509_rev1\\\"(Windows) OR "/tmp/configuration/cert_depth3_x509_rev1/" (Linux)
 
-Hard coded certificates defined in `nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h`
+Hard coded certificates defined in `nxmw/demos/nx/nx_Personalization/nx_Personalization.h`
 
 **MCUs**
 
-Hard coded certificates defined in `nx-mw-top/demos/nx/nx_Personalization/nx_Personalization.h`
+Hard coded certificates defined in `nxmw/demos/nx/nx_Personalization/nx_Personalization.h`
 
 ```
 **IMPORTANT**
@@ -41,7 +41,12 @@ certificates).
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
 	- Project - `nx_Personalization`
 	- Make sure to select "NXMW_Auth=SYMM_Auth\" in cmake options.
 

@@ -5,10 +5,7 @@ examples in a rich IDE. Only the low level communication (T=1oI2C) to
 the Secure Authenticator is done on a connected host MCU as interface to the
 Secure Authenticator.
 
-```
-Note -
-MCXN947 is used as an Host MCU example in the following documentation.
-```
+>**Note:** <span style="color:blue;">FRDM-MCXN947 is used as an Host MCU example in the following documentation.</span>
 
 <img src="../img/windows/nx_MW_Visual_Studio_Setup.jpeg" class="align-center"
 width="800" />
@@ -27,14 +24,14 @@ width="800" />
 
 ```console
 west init -m https://github.com/NXP/nxmw.git --mf mcu_sdk/west.yml workspace
+OR
+west init -m https://github.com/NXP/nxmw.git --mr <branch name> --mf mcu_sdk/west.yml workspace
+
 cd workspace
 west update
 ```
 
-```
-NOTE -
-The complete setup takes 10-15 minutes to download. Once downloaded you should have the NX middleware and all the required SDK files.
-```
+>**Note:** <span style="color:blue;">The complete setup takes 10-15 minutes to download. Once downloaded you should have the NX middleware and all the required SDK files.</span>
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps
 
@@ -43,7 +40,7 @@ cd nxmw
 west init -l --mf mcu_sdk/west.yml
 cd ..
 west update
-````
+```
 
 ## Initial Setup
 
@@ -60,7 +57,7 @@ width="500" />
 
 - Connect Host MCU-Link port to Windows USB port.
 
-- Flash MCXN947 with vcom binary. You can use the MCUX project provided in `nxmw/mcux_project/mcxn947/vcom` OR Use the precompiled binaries in binary folder.
+- Flash MCXN947 with vcom binary. You can use the MCUX project provided in `nxmw/mcux_project/mcxn947/vcom` OR Use the precompiled binaries in binary folder `nxmw/binaries/nx_vcom`.
 
 - Now connect the other USB port of MCXN947 to the PC
 
@@ -75,17 +72,17 @@ width="500" />
 cd nxmw\scripts
 env_setup.bat
 python create_cmake_projects.py
-````
-
-
-```
-NOTE -
-The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.</span>
 ```
 
-- Build files are generated at `nx-mw-top_build/`
 
-- Use the visual studio solution at `nx-mw-top_build/se_x86/NxMW.sln` to build the required example.
+>**Note:** <span style="color:blue;">The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.</span>
+
+
+>**Note:** <span style="color:blue;">Use Command Prompt to generate build files. env_setup.bat file may not work correctly with PowerShell.</span>
+
+- Build files are generated at `nxmw_build/`
+
+- Use the visual studio solution at `nxmw_build/se_x86/NxMW.sln` to build the required example.
 
 
 <img src="../img/windows/visual_studio.jpeg" class="align-center" width="800" />
@@ -121,25 +118,25 @@ The env_setup.bat files defines the development tools environment. Depending on 
    WithSharedLIB:BOOL=OFF
 ```
 
-- Change the cmake options if required. For more details on cmake
-  Cmake Configurations, refer [**CMake Options**](../config/readme.md)
+- Change the cmake options if required using the command `cmake-gui .`. For more details refer [**CMake Options**](../config/readme.md)
 
-```
-NOTE -
-The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**NX Personalization**](../../demos/nx/nx_Personalization/readme.md).
-```
+>**Note:** <span style="color:blue;">The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**NX Personalization**](../../demos/nx/nx_Personalization/readme.md).</span>
 
 
 ## Build / Run Examples
 
 - To build the demo:
 
-  - `cd nx-mw-top_build/se_x86`
-  - `cmake --build . --target <example_name>`
+```console
+cd nxmw_build/se_x86
+cmake --build . --target <example_name>
+```
 
 - Run demo as :
 
-  - `<example_name>.exe <COM_PORT>`
+```console
+<example_name>.exe <COM_PORT>
+```
 
 - Debug demo
   - Set demo as startup project in Visual Studio and click on `Local Windows Debugger`

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -83,7 +83,7 @@ int main(void)
         ephem_curve_type,
         knx_AuthCache_Enabled,
         knx_AuthCompress_Disabled,
-        1,
+        0,
         NX_AC_BITMAP_INVALID);
     ENSURE_OR_GO_CLEANUP(kStatus_SSS_Success == status);
 

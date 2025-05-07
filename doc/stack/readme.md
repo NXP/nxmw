@@ -2,7 +2,7 @@
 # NX Middleware Stack
 
 NX Middleware provides the necessary interfaces, examples, demos for NX Secure Authenticator (SA) IC.
-The **nx-mw-top/lib** folder contains necessary files required to connect / use the NX secure authenticator.
+The **nxmw/lib** folder contains necessary files required to connect / use the NX secure authenticator.
 The middleware also has crypto examples ([**demos**](../../demos)), plugins (OpenSSL engine, provider) ([**plugin**](../../plugin))
 
 Below section describe the secure session and the APIs exposed by the NX middleware stack to access NX secure authenticator.
@@ -63,12 +63,11 @@ On Windows / Linux systems, the middleware will looks for certificate chain in f
 
     - Folder indicated by ENV variable "NX_AUTH_CERT_DIR"
     - Folder "C:\nxp\configuration\cert_depth3_x509_rev1\"(Windows) or "/tmp/configuration/cert_depth3_x509_rev1/" (Linux)
-    - Hard coded certificates defined in file: "nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h"
+    - Hard coded certificates defined in file: "nxmw/lib/sss/inc/fsl_sss_nx_auth_keys.h"
 
 Other micro-controllers:
 
-    - Hard coded certificates defined in file: "nx-mw-top/lib/sss/inc/fsl_sss_nx_auth_keys.h"
-
+    - Hard coded certificates defined in file: "nxmw/lib/sss/inc/fsl_sss_nx_auth_keys.h"
 
 >**Note:** <span style="color:blue;">
     The hard coded certificates and related private keys are stored in plain text for demonstration purposes only. During actual product deployment, customer has to adopt secure means as per their security needs (note that the potential issue is more with the private keys than certificates).
@@ -76,6 +75,11 @@ Other micro-controllers:
 
 >**Note:** <span style="color:blue;">
     T=1oI2C: When using the T=1oI2C smcom interface, at the beginning of session open, we do a dummy read (function - `phNxpEse_clearReadBuffer`) from the secure authenticator if any previous session data is pending and discard the data.
+</span>
+
+>**Note:** <span style="color:blue;">
+    When using Sigma I with supported MCUs, the operations take some time. Hence we need to disable the watchdog timer so that no error is thrown.
+    For more information on this, (Refer: [**Set Config Demo**](../../demos/nx/setConfig/readme.md)).
 </span>
 
 

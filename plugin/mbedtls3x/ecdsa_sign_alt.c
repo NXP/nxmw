@@ -74,7 +74,7 @@ static SE_ECSignatureAlgo_t nx_get_ec_sign_hash_mode(sss_algorithm_t algorithm)
     }
     return mode;
 }
-
+// LCOV_EXCL_START
 /*
  * Compute ECDSA signature of a hashed message
  */
@@ -235,6 +235,7 @@ cleanup:
 
     return ret;
 }
+// LCOV_EXCL_STOP
 
 int EcSignatureToRandS_alt(uint8_t *signature, size_t *sigLen, mbedtls_mpi *r, mbedtls_mpi *s)
 {

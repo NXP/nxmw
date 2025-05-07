@@ -34,13 +34,14 @@ NOTE: MCXN947 is used as an Host MCU example in the following documentation.
 
 ```console
 west init -m https://github.com/NXP/nxmw.git --mf mcu_sdk/west.yml workspace
+OR
+west init -m https://github.com/NXP/nxmw.git --mr <branch name> --mf mcu_sdk/west.yml workspace
+
 cd workspace
 west update
 ```
 
-```
-**Note:** The complete setup takes 10-15 minutes to finish.
-```
+>**Note:** <span style="color:blue;">The complete setup takes 10-15 minutes to finish.</span>
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps to download the MCU SDK,
 
@@ -61,9 +62,7 @@ env_setup.bat
 python create_cmake_projects.py
 ```
 
-```
-**Note:** The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.
-```
+>**Note:** <span style="color:blue;">The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.</span>
 
 Build files are generated at `nxmw_build/`
 
@@ -103,11 +102,11 @@ make
 - Change the cmake options if required. For more details on cmake
   Cmake Configurations - [**Cmake Configurations**](../config/readme.md)
 
-```
-**Note:** <span style="color:black;">The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**Personalization**](../../demos/nx/nx_Personalization/readme.md).</span>
-```
 
-# Setting up MCUXPresso IDE
+>**Note:** <span style="color:blue;">The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**Personalization**](../../demos/nx/nx_Personalization/readme.md).</span>
+
+
+## Setting up MCUXPresso IDE
 
 1.  Download MCUXpresso 24.12 from:
     <https://www.nxp.com/support/developer-resources/software-development-tools/mcuxpresso-software-and-tools/mcuxpresso-integrated-development-environment-ide:MCUXpresso-IDE>
@@ -130,14 +129,16 @@ make
 
 - Click on browse and select the .axf or .bin file to be flashed and click on program to flash the file.
 
->**Note:** <span style="color:black;">If .bin file is selected, specify the address(0x00 for MCXN947/MCXA153/LPC55S69).</span>
+>**Note:** <span style="color:blue;">If .bin file is selected, specify the address (0x00 for MCXN947/MCXA153/LPC55S69).</span>
 
 
 <p align=left>
 <img src="../img/mcux/Flash_Ex.jpeg" alt="drawing" width="550" />
 </p>
 
-## Logging on console
+- Once flashed successfully, MCU will reset automatically and program execution will start. Logs will show-up on the terminal (logging in next section). To re-run the same program, press reset button on the MCU.
+
+## Logging on The Console
 
 - Open Tera Term and connect serial port.
 
@@ -145,7 +146,7 @@ make
 <img src="../img/output/TeraTerm.jpeg" alt="drawing" width="550" />
 </p>
 
-- Once the program execution begins, logs are printed on the terminal(Tera
+- Once the program execution begins, logs are printed on the terminal (Tera
 Term) indicating the status of execution.
 
 <p align=left>

@@ -1,12 +1,15 @@
 ----------------------------------
 NXP Software Content Register
-Release:  nxmw-github
-Version: 02.04.00
+Release:  nxmw
+Version: 02.05.00
 Outgoing License: BSD 3-Clause "New" or "Revised" License
 License File: LICENSE.txt
 Description and comments: NX Middleware
-Release Location: TBU
+Release Location: https://github.com/NXP/nxmw
 Origin: NXP
-            OpenSSL 1.1 (OpenSSL License) - https://github.com/openssl/openssl/tree/OpenSSL_1_1_1-stable
-            openssl-3.0 (Apache 2.0) Version: OpenSSL 3.0.14 - https://github.com/openssl/openssl/tree/openssl-3.0.14
+            Mbed-TLS (Apache-2.0) Version: 2.28.8 - https://github.com/Mbed-TLS/mbedtls/tree/v2.28.8
+            Mbed-TLS (Apache-2.0) Version: 3.6.0 - https://github.com/Mbed-TLS/mbedtls/tree/v3.6.0
+            OpenSSL 1.1 (OpenSSL License) Version 1.1.1l - https://github.com/openssl/openssl/tree/OpenSSL_1_1_1l
+            openssl-3.2 (Apache 2.0) Version: OpenSSL 3.2.0 - https://github.com/openssl/openssl/tree/openssl-3.2.0
+			pkcs11 (MIT License) Version: 2-40-errata-1 - https://github.com/oasis-tcs/pkcs11/tree/2-40-errata-1
 -----------------------------------

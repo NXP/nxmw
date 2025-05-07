@@ -139,7 +139,7 @@ Note: Tested with OpenSC 0.24.0 version
 Set environment variable to the installed PKCS#11 shared library:
 
 ``` shell
-export PKCS11_MODULE=<NX_MW_PATH>/nx-mw-top/plugin/pkcs11/bin/libsss_pkcs11.so
+export PKCS11_MODULE=<NX_MW_PATH>/nxmw/plugin/pkcs11/bin/libsss_pkcs11.so
 ```
 
 Generating new keypair:

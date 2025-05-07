@@ -6,7 +6,7 @@ Refer [**GPIO Example**](./ex_sss_gpio.c)
 
 ## Prerequisites
 
--   Hardware: NX SA should be connected to FRDM-K64F board or Raspberry Pi.
+-   Hardware: NX SA should be connected to FRDM-MCXN947 board or Raspberry Pi.
 -   GPIO1 should be already been configured to output and GPIO2 should
     be configured to input. [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md) or
     [**ex_set_config**](../setConfig/readme.md) can be used for configuration.
@@ -32,7 +32,12 @@ It uses the following APIs and data types: (including the ones used to control h
 
 ## Building the example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
+
     - Project - `ex_gpio`
     - NXMW_Auth and NXMW_Secure_Tunneling should be selected according to simulator/IC configuration.
 

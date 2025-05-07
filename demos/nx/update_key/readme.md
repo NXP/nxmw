@@ -21,7 +21,11 @@ It uses the following APIs and data types:
 
 ## Building the Example
 
-- Build NX middleware stack. Refer [**Linux build**](../../../doc/linux/readme.md).
+- Build NX middleware stack on Linux. Refer [**Linux build**](../../../doc/linux/readme.md).
+
+- Build NX middleware stack for Windows. Refer [**Windows build**](../../../doc/windows/readme.md).
+
+- Build NX middleware stack for supported MCUs. Refer [**MCUX Cmake build**](../../../doc/mcu_cmake/readme.md).
 
   - Select CMake options:
     - `NXMW_Auth=SYMM_Auth`
@@ -41,7 +45,7 @@ authentication which is used in other examples (e.g. nx_Minimal).
     case1 16-byte AES key: EX_SYMM_AUTH_AES128_KEY
     case2 32-byte AES key: EX_SYMM_AUTH_AES256_KEY
 
-    Refer [**nx-mw-top/lib/sss/ex/inc/ex_sss_nx_auth.h**](./../../../lib/sss/ex/inc/ex_sss_nx_auth.h)
+    Refer [**nxmw/lib/sss/ex/inc/ex_sss_nx_auth.h**](./../../../lib/sss/ex/inc/ex_sss_nx_auth.h)
 
 - Host with file system. - Update the AES key in configuration file.
     case1 16-byte AES key : APPKEY 00000000000000000000000000000000

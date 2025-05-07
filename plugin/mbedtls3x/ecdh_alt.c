@@ -44,7 +44,7 @@
 #define SSS_MAGIC_NUMBER_OFFSET2 (6)
 #define SSS_KEY_ID_IN_REFKEY_OFFSET (10)
 
-static sss_key_store_t *g_ecdh_keystore      = NULL;
+static sss_key_store_t *g_ecdh_keystore = NULL;
 
 /** Length of BRAINPOOL 256 header */
 #define NX_BRAINPOOL_256_HEADER_LEN 27
@@ -58,7 +58,7 @@ void sss_mbedtls_set_keystore_ecdh(sss_key_store_t *nx_keystore)
 {
     g_ecdh_keystore = nx_keystore;
 }
-
+// LCOV_EXCL_START
 #if defined(MBEDTLS_ECDH_LEGACY_CONTEXT)
 typedef mbedtls_ecdh_context mbedtls_ecdh_context_mbed;
 #endif
@@ -116,6 +116,7 @@ int mbedtls_ecdh_compute_shared_o(mbedtls_ecp_group *grp,
 {
     return ecdh_compute_shared_restartable(grp, z, Q, d, f_rng, p_rng, NULL);
 }
+// LCOV_EXCL_STOP
 
 /*
 * return asn1 header length
@@ -146,7 +147,6 @@ static int mbedtls_get_header_and_bit_Length(int groupid, int *headerLen, int *b
 
     return 0;
 }
-
 int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp,
     mbedtls_mpi *z,
     const mbedtls_ecp_point *Q,
@@ -154,25 +154,25 @@ int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp,
     int (*f_rng)(void *, unsigned char *, size_t),
     void *p_rng)
 {
-    int ret                                    = -1;
-    int headerLen                              = 0;
-    int keyBitLen                              = 0;
-    uint8_t otherPublicKey[256]                = {0};
-    size_t otherPublickeyLen                   = sizeof(otherPublicKey);
-    uint8_t privateKey[128]                    = {0};
-    size_t privateKeylen                       = 0;
-    uint8_t buf[256]                           = {0};
-    size_t bufByteLen                          = sizeof(buf);
-    smStatus_t sm_status                       = SM_NOT_OK;
-    uint32_t magic_no1                         = 0;
-    uint32_t magic_no2                         = 0;
-    uint32_t key_id                            = 0;
-    int mbedtls_ret                            = 0;
-    uint8_t sharedSecret[32]                   = {0};
-    size_t sharedSecretLen                     = sizeof(sharedSecret);
-    sss_nx_key_store_t *nx_ecdh_keystore       = NULL;
-    sss_nx_session_t *pSession                 = NULL;
-    size_t keyOffset                           = 0;
+    int ret                              = -1;
+    int headerLen                        = 0;
+    int keyBitLen                        = 0;
+    uint8_t otherPublicKey[256]          = {0};
+    size_t otherPublickeyLen             = sizeof(otherPublicKey);
+    uint8_t privateKey[128]              = {0};
+    size_t privateKeylen                 = 0;
+    uint8_t buf[256]                     = {0};
+    size_t bufByteLen                    = sizeof(buf);
+    smStatus_t sm_status                 = SM_NOT_OK;
+    uint32_t magic_no1                   = 0;
+    uint32_t magic_no2                   = 0;
+    uint32_t key_id                      = 0;
+    int mbedtls_ret                      = 0;
+    uint8_t sharedSecret[32]             = {0};
+    size_t sharedSecretLen               = sizeof(sharedSecret);
+    sss_nx_key_store_t *nx_ecdh_keystore = NULL;
+    sss_nx_session_t *pSession           = NULL;
+    size_t keyOffset                     = 0;
 
     /* read the private key */
     if (g_ecdh_keystore != NULL && grp != NULL &&
@@ -229,16 +229,16 @@ int mbedtls_ecdh_compute_shared(mbedtls_ecp_group *grp,
             if ((SIZE_MAX - der_ecc_nistp256_header_len) < otherPublickeyLen) {
                 return 1;
             }
-            otherPublickeyLen        = otherPublickeyLen + der_ecc_nistp256_header_len;
-            keyOffset                = NX_NIST_256_HEADER_LEN;
+            otherPublickeyLen = otherPublickeyLen + der_ecc_nistp256_header_len;
+            keyOffset         = NX_NIST_256_HEADER_LEN;
             break;
         case MBEDTLS_ECP_DP_BP256R1:
             memcpy(otherPublicKey, gecc_der_header_bp256, der_ecc_bp256_header_len);
             if ((SIZE_MAX - der_ecc_bp256_header_len) < otherPublickeyLen) {
                 return 1;
             }
-            otherPublickeyLen        = otherPublickeyLen + der_ecc_bp256_header_len;
-            keyOffset                = NX_BRAINPOOL_256_HEADER_LEN;
+            otherPublickeyLen = otherPublickeyLen + der_ecc_bp256_header_len;
+            keyOffset         = NX_BRAINPOOL_256_HEADER_LEN;
             break;
         default:
             LOG_I("Unsupported ec group found");

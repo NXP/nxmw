@@ -83,7 +83,7 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 status                = nxclitool_get_uint32_from_hex_text(argv[i], &temp_u32_holder);
                 ENSURE_OR_RETURN_ON_ERROR(status == kStatus_SSS_Success, 1);
                 ENSURE_OR_RETURN_ON_ERROR(temp_u32_holder <= UINT8_MAX, 1);
-                featureselection = (uint16_t)temp_u32_holder;
+                featureselection = (uint8_t)temp_u32_holder;
                 i++;
             }
             continue;
