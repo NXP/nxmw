@@ -14,7 +14,7 @@ You can compile host library for different OS Applications of NX Secure Authenti
 
 ## NXMW_Host: Host where the software stack is running
 
-For e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
+For e.g. Windows, PC Linux, Embedded Linux, FRDM-MCX like embedded platform
 
 ``-DNXMW_Host=PCWindows``: PC/Laptop Windows
 

@@ -29,7 +29,7 @@ The access condition of the authentication should match access condition configu
 
 If everything is successful, the output will be similar to:
 ```
-ss   :INFO :Session Open Succeed
+sss   :INFO :Session Open Succeed
 App   :INFO :Running CMAC Example (using Slots) ex_nx_cmac_using_slots.c
 App   :INFO :Do CMAC
 App   :INFO :input (Len=16)

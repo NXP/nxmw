@@ -8,7 +8,7 @@
 4) Secure Authenticator connected to Host MCU (Refer: [**MCU Pin Diagram**](../../boards/README.md)).
 5) The overall set up will look as shown below.
 
-<p align=left>
+<p align=center>
 <img src="../img/windows/mcxn_nx.jpeg" alt="drawing" width="600" />
 </p>
 
