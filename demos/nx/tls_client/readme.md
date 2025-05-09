@@ -1,7 +1,7 @@
-# OpenSSL Engine: TLS Client example
+# OpenSSL Engine/Provider: TLS Client example
 
 This section explains how to set-up a TLS link using the SSS OpenSSL
-Engine on the client side.
+Engine or Provider on the client side.
 
 ## Summary
 
@@ -69,6 +69,7 @@ python tlsServer.py ECDHE_SHA256 prime256v1
 ```
 ## Establish a TLS link from the client to the server
 
+## Using OpenSSL Engine
 - Build OpenSSL Engine (refer: [**Building the OpenSSL engine**](../../../plugin/openssl/readme.md))
 - Invoke the script [**tlsSeClient.py**](./scripts/tlsSeClient.py) in a separate terminal using the IP address of the server as the first argument and ECDHE or ECDHE_SHA256 as the second argument (ECDHE
 corresponding to ECDH ephemeral) when connecting to a server using EC
@@ -81,5 +82,21 @@ Execute following command in a separate terminal to run TLS client:
 ```
 cd nxmw/demos/nx/tls_client/scripts
 python tlsSeClient.py 127.0.0.1 ECDHE_SHA256 prime256v1
+```
+Any message entered on the client terminal now will be received by server terminal and vice versa.
+
+## Using OpenSSL Provider
+- Build OpenSSL Provider (refer: [**Building the OpenSSL provider**](../../../plugin/openssl_provider/readme.md))
+- Invoke the script [**tlsSeClient30.py**](./scripts/tlsSeClient30.py) in a separate terminal using the IP address of the server as the first argument and ECDHE or ECDHE_SHA256 as the second argument (ECDHE
+corresponding to ECDH ephemeral) when connecting to a server using EC
+based credentials. Generic command:
+```
+python tlsSeClient30.py <SERVER_IP_ADDRESS> <ECDHE|ECDHE_256>
+```
+
+Execute following command in a separate terminal to run TLS client:
+```
+cd nxmw/demos/nx/tls_client/scripts
+python tlsSeClien30.py 127.0.0.1 ECDHE_SHA256 prime256v1
 ```
 Any message entered on the client terminal now will be received by server terminal and vice versa.
