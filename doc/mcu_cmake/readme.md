@@ -41,7 +41,7 @@ cd workspace
 west update
 ```
 
->**Note:** <span style="color:blue;">The complete setup takes 10-15 minutes to finish.</span>
+>**Note:** The complete setup takes 10-15 minutes to finish.
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps to download the MCU SDK,
 
@@ -57,12 +57,12 @@ west update
 Use `nxmw/scripts/create_cmake_projects.py` to generate the build files -
 
 ```console
-cd nxmw\scripts
+cd nxmw/scripts
 env_setup.bat
 python create_cmake_projects.py
 ```
 
->**Note:** <span style="color:blue;">The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.</span>
+>**Note:** The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.
 
 Build files are generated at `nxmw_build/`
 
@@ -103,7 +103,7 @@ make
   Cmake Configurations - [**Cmake Configurations**](../config/readme.md)
 
 
->**Note:** <span style="color:blue;">The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**Personalization**](../../demos/nx/nx_Personalization/readme.md).</span>
+>**Note:** The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**Personalization**](../../demos/nx/nx_Personalization/readme.md).
 
 
 ## Setting up MCUXPresso IDE
@@ -129,7 +129,7 @@ make
 
 - Click on browse and select the .axf or .bin file to be flashed and click on program to flash the file.
 
->**Note:** <span style="color:blue;">If .bin file is selected, specify the address (0x00 for MCXN947/MCXA153/LPC55S69).</span>
+>**Note:** If .bin file is selected, specify the address (0x00 for MCXN947/MCXA153/LPC55S69).
 
 
 <p align=left>

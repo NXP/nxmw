@@ -79,19 +79,19 @@ ASN1 OID: prime256v1
 ```
 
 
->**Note:** <span style="color:blue;">
+>**Note:** 
 The key identifier `0x00000002` (stored in big-endian convention) is
 in front of the magic number `0xA5A6B5B6A5A6B5B6`.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 The padding of the private key value and the magic number makes it unlikely a normal private
 key value matches a reference key.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 Ensure the value reserved for public key and ASN1 OID contain the values matching the stored key.
-</span>
+
 
 ## Building the OpenSSL engine
 
@@ -133,13 +133,13 @@ cd nxmw/plugin/openssl/scripts
 python openssl_provision.py -smcom t1oi2c -port /dev/i2c-1 -curve prime256v1 -keypath ../keys/prime256v1/ecc_key_kp.pem
 ```
 
->**Note:** <span style="color:blue;">
+>**Note:** 
 The provisioning script uses NX CLI Tool to provision the SA and assumes some of the inputs to the CLI tool for simplicity. For e.g. `NXMW_Secure_Tunneling` is set to `NTAG_AES128_EV2` and `NXMW_Auth` is set to `SYMM_Auth` by default and, these can be changed in the script as per user's preference.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 This script provisions the key with signing policy enabled at key ID 0x02 and the key with ECDH policy enabled at ID 0x03. User must make sure no other keys are present in these key IDs before provisioning.
-</span>
+
 
 To generate the random numbers, invoke following script:
 

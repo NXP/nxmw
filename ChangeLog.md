@@ -6,7 +6,7 @@
 	- For MCU Projects, refer [**Getting Started on MCUs Using Standalone MCUXpresso Projects**](doc/mcu_projects/readme.md)
 	- For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmake/readme.md)
 - MCUX projects for few examples added for LPC55s69, MCXN947, MCXA153. Refer [**mcux_project**](mcux_project)
-- Pre-build binaries of vcom and nxcli tool added. Refer [**Binaries**](binaries)
+- Pre-build binaries of vcom and NX CLI tool added. Refer [**Binaries**](binaries)
 -  New examples -
 	- Host co-processor example. Refer [**Host co-processor demo**](demos/nx/host_coprocessor/readme.md)
 	- Qi Authentication example. Refer [**Qi Authentication demo**](demos/nx/sa_qi/readme.md)
@@ -18,11 +18,12 @@
 	- Mbed TLS ALT - Refer [**Mbed TLS ALT files**](plugin/mbedtls3x/readme.md)
 - OpenSSL Provider changes
 	- ECDSA functions handle different formats of SHA algorithm string (Example - "sha256" / "SHA256" / "SHA2-256")
-- nxcli tool changes
+- NX CLI tool changes
 	- Added write access condition option in setkey command
-	- New commands added - list-eckey, set-i2c_mgnt, set-cert_mgnt. For details refer - [**NX-Cli Tool**](demos/nx/nx_cli_tool/readme.md).
+	- New commands added - list-eckey, set-i2c_mgnt, set-cert_mgnt. For details refer - [**NX CLI Tool**](demos/nx/nx_cli_tool/readme.md).
 - AWS Cloud example extended for MCXN947 platform.
 - Fixes for static analysis findings and memory leak issues.
+- APDU buffers (of APDU functions of nx_apdu.c) are made global.
 
 
 ## \[v02.04.00\]
@@ -42,8 +43,8 @@
 - Fixes for static analysis findings.
 
 ## \[v02.03.00\]
-- lpc55s69 platform support added. (cmake based build and mcuxpresso project).
-- Mbedtls 3.x support added. (Mbedtls version - 3.5.0). Using cmake option `-DNXMW_MBedTLS=`, NX middleware can be built with 2.x or 3.x version of Mbedtls.
+- lpc55s69 platform support added (cmake based build and mcuxpresso project).
+- Mbedtls 3.x support added (Mbedtls version - 3.5.0). Using cmake option `-DNXMW_MBedTLS=`, NX middleware can be built with 2.x or 3.x version of Mbedtls.
 - MCU SDK updated to version 2.14
 - PSA APIs developed for NX secure authenticator. Refer - :ref:`psa-alt`.
 - OpenSSL Provider - Provider updated to support reference keys in file format also.

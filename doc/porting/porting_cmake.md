@@ -10,6 +10,8 @@ nxmw
       |
       ├── frdmmcxa153 ----- FRDM MCXA 153 specific files.
       |
+      ├── frdmmcxn947 ----- FRDM MCXN 947 specific files.
+      |
       ├── generic ------ Wrappers for timer implementation.
       |
       ├── inc
@@ -21,7 +23,9 @@ nxmw
 
 ```
 
-The following steps describe the process to add new micro-controller support - say lpc55s:
+The following steps describe the process to add new micro-controller support.
+
+>**Note:** We will consider lpc55s69 as a new controller.
 
 
 ## Add new host platform in cmake build options
@@ -79,7 +83,9 @@ Include the same in :file:`nxmw/scripts/ksdk.cmake`
 
 ## Updating boards folder
 
-Add new platform folder in boards directory (say lpcxpresso55s69).. This should match the board name added in cmake_options.cmake file.
+Add new platform folder in boards directory (say lpcxpresso55s69). This should match the board name added in cmake_options.cmake file.
 Copy / implement the necessary files here. (Refer existing frdmmcxn947 folder).
 
-Refer :file:`nxmw/boards/frdmmcxn947/CMakeLists.txt` and create a new cmake file - :file:`nxmw/boards/lpcxpresso55s69/CMakeLists.txt` to include the relevant files of new platform from the mcu-sdk and boards dir.
+Refer :file:`nxmw/boards/frdmmcxn947/CMakeLists.txt` and create a new cmake file - :file:`nxmw/boards/lpcxpresso55s69/CMakeLists.txt` to include the relevant files of new platform from the mcu-sdk and boards dir. Ensure that I2C driver is implemented properly. (Refer existing frdmmcxn947 folder for required files and implementation).
+
+For more information on existing projects using cmake build refer: [**CMake Projects for NX SA**](../../doc/mcu_cmake/readme.md).

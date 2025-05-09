@@ -49,11 +49,11 @@ On RPI, you can use following command:
 cd nxmw/demos/nx/tls_client/scripts
 python tlsProvision.py -smcom t1oi2c -port /dev/i2c-1 -curve prime256v1 -keypath ../credentials/prime256v1/tls_client_key.pem
 ```
->**Note:** <span style="color:blue;">This command will store the key [**tls_client_key.pem**](./credentials/prime256v1/tls_client_key.pem) inside the SA at key ID 0x02.</span>
+>**Note:** This command will store the key [**tls_client_key.pem**](./credentials/prime256v1/tls_client_key.pem) inside the SA at key ID 0x02.
 
 ## Start up the server
 
->**Note:** <span style="color:blue;">The server can run e.g. on a PC. The server must be reachable over the TCP/IP network for the Client.</span>
+>**Note:** The server can run e.g. on a PC. The server must be reachable over the TCP/IP network for the Client.
 
 Server can be executed using the following generic command:
 ```

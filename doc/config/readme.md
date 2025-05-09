@@ -24,9 +24,10 @@ For e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 
 ``-DNXMW_Host=Raspbian``: Embedded Linux on RaspBerry PI
 
+``-DNXMW_Host=frdmmcxa153``: Embedded Freedom MCXA153
+
 ``-DNXMW_Host=frdmmcxn947``: Embedded Freedom MCXN947
 
-``-DNXMW_Host=frdmmcxn947``: Embedded Freedom MCXA153
 
 
 ## NXMW_SMCOM: Communication Interface

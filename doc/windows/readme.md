@@ -5,7 +5,7 @@ examples in a rich IDE. Only the low level communication (T=1oI2C) to
 the Secure Authenticator is done on a connected host MCU as interface to the
 Secure Authenticator.
 
->**Note:** <span style="color:blue;">FRDM-MCXN947 is used as an Host MCU example in the following documentation.</span>
+>**Note:** FRDM-MCXN947 is used as an Host MCU example in the following documentation.
 
 <img src="../img/windows/nx_MW_Visual_Studio_Setup.jpeg" class="align-center"
 width="800" />
@@ -31,7 +31,7 @@ cd workspace
 west update
 ```
 
->**Note:** <span style="color:blue;">The complete setup takes 10-15 minutes to download. Once downloaded you should have the NX middleware and all the required SDK files.</span>
+>**Note:** The complete setup takes 10-15 minutes to download. Once downloaded you should have the NX middleware and all the required SDK files.
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps
 
@@ -75,17 +75,18 @@ python create_cmake_projects.py
 ```
 
 
->**Note:** <span style="color:blue;">The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.</span>
+>**Note:** The env_setup.bat files defines the development tools environment. Depending on your tools (MCUXpresso, Visual Studio, Java, Python and CMake) file locations you may need to update the tools paths within the env_setup.bat file.
 
 
->**Note:** <span style="color:blue;">Use Command Prompt to generate build files. env_setup.bat file may not work correctly with PowerShell.</span>
+>**Note:** Use Command Prompt to generate build files. env_setup.bat file may not work correctly with PowerShell.
 
 - Build files are generated at `nxmw_build/`
 
 - Use the visual studio solution at `nxmw_build/se_x86/NxMW.sln` to build the required example.
 
 
-<img src="../img/windows/visual_studio.jpeg" class="align-center" width="800" />
+<img src="../img/windows/visual_studio.jpeg" class="align-center" 
+width="800" />
 
 
 - By default the cmake options are set as below.
@@ -120,7 +121,7 @@ python create_cmake_projects.py
 
 - Change the cmake options if required using the command `cmake-gui .`. For more details refer [**CMake Options**](../config/readme.md)
 
->**Note:** <span style="color:blue;">The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**NX Personalization**](../../demos/nx/nx_Personalization/readme.md).</span>
+>**Note:** The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**NX Personalization**](../../demos/nx/nx_Personalization/readme.md).
 
 
 ## Build / Run Examples
@@ -141,8 +142,12 @@ cmake --build . --target <example_name>
 - Debug demo
   - Set demo as startup project in Visual Studio and click on `Local Windows Debugger`
 
-<img src="../img/windows/vs_starup_project.jpeg" class="align-center" width="800" />
+
+<img src="../img/windows/vs_starup_project.jpeg" class="align-center" 
+width="800" />
 
   - Ensure that the com port is set in command line arguments
 
-<img src="../img/windows/cmdargs.jpg" class="align-center" width="800" />
+
+<img src="../img/windows/cmdargs.jpg" class="align-center" 
+width="800" />

@@ -5,7 +5,7 @@ encryption/decryption operation on a message using SSS API and
 offloading the operations to NX SA using mbedtls alt file.
 **Refer** - [**Mbed-TLS 3x Intro**](../../../plugin/mbedtls3x/readme.rst)
 
-**Refer** - [**Mbed-TLS 3x Example**](/ex_mbedtls_3_x_alt.c)
+**Refer** - [**Mbed-TLS 3x Example**](./ex_mbedtls_3_x_alt.c)
 
 ## Prerequisites
 
@@ -37,13 +37,13 @@ required crypto operation
     4. Injecting reference key on Host.
     5. Sign using SSS APIs, Mbed-TLS alt uses NX SA for sign.
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     In the default implementation, every time the control goes to ALT implementation,
     session open and close is performed. This will have all transient objects will be lost.
     To avoid the session open / close in ALT implementation,
     Use the sss_mbedtls_set_keystore_ecdsa_sign() / sss_mbedtls_set_keystore_ecdsa_verify()/
     APIs to pass the key store.
-</span>
+
 
 - ex_mbedtls3x_ecdsa_verify function does the following -
 
@@ -52,18 +52,18 @@ required crypto operation
     3. Injecting public key on Host.
     4. Verify using SSS APIs. Mbed-TLS ALT will use NX SA for verify.
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     ECDSA Verify works only when the session authentication is Symmetric. Not with Sigma-I.
-</span>
+
 
 - ex_mbedtls3x_rng_gen function does the following -
 
     1. Generate random numbers using NX SA.
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     Random number generation is offloaded to NX Secure authenticator only if the key store
     is passed using sss_mbedtls_set_keystore_rng() API.
-</span>
+
 
 - ex_mbedtls3x_ecdh function does the following -
 
@@ -72,10 +72,10 @@ required crypto operation
     3. Injecting the public key on host.
     4. Derive ECDH using SSS APIs. Mbed-TLS alt use NX SA for ECDH.
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     ECDH key derivation is offloaded to NX Secure authenticator only if the key store
     is passed using sss_mbedtls_set_keystore_ecdh() API.
-</span>
+
 
 - ex_mbedtls3x_ebc , ex_mbedtls3x_cbc, ex_mbedtls3x_cmac functions does
 the following -
@@ -113,7 +113,7 @@ the following -
   6.  AES CMAC verify using SSS APIs, Mbed-TLS alt use SE for CMAC
       verify.
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     AES ECB/CBC encryption/decryption is offloaded to NX Secure authenticator only if the key store
     is passed using sss_mbedtls_set_keystore_aes() API.
     Only plain authentication mode (``NXMW_Auth=None``) is supported.
@@ -122,9 +122,9 @@ the following -
     Example:
 
           nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
     To run ecdsa, ecdh and rng alt example on plain commMode or none authentication.
     set access condition plain mode for Cmd.CryptoRequest, Cmd.Managekeypair and which can be configured
     through Cmd.SetConfiguration Option 0x15 and 0x12 (Refer [**nx_tool_setconfig**](../nx_tool_setconfig/readme.md)).
@@ -132,18 +132,16 @@ the following -
 
           nx_tool_setconfig.exe -cryptoCM plain -cryptoAC 0xE COM10
           nx_tool_setconfig.exe -keypairCM plain -keypairAC 0xE COM10
-</span>
+
 
 ## Building the Example
 
 - Project: `ex_mbedtls_3_x_alt`
 
-1.  `NXMW_Host=PCWindows`
+1.  `NXMW_HostCytpo=MBEDTLS`
 
-2.  `NXMW_HostCytpo=MBEDTLS`
+2.  `NXMW_MBedTLS=3_X`
 
-3.  `NXMW_MBedTLS=3_X`
-
-4.  `NXMW_mbedTLS_ALT=SSS`
+3.  `NXMW_mbedTLS_ALT=SSS`
 
 Other options should be selected according to IC configuration.

@@ -64,14 +64,14 @@ export ACCESS_CONDITION=0x00
 
 if [ $AUTH == symmetric ]
 then
-$TOOL_PATH/pcsc_nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -keyid 0x00
+$TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -keyid 0x00
 elif [ $AUTH == none ]
 then
-$TOOL_PATH/pcsc_nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn none -keyid 0x00
+$TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn none -keyid 0x00
 else
-$TOOL_PATH/pcsc_nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -curve $AUTH_CURVE -repoid $REPO_ID
+$TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -curve $AUTH_CURVE -repoid $REPO_ID
 fi
 
-$TOOL_PATH/pcsc_nxclitool set-cert_mgnt -leafcachesize $LEAF_CACHE_SIZE -intermcachesize $INTERM_CACHE_SIZE -featureselection $FEATURE_SELECTION -wcomm $COMM_MODE -waccess $ACCESS_CONDITION
+$TOOL_PATH/nxclitool set-cert_mgnt -leafcachesize $LEAF_CACHE_SIZE -intermcachesize $INTERM_CACHE_SIZE -featureselection $FEATURE_SELECTION -wcomm $COMM_MODE -waccess $ACCESS_CONDITION
 
-$TOOL_PATH/pcsc_nxclitool disconnect
+$TOOL_PATH/nxclitool disconnect

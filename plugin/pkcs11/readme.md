@@ -21,7 +21,7 @@ PKCS#11 library calculates keyId through `pkcs11_label_to_keyId`:
       of the keyID. Example - If CKA_LABEL is `sss:0x10000001`, keyID is
       0x01
 
-    >**Note:** <span style="color:blue;"> 0x1 to 0x3 is reserved keyIDs for certificate and cannot be used.</span>
+    >**Note:**  0x1 to 0x3 is reserved keyIDs for certificate and cannot be used.
 
 ## PKCS#11 specifications
 
@@ -124,7 +124,7 @@ configurations:
 - `-DNXMW_HostCrypto=MBEDTLS` / `-DNXMW_HostCrypto=OPENSSL`
 - Project: `sss_pkcs11`
 
->**Note:** <span style="color:blue;">While using PKCS#11 as a library on multi threaded systems, the application must ensure proper locking is used. Calling multiple APIs from the library from different threads without proper locks can lead to unexpected behavior.</span>
+>**Note:** While using PKCS#11 as a library on multi threaded systems, the application must ensure proper locking is used. Calling multiple APIs from the library from different threads without proper locks can lead to unexpected behavior.
 
 ## Using with pkcs11-tool
 

@@ -59,19 +59,22 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 
 | File/Folder        | Content                                                                 |
 | ------------------ | ------------------------------------------------------------------------|
-| binaries           | Pre built binaries / binaries tmp folder for testing                    |
+| binaries           | Pre built binaries, session certificates and keys for testing           |
 | boards             | Platform porting specific files                                         |
 | demos              | Examples / Use cases / Access manager                                   |
 | doc                | Documentation                                                           |
+| ext                | Openssl and PKCS11 dependencies required to build / run MW demos        |
 | lib                | Session Manager Code, SSS APIs, NX APIs to use NX SA                    |
+| mcu_sdk            | Files for cloning and building from MCU SDK                             |
+| mcux_project       | Standalone MCUXpresso projects for various supported MCUs               |
 | plugin             | Standard plugins like OpenSSL Engine, OpenSSL provider, psa, pkcs11     |
-| scripts            | Scripts for building                                                    |
+| scripts            | Scripts for building the MW                                             |
+| tools              | Temporary executables                                                   |
 | ChangeLog.md       | Change Log file                                                         |
 | CMakeLists.txt     | Root Cmake file                                                         |
 | LICENSE.txt        | License                                                                 |
 | README.md          | Readme document                                                         |
 | SCR.txt            | Software Content Register                                               |
-
 
 ## Useful Links
 
@@ -83,4 +86,4 @@ Platform Security Architecture - [**Platform Security Architecture**](plugin/psa
 
 Access Manager for Linux - [**Access Manager**](demos/linux/nx_access_manager/readme.md)
 
-Command line tool - [**NX-Cli Tool**](demos/nx/nx_cli_tool/readme.md)
+Command line tool - [**NX CLI Tool**](demos/nx/nx_cli_tool/readme.md)

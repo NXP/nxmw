@@ -1,2 +1,1 @@
-
-This folder temporary executable files purpose
+This folder holds temporary executables

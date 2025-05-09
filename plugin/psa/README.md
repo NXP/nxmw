@@ -22,7 +22,7 @@ plugin/psa/\*.c.
 To include the PSA plugin files in mbedTLS 3.x build enable PSA in
 mbedTLS_ALT cmake option (`mbedTLS_ALT=PSA`),
 
-The following PSA features / APIs are supported in NX middleare using
+The following PSA features / APIs are supported in NX middleware using
 mbedTLS 3.x
 
 1.  Nist256 and Brainpool256 Generate Key / (API - `psa_generate_key`)

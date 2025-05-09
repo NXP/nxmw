@@ -1,4 +1,3 @@
-
 # NX Middleware Stack
 
 NX Middleware provides the necessary interfaces, examples, demos for NX Secure Authenticator (SA) IC.
@@ -69,18 +68,18 @@ Other micro-controllers:
 
     - Hard coded certificates defined in file: "nxmw/lib/sss/inc/fsl_sss_nx_auth_keys.h"
 
->**Note:** <span style="color:blue;">
+>**Note:** 
     The hard coded certificates and related private keys are stored in plain text for demonstration purposes only. During actual product deployment, customer has to adopt secure means as per their security needs (note that the potential issue is more with the private keys than certificates).
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
     T=1oI2C: When using the T=1oI2C smcom interface, at the beginning of session open, we do a dummy read (function - `phNxpEse_clearReadBuffer`) from the secure authenticator if any previous session data is pending and discard the data.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
     When using Sigma I with supported MCUs, the operations take some time. Hence we need to disable the watchdog timer so that no error is thrown.
     For more information on this, (Refer: [**Set Config Demo**](../../demos/nx/setConfig/readme.md)).
-</span>
+
 
 
 <br />
@@ -195,17 +194,12 @@ Refer `fsl_sss_api.h` for complete set of SSS APIs supported.
 
 #### NX APIs
 
-These are the low level apis which create / encrypt / decrypt / transrecive the APDUs of the NX secure authenticator.
+These are the low level apis which create / encrypt / decrypt / transceive the APDUs of the NX secure authenticator.
 
 Refer `nx_apdu.h` for complete set of Nx APIs supported.
 
 
-
-<br />
-<br />
-<br />
-
-## Write Own Applications
+### Write Own Applications
 
 A new application can be created in 2 ways.
 
@@ -255,7 +249,7 @@ Following section shows the sequence of SSS APIs required for some common crypto
 
 ### Example crypto operations
 
-#### Generating Asymmetric key
+### Generating Asymmetric key
 
 ```c
 
@@ -274,7 +268,7 @@ Following section shows the sequence of SSS APIs required for some common crypto
         void *options);
 ```
 
-#### Set key
+### Set key
 
 ```c
 

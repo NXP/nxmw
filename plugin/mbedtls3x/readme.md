@@ -21,28 +21,28 @@ Crypto operations supported -
    **Refer** [**ex_mbedtls_3_x_alt**](../../demos/nx/mbedtls_3_x_alt/ex_mbedtls_3_x_alt.c)
 
 
->**Note:** <span style="color:blue;"> 1. For ECDSA ALT implementation, every time the control goes to ALT implementation,
+>**Note:**  1. For ECDSA ALT implementation, every time the control goes to ALT implementation,
     session open and close is performed. This will have all transient objects will be lost.
     To avoid the session open / close in ALT implementation,
     Use the sss_mbedtls_set_keystore_ecdsa_sign() / sss_mbedtls_set_keystore_ecdsa_verify()/
-    APIs to pass the key store.</span>
+    APIs to pass the key store.
 
->**Note:** <span style="color:blue;">2. Use Reference key to refer to the actual key in NX Secure Authenticator for ECDSA Sign Operation.
-    Using nxclitool you can generate / inject a key pair in SA and create reference key for the same. **Refer** [**nxclitool_scripts**](../../demos/nx/nx_cli_tool/scripts/nxclitool_genkey_refkey.bat) for example commands.</span>
+>**Note:** 2. Use Reference key to refer to the actual key in NX Secure Authenticator for ECDSA Sign Operation.
+    Using nxclitool you can generate / inject a key pair in SA and create reference key for the same. **Refer** [**nxclitool_scripts**](../../demos/nx/nx_cli_tool/scripts/nxclitool_genkey_refkey.bat) for example commands.
 
->**Note:** <span style="color:blue;">3. ECDSA Verify works only when the session authentication is Symmetric. Not with Sigma-I.</span>
+>**Note:** 3. ECDSA Verify works only when the session authentication is Symmetric. Not with Sigma-I.
 
->**Note:** <span style="color:blue;">4. Random number generation is offloaded to NX Secure authenticator only if the key store
-    is passed using sss_mbedtls_set_keystore_rng() API. (No session open done in alt implementation)</span>
+>**Note:** 4. Random number generation is offloaded to NX Secure authenticator only if the key store
+    is passed using sss_mbedtls_set_keystore_rng() API. (No session open done in alt implementation)
 
->**Note:** <span style="color:blue;">5. ECDH key derivation is offloaded to NX Secure authenticator only if the key store
-    is passed using sss_mbedtls_set_keystore_ecdh() API. (No session open done in alt implementation)</span>
+>**Note:** 5. ECDH key derivation is offloaded to NX Secure authenticator only if the key store
+    is passed using sss_mbedtls_set_keystore_ecdh() API. (No session open done in alt implementation)
 
->**Note:** <span style="color:blue;">6. AES ECB/CBC encryption/decryption is offloaded to NX Secure authenticator only if the key store
+>**Note:** 6. AES ECB/CBC encryption/decryption is offloaded to NX Secure authenticator only if the key store
     is passed using sss_mbedtls_set_keystore_aes() API. (No session open done in alt implementation)
     For AES ALT, the key is always set at location 0x08 (kSE_CryptoDataSrc_TB0). And AES ALT works only
     in plain authentication mode(``NXMW_Auth=None``). The access conditions can be configured
-    through Cmd.SetConfiguration Option 0x15. **Refer** [**nx_tool_setconfig**](../../demos/nx/nx_tool_setconfig/readme.md)</span>
+    through Cmd.SetConfiguration Option 0x15. **Refer** [**nx_tool_setconfig**](../../demos/nx/nx_tool_setconfig/readme.md)
 
 ## Key Management
 

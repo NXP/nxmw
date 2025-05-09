@@ -57,11 +57,11 @@ required. Old key value is defined as MACRO
 
     **Refer** - `nxmw/lib/sss/ex/inc/ex_sss_nx_auth.h`
 
->**Note:** <span style="color:blue;">This example implements the master key diversification in the host MCU for demonstration purposes. In real life use cases, depending on the security requirements of the system, master key storage and diversification should be done in a Secure Authenticator.</span>
+>**Note:** This example implements the master key diversification in the host MCU for demonstration purposes. In real life use cases, depending on the security requirements of the system, master key storage and diversification should be done in a Secure Authenticator.
 
 Construct diversification input as per AN10922.pdf and use host crypto library to get derived diversification key.
 
-After generating the diversificatin key on host, this demo will setup Sigma-I/symmetric authentication session to inject diversification key into SE with KeyID 1. To build this project, use cmake option `NXMW_Auth_Symm_Diversify=Disabled` so that master key is used for authetication.
+After generating the diversification key on host, this demo will setup Sigma-I/symmetric authentication session to inject diversification key into SE with KeyID 1. To build this project, use cmake option `NXMW_Auth_Symm_Diversify=Disabled` so that master key is used for authentication.
 
 It uses the following APIs and data types:
     `sss_key_object_init()`

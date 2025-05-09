@@ -573,18 +573,18 @@ nxclitool setbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
->**Note:** <span style="color:blue;">
+>**Note:** 
 If **-offset** option is not specified, default value used is 0 (zero).
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 If **-offset** option is specified, CLI tool will read data from input file from the start
     and store it in standard data file inside SA at the offset value specified.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 If **-bytes** option is not specified, default value used is the size of file in bytes.
-</span>
+
 
 ## Get Binary Command
 
@@ -611,19 +611,19 @@ nxclitool getbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
->**Note:** <span style="color:blue;">
+>**Note:** 
 If **-offset** option is not specified, default value used is 0 (zero).
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 If **-offset** option is specified, CLI tool will read data from standard data file
     in the SA from the offset specified and store it in the output file.
-</span>
 
->**Note:** <span style="color:blue;">
+
+>**Note:** 
 If **-bytes** option is not specified, default value used is the number of bytes from
     offset value to EOF of standard data file
-</span>
+
 
 
 ## Personalization of SA Using NX CLI Tool

@@ -75,7 +75,7 @@ Run the required demo as:
 
 ```console
 ./<TARGET_NAME>.bin
-````
+```
 
 
 ---

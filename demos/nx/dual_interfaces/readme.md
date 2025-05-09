@@ -33,7 +33,7 @@ trigger NFC pause and this example will release NFC pause.
 3. Read GPIO status at 1s interval and wait until status changes.
 4. NFC host(RFIDDiscover) selects NTAGECC application from NFC interface.
 5. NFC host(RFIDDiscover) setups symmetric authentication with Secure Authenticator.
-6. NFC host(RFIDDiscover) configures GPIO2 for output or output with NFCPause file. If it is latter then NFC Pause file should also be configured. NFC pause file is supposed to be file 2 (can be changed by modifying EX_DUAL_INTERFACE_NFC_PAUSE_FILE_NO in ex_dual_interfaces.c.
+6. NFC host(RFIDDiscover) configures GPIO2 for output or output with NFCPause file. If it is latter then NFC Pause file should also be configured. NFC pause file is supposed to be file 2 (can be changed by modifying EX_DUAL_INTERFACE_NFC_PAUSE_FILE_NO in ex_dual_interfaces.c).
 7. NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause or Cmd.ReadData.
 8. ex_dual_interfaces will detect GPIO status change.
 9. ex_dual_interfaces will write to NFCPause file.

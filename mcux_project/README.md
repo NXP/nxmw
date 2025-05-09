@@ -12,9 +12,9 @@ This section will give a brief about the MCUX projects.
 
 Demos for the supported boards are provided in respective MCUX folders. Every project contains MCUXpresso supported projects which can be used to build and debug the demos. The project folder contains the feature file `fsl_sss_ftr.h` with the necessary configurations for building the project.
 
->**Note:** <span style="color:blue;">All files you see in the projects are links to the middleware files. They are not copies. Only the fsl_sss_ftr.h file is different for different projects.</span>
+>**Note:** All files you see in the projects are links to the middleware files. They are not copies. Only the fsl_sss_ftr.h file is different for different projects.
 
->**Note:** <span style="color:blue;">All projects are linked to particular versions 3rd party softwares. Most demos are linked to mbedtls 2. To use mbedtls 3, you need to remove mbedtls 2 from the sources and add mbedtls 3. Only then the macros present in `fsl_sss_ftr.h` can be updated. </span>
+>**Note:** All projects are linked to particular versions 3rd party softwares. Most demos are linked to mbedtls 2. To use mbedtls 3, you need to remove mbedtls 2 from the sources and add mbedtls 3. Only then the macros present in `fsl_sss_ftr.h` can be updated. 
 
 For more information on the configurations (Refer: [**SA Configs**](../doc/config/readme.md)).
 
@@ -41,7 +41,7 @@ The Standalone projects structure allows you to create copies of existing projec
 - Enter a new project name. Ensure that Default Location is not selected. In location, create a new project folder (preferably with same name as project) and and select that location.
 
 <p align=center>
-<img src="../doc/img/mcux_projects/mcux_proj_copy.png" alt="project_explorer_expanded" width="500"/>
+<img src="../doc/img/mcux_projects/mcux_proj_new.png" alt="project_explorer_expanded" width="500"/>
 </p>
 
 - You will now see the new project in project explorer.

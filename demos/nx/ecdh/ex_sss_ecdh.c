@@ -791,7 +791,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     sss_status_t status = kStatus_SSS_Fail;
 
     LOG_I("\n");
-    LOG_I("ECDH with static keypair. Export shared secrect to keyobject.");
+    LOG_I("ECDH with static keypair. Export shared secret to keyobject.");
     status = ex_ecdh_static_keypair_export_sharedsecret(pCtx);
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
@@ -802,7 +802,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
     LOG_I("\n");
-    LOG_I("ECDH with ephemeral keypair. Export shared secrect to keyobject.");
+    LOG_I("ECDH with ephemeral keypair. Export shared secret to keyobject.");
     status = ex_ecdh_ephem_keypair_export_sharedsecret(pCtx);
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 

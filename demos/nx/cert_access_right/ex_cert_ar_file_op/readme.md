@@ -32,7 +32,7 @@ Also certificates used are defined in `demos/nx/cert_access_right/cert`.
 
 For Windows or Linux Like platform, it means set environment variable `NX_AUTH_CERT_DIR` to the certificate path.
 
-For MCU like K64F, it means changing the certificates defined in `sss/ex/inc/ex_sss_nx_auth.h`
+For MCU like mcxn947, it means changing the certificates defined in `sss/ex/inc/ex_sss_nx_auth.h`
 
 
 ## Building the Example
@@ -71,5 +71,5 @@ nx_mw :INFO :Running File Management Example ex_cert_ar_file_op.c
 nx_mw :WARN :nxEnsure:'(ret == SM_OK) || (ret == SM_OK_ALT)' failed. At Line:3735 Function:sss_nx_TXn_AES_EV2
 nx_mw :INFO :File read failed. Expected result if uses certificates of this demo !!!
 nx_mw :INFO :ex_cert_ar_file_op Example Success !!!...
-nx_mw :INFO :ex_sss Finishe
+nx_mw :INFO :ex_sss Finished
 ```

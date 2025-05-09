@@ -75,7 +75,7 @@ Select host crypto as Mbedtls.
 
 - Project: `sa_qi_receiver`
 
->**Note:** <span style="color:blue;">Qi Demo on MCXA153 currently supports only Symmetric Autentication.</span>
+>**Note:** Qi Demo on MCXA153 currently supports only Symmetric Autentication.
 
 ## Running the Example
 

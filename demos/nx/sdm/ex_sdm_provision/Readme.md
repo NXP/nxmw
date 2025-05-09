@@ -30,8 +30,8 @@ In detail, this demo will do following:
 - Change file 2 setting
     1. Enable Secure Dynamic Messaging and Mirroring
     2. Disable Deferred Configuration
-    3. Enbale VCUID mirroring
-    4. Enbale SDMReadCtr mirroring
+    3. Enable VCUID mirroring
+    4. Enable SDMReadCtr mirroring
     5. Disable SDMReadCtrLimit
     6. Enable SDM File Data Encryption with AppKey 1 (`EX_SSS_SDM_AES_KEY_ID`)
     7. Enable GPIO Status mirroring.

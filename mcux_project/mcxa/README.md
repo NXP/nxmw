@@ -21,7 +21,7 @@ To update the memory configurations,
 ```console
 
 Recommended Stack and Heap Sizes
-Symmentric Authentication
+Symmetric Authentication
 Heap  - 0x3000
 Stack - 0x2800
 

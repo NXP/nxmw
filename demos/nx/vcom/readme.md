@@ -4,7 +4,7 @@ Virtual COM Port interface can be used to connect to the SA from
 development PC/Laptop. This gives advantage of faster turn around time
 for development and feature experimentation.
 
->**Note:** <span style="color:blue;">If the VCOM drivers are not installed on your PC, you would have to install it.</span>
+>**Note:** If the VCOM drivers are not installed on your PC, you would have to install it.
 
 Embedded platforms supported:
  `LPCXpresso55s69`
@@ -41,4 +41,4 @@ Build project:
 - specify this COM port for connecting from PC. For e.g. `COM17` as per
   the above image.
 
->**Note:** <span style="color:blue;">It appears as "Virtual Com Port" or "USB Serial Device" based on the driver installed in the system.</span>
+>**Note:** It appears as "Virtual Com Port" or "USB Serial Device" based on the driver installed in the system.

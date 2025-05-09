@@ -5,9 +5,9 @@ is treated as keyid 0x03 and client certificate at location 0x20000005
 which is keyid 0x05. Most Significant nibble Mask is used to distinguish
 between keyids.
 
->**Note:** <span style="color:blue;">For the user to provision their client key and certificate update `client_key` and `client_cer` in the file `nxmw/demos/ksdk/provisioning/provisioning_aws.c`</span>
+>**Note:** For the user to provision their client key and certificate update `client_key` and `client_cer` in the file `nxmw/demos/ksdk/provisioning/provisioning_aws.c`
 
->**Note:** <span style="color:blue;">If different KeyID has to be used, Update the SSS_CERTIFICATE_INDEX_CLIENT and SSS_KEYPAIR_INDEX_CLIENT_PRIVATE in the file `nxmw/boards/ksdk/common/aws_iot_config.h`</span>
+>**Note:** If different KeyID has to be used, Update the SSS_CERTIFICATE_INDEX_CLIENT and SSS_KEYPAIR_INDEX_CLIENT_PRIVATE in the file `nxmw/boards/ksdk/common/aws_iot_config.h`
 
 ## Building the example
 

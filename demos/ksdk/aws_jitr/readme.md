@@ -14,7 +14,7 @@ MQTT.
 
 Refer - [**AWS Developer guide**](https://docs.aws.amazon.com/iot/latest/developerguide/iot-gs-first-thing.html)
 
->**Note:** <span style="color:blue;">The device certificate needs to be activated and attached to a policy that allows usage of this certificate.</span>
+>**Note:** The device certificate needs to be activated and attached to a policy that allows usage of this certificate.
 
 ## Creating and updating device keys and certificates to Secure Authenticator
 

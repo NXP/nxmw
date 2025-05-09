@@ -35,7 +35,7 @@ Access Manager can be used on linux and raspbian platforms with
 Run the commands below to build access manager for NX secure authenticator. For details, refer [**Linux build**](../../../doc/linux/readme.md).
 
 ```console
-git clone ssh://git@bitbucket.sw.nxp.com/kmw/nxmw-github.git
+git clone https://github.com/NXP/nxmw.git
 cd nxmw/scripts
 python create_cmake_projects.py
 cd ../../nxmw_build/raspbian_native_nx_t1oi2c

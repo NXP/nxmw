@@ -45,7 +45,7 @@ It uses the following APIs and data types:
     - The authentication must be setup with access condition 0. This means App Master key for symmetric authentication. For Sigma-I authentication, this mean AC0 of certificate
         access right. It is defined with CA root key and reader certificate (or certificate chain).
 
->**Note:** <span style="color:blue;">GetConfig Demo on MCXA153 currently supports Sigma Authentication with Mbedtls2. Symmetric Authentication is supported with Mbedtls 2 and Mbedtls 3. </span>
+>**Note:** GetConfig Demo on MCXA153 currently supports Sigma Authentication with Mbedtls2. Symmetric Authentication is supported with Mbedtls 2 and Mbedtls 3. 
 
 ## Console output
 

@@ -42,7 +42,7 @@
 <img src="../../doc/img/mcux_projects/import_proj_2.jpg" alt="import_project_2" width="600"/>
 </p>
 
->**Note:** <span style="color:blue;">It is not possible to import two projects with the same name in IDE. If another project of same name is to be imported, project suffix needs to be added.</span>
+>**Note:** It is not possible to import two projects with the same name in IDE. If another project of same name is to be imported, project suffix needs to be added.
 
 - The project can be viewed in the side panel under **Project Explorer** section. All the files linked to this project can be viewed here.
 

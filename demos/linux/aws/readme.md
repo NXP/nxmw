@@ -27,9 +27,9 @@ The python script
 ```
 python aws_provision_client.py -smcom <SMCOM> -port <PORT NAME> -keypath <PATH TO KEY>
 ```
->**Note:** <span style="color:blue;"> Path to the key to be provisioned - `nxmw/demos/linux/aws/aws_provisioning_client/credentials/nx_device_key.pem`</span>
+>**Note:**  Path to the key to be provisioned - `nxmw/demos/linux/aws/aws_provisioning_client/credentials/nx_device_key.pem`
 
->**Note:** <span style="color:blue;"> Build `nxclitool` before running provisioning script. Refer [**Build nxclitool**](../../nx/nx_cli_tool//readme.md).</span>
+>**Note:**  Build `nxclitool` before running provisioning script. Refer [**Build nxclitool**](../../nx/nx_cli_tool//readme.md).
 
 The above commands will provision the client key at location 0x02 with the following policies.
 
@@ -69,7 +69,7 @@ The OpenSSL provider uses the sss abstraction layer to access the crypto
 services of the Secure Authenticator. The following illustrates
 compiling the OpenSSL provider for Nx connected over I2C.
 
->**Note:** <span style="color:blue;">comment the following lines in `nxmw/plugin/openssl_provider/provider/src/sssProvider_main.c` before building OpenSSL Provider</span>
+>**Note:** comment the following lines in `nxmw/plugin/openssl_provider/provider/src/sssProvider_main.c` before building OpenSSL Provider
 
 ```
     //if (NULL == OSSL_PROVIDER_load(NULL, "default")) {
@@ -87,7 +87,7 @@ make install
 ldconfig /usr/local/lib
 ```
 
->**Note:** <span style="color:blue;">If OpenSSL Provider is used to run the demo, Use Access Manager to establish connection with Secure Authenticator. For details, refer [**Build and Run Access Manager**](../nx_access_manager/readme.md).</span>
+>**Note:** If OpenSSL Provider is used to run the demo, Use Access Manager to establish connection with Secure Authenticator. For details, refer [**Build and Run Access Manager**](../nx_access_manager/readme.md).
 
 Run the example
 ---------------
@@ -105,7 +105,7 @@ Run the example
     patch -p1 < ../sssProvider_Updates.patch
     ```
 
-3. Modify the `CMakeLists.txt` file under `samples/PubSub` so it
+3. Modify the `CMakeLists.txt` file under `aws-iot-device-sdk-cpp/samples/PubSub` so it
     ensures `OPENSSL_LOAD_CONF` is defined (see excerpt below):
 
     ```
@@ -121,14 +121,14 @@ Run the example
     endif ()
     ```
 
->**Note:** <span style="color:blue;">If curl is not installed - run ``sudo apt-get install libcurl4-openssl-dev``</span>
+>**Note:** If curl is not installed - run ``sudo apt-get install libcurl4-openssl-dev``
 
-4. Set the permissions to `buildScript.sh`
+4. Set the permissions to `buildScript.sh` at `nxmw/demos/linux/aws/`:
     ```
     chmod 777 buildScript.sh
     ```
 
-5. Use 'buildScript.sh' script at `nxmw/demos/linux/aws/` to build the mqtt application:
+5. Use 'buildScript.sh' script to build the mqtt application:
 
     ```
     ./buildScript.sh
@@ -197,7 +197,7 @@ Run the example
     ./accessManager
     ```
 
-    >**Note:** <span style="color:blue;">Run Access Manager only when you use OpenSSL Provider.</span>
+    >**Note:** Run Access Manager only when you use OpenSSL Provider.
 
 11. Open New Terminal and set the OpenSSL config path as call:
 
@@ -213,6 +213,6 @@ Run the example
     ./pub-sub-sample
     ```
 
->**Note:** <span style="color:blue;">When using Openssl Provider application will not connect to NX Secure Authenticator directly over i2c. It will connect to access manager which in turn will connect to SA over i2c. So export the port_name as `127.0.0.1:8040`.</span>
+>**Note:** When using Openssl Provider application will not connect to NX Secure Authenticator directly over i2c. It will connect to access manager which in turn will connect to SA over i2c. So export the port_name as `127.0.0.1:8040`.
 
->**Note:** <span style="color:blue;">If OpenSSL Engine is used no need to export port since the application will directly connect to Secure Authenticator over i2c.</span>
+>**Note:** If OpenSSL Engine is used no need to export port since the application will directly connect to Secure Authenticator over i2c.
