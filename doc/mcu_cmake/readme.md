@@ -41,7 +41,9 @@ cd workspace
 west update
 ```
 
->**Note:** The complete setup takes 10-15 minutes to finish.
+>**Note:** The complete setup takes 10-15 minutes to finish. If network error occured, you will see a message update failed for project. Try `west update` again.
+
+- Once downloaded you should have the NX middleware and all the required SDK files.
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps to download the MCU SDK,
 

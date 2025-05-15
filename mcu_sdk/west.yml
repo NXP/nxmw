@@ -22,13 +22,6 @@ manifest:
       - core
       userdata:
         track_branch: release/24.12.00
-    - name: MIR
-      path: mcuxsdk/MIR
-      revision: 8f8440e2bebcd5f7f78fbcd0db26460aca904064
-      url: ssh://git@bitbucket.sw.nxp.com/mcucore/mcu-mir-export.git
-      west-commands: scripts/west_commands.yml
-      userdata:
-        track_branch: release/24.12.00
     - name: CMSIS
       repo-path: mcu-sdk-cmsis
       path: mcuxsdk/arch/arm/CMSIS

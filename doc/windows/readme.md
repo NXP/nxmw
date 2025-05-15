@@ -31,7 +31,9 @@ cd workspace
 west update
 ```
 
->**Note:** The complete setup takes 10-15 minutes to download. Once downloaded you should have the NX middleware and all the required SDK files.
+>**Note:** The complete setup takes 10-15 minutes to download. If network error occured, you will see a message update failed for project. Try `west update` again.
+
+- Once downloaded you should have the NX middleware and all the required SDK files.
 
 - If you have cloned the NX Middleware using git, and west setup is not done, you can follow the following steps
 
