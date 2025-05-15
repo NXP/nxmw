@@ -1,5 +1,8 @@
 # Changelog
 
+## \[v02.05.01\]
+- Removed unused module in west.yml file
+
 ## \[v02.05.00\]
 - Support for Windows, LPC55s69, MCXN947, MCXA153 platforms added.
 	- For Windows, refer [**Getting Started on Windows**](doc/windows/readme.md)

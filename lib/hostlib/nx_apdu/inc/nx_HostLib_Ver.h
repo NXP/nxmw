@@ -10,11 +10,11 @@
 
 /* clang-format off */
 #define NX_HOSTLIB_PROD_NAME          "NX_HostLib"
-#define NX_HOSTLIB_VER_STRING_NUM     "v02.05.00_20250411"
-#define NX_HOSTLIB_PROD_NAME_VER_FULL "NX_HostLib_v02.05.00_20250411"
+#define NX_HOSTLIB_VER_STRING_NUM     "v02.05.01_20250515"
+#define NX_HOSTLIB_PROD_NAME_VER_FULL "NX_HostLib_v02.05.01_20250515"
 #define NX_HOSTLIB_VER_MAJOR          (2u)
 #define NX_HOSTLIB_VER_MINOR          (5u)
-#define NX_HOSTLIB_VER_DEV            (0u)
+#define NX_HOSTLIB_VER_DEV            (1u)
 
 /* v02.05 = 20005u */
 #define NX_HOSTLIB_VER_MAJOR_MINOR ( 0 \
