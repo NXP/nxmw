@@ -1,14 +1,16 @@
-# NX Middleware for EdgeLock A30 Secure Authenticator
+# NX Middleware for EdgeLock A30 and NTAG-X-DNA Secure Authenticator
 
-EdgeLock A30 is a secure authentication IC for IoT platforms, electronic accessories and consumable devices
+EdgeLock A30 and NTAG-X-DNA are secure authentication ICs for IoT platforms, electronic accessories and consumable devices
 such as home electronic devices, mobile accessories and medical supplies.
-EdgeLock A30 supports on-chip ECC key generation to make sure that private keys are never exposed outside
-the IC. It performs cryptographic operations for security critical communication and control functions. EdgeLock A30 is
+EdgeLock A30 and NTAG-X-DNA supports on-chip ECC key generation to make sure that private keys are never exposed outside
+the IC. It performs cryptographic operations for security critical communication and control functions. EdgeLock A30 and NTAG-X-DNA are
 Common Criteria EAL 6+ security certified with AVA_VAN.5 on product level and supports a generic
 
 <p align=left>
-<img src="doc/img/a30_board.jpeg" alt="a30" width="400" height="400"/>
+<img src="doc/img/a30_board.jpeg" alt="a30" width="400" height="350"p align="middle"/>
+<img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="500" height="230"p align="middle"/>
 </p>
+
 
 Crypto API providing AES, ECDSA, ECDH, SHA, HMAC and HKDF cryptographic functionality.
 - Asymmetric cryptography features support 256-bit ECC over the NIST P-256 and brainpool P256r1 curves.
