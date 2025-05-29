@@ -13,7 +13,8 @@ width="800" />
 ## Prerequisite
 
 - Visual studio installed (\>= 2015 version, or higher)
-- Python installed (version 3.10 or above). Please follow the guideline at [Python Download](https://www.python.org/downloads/).
+- Python installed (version 3.10 or above). Please follow the guidelines at [Python Download](https://www.python.org/downloads/).
+- Git installed. Please follow the guidelines at [git install](https://git-scm.com/downloads/win)
 - West installed (version 1.2.0 or above). Please follow [west setup](https://docs.zephyrproject.org/latest/develop/west/install.html) to install west
 - CMake installed (version 3.30.0 or above). Preferably at C:/opt/cmake/bin/cmake.exe
 
@@ -87,7 +88,7 @@ python create_cmake_projects.py
 - Use the visual studio solution at `nxmw_build/se_x86/NxMW.sln` to build the required example.
 
 
-<img src="../img/windows/visual_studio.jpeg" class="align-center" 
+<img src="../img/windows/visual_studio.jpeg" class="align-center"
 width="800" />
 
 
@@ -145,11 +146,11 @@ cmake --build . --target <example_name>
   - Set demo as startup project in Visual Studio and click on `Local Windows Debugger`
 
 
-<img src="../img/windows/vs_starup_project.jpeg" class="align-center" 
+<img src="../img/windows/vs_starup_project.jpeg" class="align-center"
 width="800" />
 
   - Ensure that the com port is set in command line arguments
 
 
-<img src="../img/windows/cmdargs.jpg" class="align-center" 
+<img src="../img/windows/cmdargs.jpg" class="align-center"
 width="800" />

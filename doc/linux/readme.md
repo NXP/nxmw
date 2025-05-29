@@ -35,6 +35,8 @@ Run the following commands to build and run examples on Linux / Raspberry Pi 4
 sudo apt-get install cmake cmake-curses-gui cmake-gui libssl-dev libsystemd-dev
 ```
 
+- Git must be installed. Please follow the guidelines at [git install](https://git-scm.com/downloads/linux)
+
 
 ## Build Instructions
 

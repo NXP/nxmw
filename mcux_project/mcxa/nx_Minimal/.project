@@ -307,11 +307,6 @@
 			<locationURI>PARENT-3-PROJECT_LOC/boards/frdmmcxa153/platform_frdmmcxa153.c</locationURI>
 		</link>
 		<link>
-			<name>source/board/platform_frdmmcxa153.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/boards/frdmmcxa153/platform_frdmmcxa153.h</locationURI>
-		</link>
-		<link>
 			<name>source/board/timer_kinetis_freertos.c</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/boards/ksdk/timer_kinetis_freertos.c</locationURI>
