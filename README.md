@@ -7,8 +7,8 @@ the IC. It performs cryptographic operations for security critical communication
 Common Criteria EAL 6+ security certified with AVA_VAN.5 on product level and supports a generic
 
 <p align=left>
-<img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="middle"/>
-<img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="150"p align="middle"/>
+<img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="left"/>
+<img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="300"p align="middle"/>
 </p>
 
 
