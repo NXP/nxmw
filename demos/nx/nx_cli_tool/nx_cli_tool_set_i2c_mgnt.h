@@ -53,7 +53,6 @@ sss_status_t nxclitool_set_i2c_mgnt(int argc, const char *argv[], nxclitool_sss_
                 i2cSupport = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-i2caddr")) {
             if (i2c_addr_flag != TRUE) {
@@ -66,7 +65,6 @@ sss_status_t nxclitool_set_i2c_mgnt(int argc, const char *argv[], nxclitool_sss_
                 i2cAddr = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-protocoloptions")) {
             if (protocol_options_flag != TRUE) {
@@ -79,7 +77,6 @@ sss_status_t nxclitool_set_i2c_mgnt(int argc, const char *argv[], nxclitool_sss_
                 protocolOptions = (uint16_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);

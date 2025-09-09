@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
@@ -18,6 +18,9 @@
 #include "nx_cli_tool_set_get_bin.h"
 #include "nx_cli_tool_set_i2c_mgnt.h"
 #include "nx_cli_tool_set_cert_mgnt.h"
+#include "nx_cli_tool_sha.h"
+#include "nx_cli_tool_ecdsa.h"
+#include "nx_cli_tool_ecdh.h"
 
 /* ************************************************************************** */
 /* Function Definitions                                                       */
@@ -36,9 +39,11 @@ void nxclitool_execute_command(int argc, const char *argv[])
     Nx_ECCurve_t curve_type;
     char file_in_path[MAX_FILE_PATH_LEN] = {0};
     char file_out_path[MAX_FILE_PATH_LEN];
-    bool file_out_flag                  = FALSE;
-    NXCLITOOL_OPERATION_t operation     = NXCLITOOL_OPERATION_SIGN;
-    Nx_AccessCondition_t write_acc_cond = Nx_AccessCondition_Free_Access;
+    char file_pubkey_path[MAX_FILE_PATH_LEN]    = {0};
+    char file_signature_path[MAX_FILE_PATH_LEN] = {0};
+    bool file_out_flag                          = FALSE;
+    NXCLITOOL_OPERATION_t operation             = NXCLITOOL_OPERATION_SIGN;
+    Nx_AccessCondition_t write_acc_cond         = Nx_AccessCondition_Free_Access;
 
     conn_ctx.portName = port_name;
 
@@ -53,6 +58,8 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 argv,
                 2,
                 &rng_bytes,
+                NULL,
+                NULL,
                 NULL,
                 NULL,
                 NULL,
@@ -110,7 +117,7 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 NULL,
                 NULL,
                 NULL,
-                NULL,
+                &write_acc_cond,
                 NULL,
                 NULL,
                 NULL,
@@ -118,6 +125,8 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 NULL,
                 file_out_path,
                 &file_out_flag,
+                &operation,
+                NULL,
                 NULL)) {
             nxclitool_show_command_help_generate();
             ret = 1;
@@ -134,8 +143,16 @@ void nxclitool_execute_command(int argc, const char *argv[])
         // Session open
         status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
-        status = nxclitool_do_generate_key(
-            argc, argv, &boot_ctx, &conn_ctx, key_id, curve_type, file_out_path, file_out_flag);
+        status = nxclitool_do_generate_key(argc,
+            argv,
+            &boot_ctx,
+            &conn_ctx,
+            key_id,
+            curve_type,
+            operation,
+            write_acc_cond,
+            file_out_path,
+            file_out_flag);
     }
 
     // Create Certificate Repo
@@ -327,6 +344,33 @@ void nxclitool_execute_command(int argc, const char *argv[])
             return;
         }
 
+        if ((argc > 2) && (0 == strcmp(argv[argc - 2], "-out"))) {
+            if (nxclitool_fetch_parameters(argc,
+                    argv,
+                    2,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    file_out_path,
+                    &file_out_flag,
+                    NULL,
+                    NULL,
+                    NULL)) {
+                LOG_E("Failed to fetch parameters for get-uid command. Check usage below");
+                nxclitool_show_command_help_get_uid();
+                goto cleanup;
+            }
+        }
         ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
         if (ret) {
             LOG_E("Not connected. Connect to SA first");
@@ -336,7 +380,7 @@ void nxclitool_execute_command(int argc, const char *argv[])
 
         status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
-        status = nxclitool_get_uid(argc, argv, &boot_ctx);
+        status = nxclitool_get_uid(argc, argv, &boot_ctx, file_out_path, file_out_flag);
     }
 
     // Set key
@@ -371,7 +415,9 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 file_in_path,
                 NULL,
                 NULL,
-                &operation)) {
+                &operation,
+                NULL,
+                NULL)) {
             LOG_E("Failed to fetch parameters for set key command. Check usage below");
             nxclitool_show_command_help_set_key();
             goto cleanup;
@@ -421,6 +467,8 @@ void nxclitool_execute_command(int argc, const char *argv[])
                 file_in_path,
                 file_out_path,
                 &file_out_flag,
+                NULL,
+                NULL,
                 NULL)) {
             LOG_E("Failed to fetch parameters for get reference key command. Check usage below");
             nxclitool_show_command_help_get_ref_key();
@@ -601,6 +649,215 @@ void nxclitool_execute_command(int argc, const char *argv[])
         status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
         status = nxclitool_set_cert_mgnt(argc, argv, &boot_ctx);
+    }
+
+    // Generate digest
+    else if (0 == strcmp(argv[1], "dgst-sha256")) {
+        if (argc < 3) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_sha();
+            ret = 1;
+            goto cleanup;
+        }
+
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_sha();
+            return;
+        }
+
+        if (nxclitool_fetch_parameters(argc,
+                argv,
+                2,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                file_in_path,
+                file_out_path,
+                &file_out_flag,
+                NULL,
+                NULL,
+                NULL)) {
+            LOG_E("Failed to fetch parameters for dgst-sha256 command. Check usage below");
+            nxclitool_show_command_help_sha();
+            goto cleanup;
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+
+        status = nxclitool_do_sha(&boot_ctx, file_in_path, file_out_path, file_out_flag);
+    }
+    // dgst sign
+    else if (0 == strcmp(argv[1], "dgst-sign")) {
+        if (argc < 3) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_sign_message();
+            ret = 1;
+            goto cleanup;
+        }
+
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_sign_message();
+            return;
+        }
+
+        if (nxclitool_fetch_parameters(argc,
+                argv,
+                2,
+                NULL,
+                NULL,
+                &key_id,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                file_in_path,
+                file_out_path,
+                &file_out_flag,
+                NULL,
+                NULL,
+                NULL)) {
+            LOG_E("Failed to fetch parameters for ecdsa sign command. Check usage below");
+            nxclitool_show_command_help_sign_message();
+            goto cleanup;
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+
+        status = nxclitool_sign_message(&boot_ctx, key_id, file_in_path, file_out_path, file_out_flag);
+    }
+    // dgst sign
+    else if (0 == strcmp(argv[1], "dgst-verify")) {
+        if (argc < 3) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_verify_signature();
+            ret = 1;
+            goto cleanup;
+        }
+
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_verify_signature();
+            return;
+        }
+
+        if (nxclitool_fetch_parameters(argc,
+                argv,
+                2,
+                NULL,
+                NULL,
+                NULL,
+                &curve_type,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                file_in_path,
+                NULL,
+                NULL,
+                NULL,
+                file_pubkey_path,
+                file_signature_path)) {
+            LOG_E("Failed to fetch parameters for ecdsa verify command. Check usage below");
+            nxclitool_show_command_help_verify_signature();
+            goto cleanup;
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+
+        status = nxclitool_verify_signature(&boot_ctx, curve_type, file_in_path, file_pubkey_path, file_signature_path);
+    }
+    // do ecdh
+    else if (0 == strcmp(argv[1], "derive-ecdh")) {
+        if (argc < 3) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_derive_ecdh();
+            ret = 1;
+            goto cleanup;
+        }
+
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_derive_ecdh();
+            return;
+        }
+
+        if (nxclitool_fetch_parameters(argc,
+                argv,
+                2,
+                NULL,
+                NULL,
+                &key_id,
+                &curve_type,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                file_out_path,
+                &file_out_flag,
+                NULL,
+                file_pubkey_path,
+                NULL)) {
+            LOG_E("Failed to fetch parameters for ecdsa verify command. Check usage below");
+            nxclitool_show_command_help_derive_ecdh();
+            goto cleanup;
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+
+        status = nxclitool_derive_ecdh(&boot_ctx, key_id, curve_type, file_pubkey_path, file_out_path, file_out_flag);
     }
     // Invalid Command
     else {

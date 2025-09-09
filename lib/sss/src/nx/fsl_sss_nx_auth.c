@@ -1,6 +1,6 @@
 /*
 *
-* Copyright 2022-2024 NXP
+* Copyright 2022-2025 NXP
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
@@ -116,7 +116,6 @@ static sss_status_t nx_dec_AES256_CCM(sss_object_t *pKey,
     size_t *pPlainDataLen);
 static sss_status_t nx_decrypt_certificate(nx_auth_sigma_ctx_t *pAuthCtx,
     nx_cert_level_t level,
-    bool host_init,
     uint8_t *encCertBuf,
     size_t encCertBufLen,
     uint8_t *decCertBuf,
@@ -298,7 +297,7 @@ static sss_status_t read_file_from_fs(char *fileName, uint8_t *buffer, size_t *b
             LOG_E("Error reading cert from %s", fileName);
             ret = fclose(fp);
             if (ret != 0) {
-                goto exit;
+                LOG_E("fclose error");
             }
             goto exit;
         }
@@ -1466,7 +1465,6 @@ exit:
  *
  * @param         pAuthCtx       Context Pointer to auth context.
  * @param         level          Leaf/P1/P2 certificate
- * @param         host_init      Host is initiator or responder.
  * @param         encCertBuf     Encrypted cert reply.
  * @param         encCertBufLen  Encrypted cert reply length.
  * @param[out]    decCertBuf     Cert.
@@ -1475,7 +1473,6 @@ exit:
  */
 static sss_status_t nx_decrypt_certificate(nx_auth_sigma_ctx_t *pAuthCtx,
     nx_cert_level_t level,
-    bool host_init,
     uint8_t *encCertBuf,
     size_t encCertBufLen,
     uint8_t *decCertBuf,
@@ -1500,16 +1497,9 @@ static sss_status_t nx_decrypt_certificate(nx_auth_sigma_ctx_t *pAuthCtx,
     encBufLen = encCertBufLen - NX_AES256_CCM_TAG_LENGH;
     tagBuf    = &encCertBuf[encCertBufLen - NX_AES256_CCM_TAG_LENGH];
 
-    if (host_init == true) {
-        pKey     = &pAuthCtx->dyn_ctx.k_e1;
-        pNonce   = pAuthCtx->dyn_ctx.iv_e1;
-        nonceLen = sizeof(pAuthCtx->dyn_ctx.iv_e1);
-    }
-    else {
-        pKey     = &pAuthCtx->dyn_ctx.k_e1;
-        pNonce   = pAuthCtx->dyn_ctx.iv_e1;
-        nonceLen = sizeof(pAuthCtx->dyn_ctx.iv_e1);
-    }
+    pKey     = &pAuthCtx->dyn_ctx.k_e1;
+    pNonce   = pAuthCtx->dyn_ctx.iv_e1;
+    nonceLen = sizeof(pAuthCtx->dyn_ctx.iv_e1);
 
     // AES CCM on "cert request"
     status =
@@ -3514,8 +3504,8 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
                 memset(pCertBuf, 0, seCertBufBufLen[certIndex - 1]);
 
                 // Decrypt using ke1, ive1
-                status = nx_decrypt_certificate(
-                    pAuthCtx, certIndex, true, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
+                status =
+                    nx_decrypt_certificate(pAuthCtx, certIndex, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
                 LOG_MAU8_D("Decrypted device certificate", pCertBuf, *pCertBufLen);
 
@@ -3769,8 +3759,8 @@ sss_status_t nx_sigma_i_authenticate_channel(pSeSession_t seSession, nx_auth_sig
                 *pCertBufLen = NX_MAX_CERT_BUFFER_SIZE;
                 memset(pCertBuf, 0, seCertBufBufLen[certIndex - 1]);
 
-                status = nx_decrypt_certificate(
-                    pAuthCtx, certIndex, false, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
+                status =
+                    nx_decrypt_certificate(pAuthCtx, certIndex, pRxEncCertBuf, rxEncCertBufLen, pCertBuf, pCertBufLen);
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
 
                 // Parse leaf/p1/p2 pkcs7 certificate and add it to container.

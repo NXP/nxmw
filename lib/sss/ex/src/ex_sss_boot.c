@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -179,8 +179,17 @@ sss_status_t ex_sss_boot_open_host_session(ex_sss_boot_ctx_t *pCtx)
             return status;
         }
     }
+    else {
+        /* when NX type and authentication method(e.g., Sigma-I or symmetric) are selected,
+         * the host session is already opened in the NX Prepare Host API.
+         */
+        status = kStatus_SSS_Success;
+        goto exit;
+    }
 #else
-    /* For host only builds , main session & keystore are same as host */
+    /* For host only builds , main session & key store are same as host */
+    LOG_W("Host session is not opened when no NX Type is selected \n");
+    status             = kStatus_SSS_Success;
     pCtx->host_ks      = pCtx->ks;
     pCtx->host_session = pCtx->host_session;
 #endif

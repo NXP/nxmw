@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -126,13 +126,6 @@ void GetCertificateChainDigest(const uint8_t *pGetDigestRequest,
     if (SM_OK != sm_status) {
         errorCode = kUSBcErrorUnspecified;
         LOG_E("Failed to retrieve populated slots");
-        goto error;
-    }
-
-    /* Is Slot 0 empty? - Return error as slot 0 must always be populated */
-    // A product shall not act as an Authentication Responder unless it contains a Certificate Chain in Slot 0.
-    if (!(slotsPopulated & 0x01)) {
-        errorCode = kUSBcErrorUnspecified;
         goto error;
     }
 
@@ -499,11 +492,6 @@ void Authenticate(const uint8_t *pChallengeRequest,
         goto error;
     }
 
-    if (!(slotsPopulated & 0x01)) {
-        /* Slot 0 is empty */
-        errorCode = kUSBcErrorUnspecified;
-        goto error;
-    }
     /* Check if the requested slot is populated */
     if (!((1 << requestedSlot) & slotsPopulated)) {
         errorCode = kUSBcErrorInvalidRequest;

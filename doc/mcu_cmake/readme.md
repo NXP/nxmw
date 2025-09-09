@@ -88,6 +88,7 @@ make
    NXMW_Auth_Asymm_Host_PK_Cache:STRING=Enabled
    NXMW_Auth_Symm_App_Key_Id:STRING=0
    NXMW_Auth_Symm_Diversify:STRING=Disabled
+   NXMW_CMSIS_Driver:STRING=Disabled
    NXMW_Host:STRING=lpcxpresso55s
    NXMW_HostCrypto:STRING=MBEDTLS
    NXMW_Log:STRING=Default

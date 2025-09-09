@@ -7,6 +7,11 @@
 
 #include <sm_types.h>
 
+#if defined(SSS_USE_FTR_FILE)
+#include "fsl_sss_ftr.h"
+#else
+#include "fsl_sss_ftr_default.h"
+#endif
 #include "fsl_device_registers.h"
 #include "clock_config.h"
 #include "board.h"
@@ -38,10 +43,6 @@
 
 #define MCU_GPIO_PIN_IO1 0x01
 #define MCU_GPIO_PIN_IO2 0x02
-
-#define LPC_GPIO_PIN_PIO1_5 0x05
-#define LPC_GPIO_PIN_PIO1_8 0x08
-#define LPC_GPIO_PORT1 0x01
 
 //- A71CH I2C
 

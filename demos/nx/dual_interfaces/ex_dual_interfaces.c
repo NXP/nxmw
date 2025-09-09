@@ -20,6 +20,9 @@
 #include "sm_timer.h"
 #if defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED)
 #include "board.h"
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && SSS_HAVE_CMSIS_DRIVER_ENABLED
+#include "app.h"
+#endif
 #endif
 /* ************************************************************************** */
 /* Local Defines                                                              */
@@ -80,19 +83,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     U16 respLen = 0;
     int gpioRet = -1;
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    U8 gpioPIN = BOARD_PIO1_8_GPIO_PIN; //PIN8
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-    U8 gpioPIN = BOARD_PIO0_26_GPIO_PIN; //PIN26
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-    U8 gpioPIN = BOARD_P2_16_GPIO_PIN; //PIN16
-#endif
-
-    gpio_pin_config_t config = {
-        setInOutDir,
-        0,
-    };
+    U8 gpioPIN = BOARD_GPIO_PIN_IO2; //PIN8
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     U8 gpioPIN  = NX_HOSTGPIO_I02; //PIN3
     U16 respLen = 0;
@@ -112,32 +103,26 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     resp   = 0xFF;
     status = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
-    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
-
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, gpioPIN, &config);
-    resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-    GPIO_PinInit(GPIO0, gpioPIN, &config);
-    resp = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-    GPIO_PinInit(GPIO2, gpioPIN, &config);
-    resp = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+    EXAMPLE_GPIO_INTERFACE.Setup(gpioPIN, NULL);
+    EXAMPLE_GPIO_INTERFACE.SetDirection(gpioPIN, setInOutDir);
+    resp = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+#else
+    gpio_pin_config_t config = {setInOutDir, 0};
+    INIT_GPIO_PIN(gpioPIN, &config);
+    resp = READ_GPIO_PIN(gpioPIN);
 #endif
-    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
-
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
-    respLen     = 0;
-    status      = nx_host_GPIOInit(NULL, gpioPIN, setInOutDir);
+    respLen = 0;
+    status  = nx_host_GPIOInit(NULL, gpioPIN, setInOutDir);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
 
     resp   = 0xFF;
     status = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
-    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #endif
+    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 
     initGPIOStatus = resp;
     if (initGPIOStatus == NX_HOSTGPIO_Read_Low) {
@@ -155,24 +140,19 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         respLen = 0;
         status  = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
         ENSURE_OR_GO_CLEANUP(status == TRUE);
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-        resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-        resp = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-        resp = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+        resp = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+#else
+        resp = READ_GPIO_PIN(gpioPIN);
 #endif
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
         respLen = 0;
 
         status = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
         ENSURE_OR_GO_CLEANUP(status == TRUE);
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #endif
+        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 
         sm_sleep(1000);
     }
@@ -211,23 +191,19 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     respLen = 0;
     status  = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
-    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
-
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-    resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-    resp = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-    resp = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+    resp = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+#else
+    resp = READ_GPIO_PIN(gpioPIN);
 #endif
     ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     respLen = 0;
     status  = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
     ENSURE_OR_GO_CLEANUP(status == TRUE);
-    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #endif
+    ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 
     if (resp == NX_HOSTGPIO_Read_Low) {
         LOG_I("Read HOST GPIO (PTB3): Low");
@@ -246,23 +222,18 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         respLen = 0;
         status  = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
         ENSURE_OR_GO_CLEANUP(status == TRUE);
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) // Other MCU (K64F)
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-        resp = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-        resp = (uint8_t)GPIO_PinRead(GPIO0, gpioPIN);
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-        resp = (uint8_t)GPIO_PinRead(GPIO2, gpioPIN);
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+        resp = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+#else
+        resp = READ_GPIO_PIN(gpioPIN);
 #endif
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
         respLen = 0;
-
-        status = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
+        status  = nx_host_GPIORead(NULL, gpioPIN, &resp, &respLen);
         ENSURE_OR_GO_CLEANUP(status == TRUE);
-        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 #endif
+        ENSURE_OR_GO_CLEANUP((resp == NX_HOSTGPIO_Read_Low) || (resp == NX_HOSTGPIO_Read_High));
 
         sm_sleep(1000);
     }

@@ -79,10 +79,7 @@ int ex_util_asn1_get_ec_pair_key_index(const uint8_t *input,
                 break;
             }
             ENSURE_OR_GO_EXIT((UINT_MAX - i) >= taglen);
-            if (i + taglen == inLen) {
-                continue;
-            }
-            else {
+            if (i + taglen != inLen) {
                 i = i + taglen;
             }
         }

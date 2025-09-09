@@ -390,7 +390,7 @@ static sss_status_t ex_orginality_check_parse_cert(
     pCert   = data;
     certLen = len = ((data[2] << 8) | (data[3] << 0)) + EX_CERT_TAG_LENGTH;
 #else
-    pCert            = data + 3;
+    pCert   = data + 3;
     certLen = len = (data[2] << 16) | (data[1] << 8) | (data[0] << 0);
 #endif
 

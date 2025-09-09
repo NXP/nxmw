@@ -56,7 +56,6 @@ ex_sss_boot_ctx_t *pex_sss_demo_boot_ctx = &gex_sss_demo_boot_ctx;
 
 sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 {
-
     awsPubSub_task((void *)pCtx);
 
     /* Should not reach this statement */

@@ -109,6 +109,14 @@
 #define BOARD_PIO0_26_GPIO_PIN 26U
 #endif
 
+#define BOARD_GPIO_PIN_IO1      BOARD_PIO0_25_GPIO_PIN
+#define BOARD_GPIO_PIN_IO2      BOARD_PIO0_26_GPIO_PIN
+#define INIT_GPIO_PIN(pin,cfg)  GPIO_PinInit(GPIO0, (pin), (cfg))
+#define SET_GPIO_PIN(pin)       GPIO_PortSet(GPIO0, 1U << (pin))
+#define CLEAR_GPIO_PIN(pin)     GPIO_PortClear(GPIO0, 1U << (pin))
+#define TOGGLE_GPIO_PIN(pin)    GPIO_PortToggle(GPIO0, 1U << (pin))
+#define READ_GPIO_PIN(pin)      (uint8_t)GPIO_PinRead(GPIO0, (pin))
+
 #ifndef BOARD_SW2_GPIO
 #define BOARD_SW2_GPIO GPIO0
 #endif

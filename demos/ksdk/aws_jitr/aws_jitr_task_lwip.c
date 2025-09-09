@@ -546,7 +546,7 @@ BaseType_t SubscribeToTopic(MQTTContext_t *pxMqttContext, const char *pcTopicFil
         globalSubscribePacketIdentifier);
 
     if (xMqttStatus != MQTTSuccess) {
-        LogError(("Failed to SUBSCRIBE to MQTT topic %s. Error=%s", pcTopicFilter, usTopicFilterLength));
+        LogError(("Failed to SUBSCRIBE to MQTT topic %s. Error=%x", pcTopicFilter, usTopicFilterLength));
 
         xSubscribeStatus = pdFAIL;
     }
@@ -972,8 +972,7 @@ BaseType_t PublishToTopic(MQTTContext_t *pxMqttContext,
             xReturnStatus = pdFAIL;
         }
         else {
-            LogInfo(("PUBLISH sent for topic %.*s to broker with packet ID %u.\n\n",
-                topicFilterLength,
+            LogInfo(("PUBLISH sent for topic %s to broker with packet ID %u.\n\n",
                 pcTopicFilter,
                 outgoingPublishPackets[ucPublishIndex].packetId));
 

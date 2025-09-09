@@ -14,7 +14,7 @@ SSS_HAVE_NX_TYPE_NX_R_DA := ${SSS_HAVE_NX_TYPE_NX_R_DA}
 SSS_HAVE_NX_TYPE_NX_PICC := ${SSS_HAVE_NX_TYPE_NX_PICC}
 
 # Host where the software stack is running
-# 
+#
 # e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 SSS_HAVE_HOST_PCWINDOWS := ${SSS_HAVE_HOST_PCWINDOWS}
 SSS_HAVE_HOST_PCLINUX64 := ${SSS_HAVE_HOST_PCLINUX64}
@@ -24,7 +24,7 @@ SSS_HAVE_HOST_FRDMMCXA153 := ${SSS_HAVE_HOST_FRDMMCXA153}
 SSS_HAVE_HOST_FRDMMCXN947 := ${SSS_HAVE_HOST_FRDMMCXN947}
 
 # Communication Interface
-# 
+#
 # How the host library communicates to the Secure Authenticator.
 # This may be directly over an I2C interface on embedded platform.
 # Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
@@ -35,7 +35,7 @@ SSS_HAVE_SMCOM_PCSC := ${SSS_HAVE_SMCOM_PCSC}
 SSS_HAVE_SMCOM_JRCP_V1_AM := ${SSS_HAVE_SMCOM_JRCP_V1_AM}
 
 # Counterpart Crypto on Host
-# 
+#
 # What is being used as a cryptographic library on the host.
 # As of now only OpenSSL / mbedTLS is supported
 SSS_HAVE_HOSTCRYPTO_MBEDTLS := ${SSS_HAVE_HOSTCRYPTO_MBEDTLS}
@@ -43,14 +43,14 @@ SSS_HAVE_HOSTCRYPTO_OPENSSL := ${SSS_HAVE_HOSTCRYPTO_OPENSSL}
 SSS_HAVE_HOSTCRYPTO_NONE := ${SSS_HAVE_HOSTCRYPTO_NONE}
 
 # Choice of Operating system
-# 
+#
 # Default would mean nothing special.
 # i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
 SSS_HAVE_RTOS_DEFAULT := ${SSS_HAVE_RTOS_DEFAULT}
 SSS_HAVE_RTOS_FREERTOS := ${SSS_HAVE_RTOS_FREERTOS}
 
 # NX Authentication
-# 
+#
 # This settings is used by examples to connect using various options
 # to authenticate with the Nx SE.
 # Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for the combinations of session auth and secure tunneling modes.
@@ -66,7 +66,7 @@ SSS_HAVE_LOG_SILENT := ${SSS_HAVE_LOG_SILENT}
 SSS_HAVE_LOG_SEGGERRTT := ${SSS_HAVE_LOG_SEGGERRTT}
 
 # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
-# 
+#
 # For embedded builds, this choices sets optimization levels.
 # For MSVC builds, build type is selected from IDE As well
 SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG := ${SSS_HAVE_CMAKE_BUILD_TYPE_DEBUG}
@@ -75,7 +75,7 @@ SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHDEBINFO := ${SSS_HAVE_CMAKE_BUILD_TYPE_RELWITHD
 SSS_HAVE_CMAKE_BUILD_TYPE_ := ${SSS_HAVE_CMAKE_BUILD_TYPE_}
 
 # Secure Tunneling(Secure Messaging)
-# 
+#
 # Successful Symmetric authentication and SIGMA-I mutual authentication results in the establishment of
 # session keys and session IVs.
 # These are used to encrypt and integrity protect the payloads to be exchanged.
@@ -86,18 +86,18 @@ SSS_HAVE_SECURE_TUNNELING_NTAG_AES128_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AE
 SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2 := ${SSS_HAVE_SECURE_TUNNELING_NTAG_AES256_EV2}
 
 # Host public key cache
-# 
+#
 # Support a cache of validated public keys and parent certificates on host.
-# This is utilized to accelerate protocol execution time by removing the need 
+# This is utilized to accelerate protocol execution time by removing the need
 # to validate public key and certificates that have been previously verified. Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for more information.
-# 
+#
 # Secure authenticator cache is enabled by Cmd.SetConfiguration. Ref to section 4.6.2 for more information.
 SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_DISABLED}
 SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED := ${SSS_HAVE_AUTH_ASYMM_HOST_PK_CACHE_ENABLED}
 
 # Certificate Repository Id
-# 
-# Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication. 
+#
+# Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication.
 # In personalization, it indicates repository to be initialized. In demos, it indicates repository to be used for Sigma-I authentication
 SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_0}
 SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_1}
@@ -109,8 +109,8 @@ SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_6}
 SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7 := ${SSS_HAVE_AUTH_ASYMM_CERT_REPO_ID_7}
 
 # Certificate Private Key Id
-# 
-# Id of ECC private key associated with this 
+#
+# Id of ECC private key associated with this
 # repository. Used in personalization for Sigma-I.
 SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_0}
 SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_1}
@@ -119,8 +119,8 @@ SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_3}
 SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CERT_SK_ID_4}
 
 # Key ID of CA Root Public Key
-# 
-# Id of CA root public key associated with this 
+#
+# Id of CA root public key associated with this
 # repository. Used in personalization for Sigma-I.
 SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_0}
 SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_1}
@@ -129,7 +129,7 @@ SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_3}
 SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4 := ${SSS_HAVE_AUTH_ASYMM_CA_ROOT_KEY_ID_4}
 
 # application Key ID
-# 
+#
 # Indicate application key which is used in symmetric authentication.
 SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_0}
 SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_1}
@@ -138,14 +138,14 @@ SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_3}
 SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4 := ${SSS_HAVE_AUTH_SYMM_APP_KEY_ID_4}
 
 # Host EC domain curve type
-# 
-# EC domain curve used for session key generation and 
+#
+# EC domain curve used for session key generation and
 # session signature. Used in demos with Sigma-I authentication.
 SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_NIST_P}
 SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL := ${SSS_HAVE_AUTH_ASYMM_HOST_CURVE_BRAINPOOL}
 
 # For PC, which OpenSSL to pick up
-# 
+#
 # On Linux based builds, this option has no impact, because the build system
 # picks up the default available/installed OpenSSL from the system directly.
 SSS_HAVE_OPENSSL_1_1_1 := ${SSS_HAVE_OPENSSL_1_1_1}
@@ -156,9 +156,9 @@ SSS_HAVE_MBEDTLS_2_X := ${SSS_HAVE_MBEDTLS_2_X}
 SSS_HAVE_MBEDTLS_3_X := ${SSS_HAVE_MBEDTLS_3_X}
 
 # Diversification of symmetric authentication key
-# 
+#
 # When enabled, key used for symmetric authentication is diversification key derived from master key.
-# 
+#
 # Otherwise master key is used.
 SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_DISABLED}
 SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED := ${SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED}
@@ -169,7 +169,7 @@ SSS_HAVE_ALL_AUTH_CODE_DISABLED := ${SSS_HAVE_ALL_AUTH_CODE_DISABLED}
 SSS_HAVE_ALL_AUTH_CODE_ENABLED := ${SSS_HAVE_ALL_AUTH_CODE_ENABLED}
 
 # ALT Engine implementation for mbedTLS
-# 
+#
 # When set to None, mbedTLS would not use ALT Implementation to connect to / use Secure Authenticator.
 # This needs to be set to PSA for PSA example over SSS APIs
 SSS_HAVE_MBEDTLS_ALT_SSS := ${SSS_HAVE_MBEDTLS_ALT_SSS}
@@ -182,6 +182,12 @@ SSS_HAVE_SA_TYPE_A30 := ${SSS_HAVE_SA_TYPE_A30}
 SSS_HAVE_SA_TYPE_NTAG_X_DNA := ${SSS_HAVE_SA_TYPE_NTAG_X_DNA}
 SSS_HAVE_SA_TYPE_NXP_INT_CONFIG := ${SSS_HAVE_SA_TYPE_NXP_INT_CONFIG}
 SSS_HAVE_SA_TYPE_OTHER := ${SSS_HAVE_SA_TYPE_OTHER}
+
+# CMSIS I2C driver for communicating with SA
+#
+# CMSIS I2C driver for communicating with SA. (Disabled by Default)
+SSS_HAVE_CMSIS_DRIVER_DISABLED := ${SSS_HAVE_CMSIS_DRIVER_DISABLED}
+SSS_HAVE_CMSIS_DRIVER_ENABLED := ${SSS_HAVE_CMSIS_DRIVER_ENABLED}
 
 # Compiling without any NX Type Support
 SSS_HAVE_NX_TYPE_NONE := ${SSS_HAVE_NX_TYPE_NONE}
@@ -403,7 +409,7 @@ SSS_HAVE_MBEDTLS_ALT_SSS := ${SSS_HAVE_MBEDTLS_ALT_SSS}
 SSS_HAVE_MBEDTLS_ALT_PSA := ${SSS_HAVE_MBEDTLS_ALT_PSA}
 
 # Not using any mbedTLS_ALT
-# 
+#
 # When this is selected, cloud demos can not work with mbedTLS
 SSS_HAVE_MBEDTLS_ALT_NONE := ${SSS_HAVE_MBEDTLS_ALT_NONE}
 
@@ -418,6 +424,12 @@ SSS_HAVE_SA_TYPE_NXP_INT_CONFIG := ${SSS_HAVE_SA_TYPE_NXP_INT_CONFIG}
 
 # Enable Other host cert for sigma-I authentication
 SSS_HAVE_SA_TYPE_OTHER := ${SSS_HAVE_SA_TYPE_OTHER}
+
+# CMSIS I2C driver Disabled
+SSS_HAVE_CMSIS_DRIVER_DISABLED := ${SSS_HAVE_CMSIS_DRIVER_DISABLED}
+
+# CMSIS I2C driver Enabled
+SSS_HAVE_CMSIS_DRIVER_ENABLED := ${SSS_HAVE_CMSIS_DRIVER_ENABLED}
 
 
 

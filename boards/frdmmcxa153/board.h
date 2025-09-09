@@ -67,6 +67,14 @@
 #define BOARD_P2_16_GPIO_PIN 16U
 #endif
 
+#define BOARD_GPIO_PIN_IO1      BOARD_P2_12_GPIO_PIN
+#define BOARD_GPIO_PIN_IO2      BOARD_P2_16_GPIO_PIN
+#define INIT_GPIO_PIN(pin,cfg)  GPIO_PinInit(GPIO2, (pin), (cfg))
+#define SET_GPIO_PIN(pin)       GPIO_PortSet(GPIO2, 1U << (pin))
+#define CLEAR_GPIO_PIN(pin)     GPIO_PortClear(GPIO2, 1U << (pin))
+#define TOGGLE_GPIO_PIN(pin)    GPIO_PortToggle(GPIO2, 1U << (pin))
+#define READ_GPIO_PIN(pin)      (uint8_t)GPIO_PinRead(GPIO2, (pin))
+
 /*! @brief GPIO for SW. */
 #ifndef BOARD_SW2_GPIO
 #define BOARD_SW2_GPIO GPIO3

@@ -1,4 +1,4 @@
-/* Copyright 2018, 2020, 2022-2024 NXP
+/* Copyright 2018, 2020, 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "sm_types.h"
@@ -49,11 +49,11 @@ static void escapeComPortName(char pOutPortName[20], const char *iPortName)
     if (0 == _strnicmp(iPortName, "COM", 3)) {
         long number = atol(&iPortName[3]);
         if (number > 4) {
-            _snprintf(pOutPortName, 20, "\\\\.\\%s", iPortName);
+            ENSURE_OR_GO_EXIT((_snprintf(pOutPortName, 20, "\\\\.\\%s", iPortName)) >= 0);
         }
     }
     else {
-        _snprintf(pOutPortName, 20, "%s", iPortName);
+        ENSURE_OR_GO_EXIT((_snprintf(pOutPortName, 20, "%s", iPortName)) >= 0);
     }
 exit:
     return;
@@ -114,9 +114,6 @@ U32 smComVCom_Open(void **vcom_ctx, const char *pComPortString)
         printf("ERROR! Failed opening '%s'. ERROR=ERROR_ACCESS_DENIED\n", pComPortString);
     }
     else if (pComHandle == INVALID_HANDLE_VALUE) {
-        if (status == 0) {
-            status = 1; /* Over ride - it's a failure */
-        }
         printf("ERROR! Failed opening '%s'. ERROR=%X\n", escaped_port_name, status);
     }
 

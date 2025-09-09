@@ -50,7 +50,7 @@
 
 
 /** NXMW_Host : Host where the software stack is running
- * 
+ *
  * e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
  */
 
@@ -93,7 +93,7 @@
 
 
 /** NXMW_SMCOM : Communication Interface
- * 
+ *
  * How the host library communicates to the Secure Authenticator.
  * This may be directly over an I2C interface on embedded platform.
  */
@@ -132,7 +132,7 @@
 
 
 /** NXMW_HostCrypto : Counterpart Crypto on Host
- * 
+ *
  * What is being used as a cryptographic library on the host.
  * As of now only OpenSSL / mbedTLS is supported
  */
@@ -168,7 +168,7 @@
 
 
 /** NXMW_RTOS : Choice of Operating system
- * 
+ *
  * Default would mean nothing special.
  * i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
  */
@@ -197,7 +197,7 @@
 
 
 /** NXMW_Auth : NX Authentication
- * 
+ *
  * This settings is used by examples to connect using various options
  * to authenticate with the Nx SE.
  * Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for the combinations of session auth and secure tunneling modes.
@@ -273,7 +273,7 @@
 
 
 /** NXMW_Secure_Tunneling : Secure Tunneling(Secure Messaging)
- * 
+ *
  * Successful Symmetric authentication and SIGMA-I mutual authentication results in the establishment of
  * session keys and session IVs.
  * These are used to encrypt and integrity protect the payloads to be exchanged.
@@ -314,11 +314,11 @@
 
 
 /** NXMW_Auth_Asymm_Host_PK_Cache : Host public key cache
- * 
+ *
  * Support a cache of validated public keys and parent certificates on host.
- * This is utilized to accelerate protocol execution time by removing the need 
+ * This is utilized to accelerate protocol execution time by removing the need
  * to validate public key and certificates that have been previously verified. Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for more information.
- * 
+ *
  * Secure authenticator cache is enabled by Cmd.SetConfiguration. Ref to section 4.6.2 for more information.
  */
 
@@ -346,8 +346,8 @@
 
 
 /** NXMW_Auth_Asymm_Cert_Repo_Id : Certificate Repository Id
- * 
- * Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication. 
+ *
+ * Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication.
  * In personalization, it indicates repository to be initialized. In demos, it indicates repository to be used for Sigma-I authentication
  */
 
@@ -405,8 +405,8 @@
 
 
 /** NXMW_Auth_Asymm_Cert_SK_Id : Certificate Private Key Id
- * 
- * Id of ECC private key associated with this 
+ *
+ * Id of ECC private key associated with this
  * repository. Used in personalization for Sigma-I.
  */
 
@@ -449,8 +449,8 @@
 
 
 /** NXMW_Auth_Asymm_CA_Root_Key_Id : Key ID of CA Root Public Key
- * 
- * Id of CA root public key associated with this 
+ *
+ * Id of CA root public key associated with this
  * repository. Used in personalization for Sigma-I.
  */
 
@@ -493,7 +493,7 @@
 
 
 /** NXMW_Auth_Symm_App_Key_Id : application Key ID
- * 
+ *
  * Indicate application key which is used in symmetric authentication.
  */
 
@@ -536,8 +536,8 @@
 
 
 /** NXMW_Auth_Asymm_Host_Curve : Host EC domain curve type
- * 
- * EC domain curve used for session key generation and 
+ *
+ * EC domain curve used for session key generation and
  * session signature. Used in demos with Sigma-I authentication.
  */
 
@@ -565,7 +565,7 @@
 
 
 /** NXMW_OpenSSL : For PC, which OpenSSL to pick up
- * 
+ *
  * On Linux based builds, this option has no impact, because the build system
  * picks up the default available/installed OpenSSL from the system directly.
  */
@@ -620,9 +620,9 @@
 
 
 /** NXMW_Auth_Symm_Diversify : Diversification of symmetric authentication key
- * 
+ *
  * When enabled, key used for symmetric authentication is diversification key derived from master key.
- * 
+ *
  * Otherwise master key is used.
  */
 
@@ -746,6 +746,35 @@
     ) == 0)
 #        error "Enable at-least one of 'NXMW_SA_Type'"
 #endif
+
+
+
+/** NXMW_CMSIS_DRIVER : CMSIS I2C driver for communicating with SA
+ *
+ * CMSIS I2C driver for communicating with SA. (Disabled by Default)
+ */
+
+/** CMSIS I2C driver Disabled */
+#define SSS_HAVE_CMSIS_DRIVER_DISABLED 1
+
+/** CMSIS I2C driver Enabled */
+#define SSS_HAVE_CMSIS_DRIVER_ENABLED 0
+
+#if (( 0                             \
+    + SSS_HAVE_CMSIS_DRIVER_DISABLED \
+    + SSS_HAVE_CMSIS_DRIVER_ENABLED  \
+    ) > 1)
+#        error "Enable only one of 'NXMW_CMSIS_DRIVER'"
+#endif
+
+
+#if (( 0                             \
+    + SSS_HAVE_CMSIS_DRIVER_DISABLED \
+    + SSS_HAVE_CMSIS_DRIVER_ENABLED  \
+    ) == 0)
+#        error "Enable at-least one of 'NXMW_CMSIS_DRIVER'"
+#endif
+
 
 
 

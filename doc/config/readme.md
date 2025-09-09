@@ -283,3 +283,12 @@ When Secure Authenticator type is selected, respective host certificates are ena
 ``-DNXMW_SA_Type=NXP_INT_CONFIG``: Enable NXP_INT_CONFIG host cert for Sigma-I authentication
 
 ``-DNXMW_SA_Type=Other``: Enable Other host cert for Sigma-I authentication
+
+
+## NXMW_CMSIS_Driver: CMSIS I2C driver for communicating with SA
+
+CMSIS I2C driver for communicating with SA. (Disabled by Default)
+
+``-DNXMW_CMSIS_Driver=Disabled``: CMSIS I2C driver Disabled
+
+``-DNXMW_CMSIS_Driver=Enabled``: CMSIS I2C driver Enabled

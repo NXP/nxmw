@@ -39,7 +39,10 @@ It supports following commands:
 | list-eckey     | Fetches the list and properties of EC keys inside SA                    |
 | set-i2c_mgnt   | Set I2C configuration                                                   |
 | set-cert_mgnt  | Set certificate configuration                                           |
-
+| dgst-sha256    | Generate SHA-256 message digest from SA                                 |
+| dgst-sign      | Sign the message digest using SA                                        |
+| dgst-verify    | Verify the signature using SA                                           |
+| derive-ecdh    | Derive an ECDH key from SA                                              |
 
 Refer individual command sections for more details.
 
@@ -126,13 +129,17 @@ Get UID from Secure Authenticator. This command does not require any options.
 **Command Format**
 
 ```
-nxclitool get-uid
+nxclitool get-uid [OPTIONS]
 ```
+
+**Options**
+
+-   **-out**: Store the uid to a file (optional argument)
 
 **Example**
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
-./nxclitool get-uid
+./nxclitool get-uid -out uid.txt
 ./nxclitool disconnect
 ```
 
@@ -192,6 +199,20 @@ nxclitool genkey [OPTIONS]
 -   **-curve**: Curve type for keypair generation. Accepted values:
     - `brainpoolP256r1`: ECC curve type BRAINPOOL_256
     - `prime256v1`: ECC curve type NIST_P256
+
+-   **-enable**: Operation to be performed by the key. Accepted values:
+    -   `none`
+    -   `ecdh`
+    -   `sign`
+    -   `sigmai`
+    -   `sdm`
+
+-   **-waccess**: Write and Read Access Rights respectively,
+    required to write to/read from the repository. Accepted values:
+    -   `0x00 to 0x0C` Auth required
+    -   `0x0D` Free over I2C
+    -   `0x0E` Free Access
+    -   `0x0F` No Access
 
 -   **-out**: Store the public key to a file in PEM format (optional argument).
 
@@ -394,7 +415,7 @@ commands can be used to manage a certificate repository in the SA.
     -   `plain`
 
 -   **-repoid**: Certificate Repository ID in hex format. Required with
-    **certrepo-load-cert**and **certrepo-load-mapping**
+    **certrepo-load-cert** and **certrepo-load-mapping**
 
 -   **-curve**: ECC Curve type for the key. Required with
     **certrepo-load-key**. Accepted values:
@@ -745,5 +766,102 @@ nxclitool set-cert_mgnt [OPTIONS]
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
 ./nxclitool set-cert_mgnt -leafcachesize 0x08 -intermcachesize 0x08 -featureselection 0x01 -wcomm plain -waccess 0x00
+./nxclitool disconnect
+```
+
+## Message-Digest with SA using NX CLI TooL
+
+Generates a message digest or hash using the SA takes input data and produces a cryptographic hash using the selected algorithm SHA-256 
+
+**Command Format**
+```
+nxclitool dgst-sha256 [OPTIONS]
+```
+
+**Options**
+-   **-in**: Path to the plain input data in txt format
+-   **-out**: Write the message digest to a file on this path
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool dgst-sha256 -in <INPUT_FILE_PATH> -out <DIGEST_FILE_PATH>
+./nxclitool disconnect
+```
+
+## ECDSA Sign with SA using NX CLI TooL
+
+Performs ECDSA signing using the SA signs the provided message digest using the private key associated with the given keyID
+
+**Command Format**
+```
+nxclitool dgst-sign [OPTIONS]
+```
+
+**Options**
+
+-   **-keyid**: Key ID for asymmetric keypair generation should be in HEX
+    format. Range: **0x00 to 0x04**
+-   **-in**: Path to the message digest file in txt format
+-   **-out**: Path to save the generated signature
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool dgst-sign -keyid <KEY_ID> -in <DIGEST_FILE_PATH> -out <SIGNATURE_FILE_PATH> 
+./nxclitool disconnect
+```
+
+## ECDSA Verify with SA using NX CLI TooL
+
+Verifies an ECDSA signature using the SA Takes a message digest, a signature, and a public key to validate the authenticity of the signature
+
+**Command Format**
+```
+nxclitool dgst-verify [OPTIONS]
+```
+
+**Options**
+
+-   **-curve**: Curve type for ecdsa verify. Accepted values:
+    - `brainpoolP256r1`: ECC curve type BRAINPOOL_256
+    - `prime256v1`: ECC curve type NIST_P256
+-   **-pubkey**: Path to the public key file in PEM format
+-   **-signature**: Path to the signature file in txt format
+-   **-in**: Path to the message digest file in txt format
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool dgst-verify -curve <CURVE> -pubkey <PUB_KEY_PATH> -signature <SIGNATURE_FILE> -in <DIGEST_FILE>
+./nxclitool disconnect
+```
+
+## Derive ECDH with SA using NX CLI TooL
+
+Derive an ecdh shared secret key using the keyID associated with a keypair stored in SA and peer's public key to compute the shared secret
+
+**Command Format**
+```
+nxclitool derive-ecdh [OPTIONS]
+```
+
+**Options**
+
+-   **-keyid**: Key ID for asymmetric key pair. Range: **0x00 to 0x04**
+-   **-curve**: Curve type for asymmetric keypair. Accepted values:
+    -   `brainpoolP256r1`: ECC curve type BRAINPOOL_256
+    -   `prime256v1`: ECC curve type NIST_P256
+-   **-pubkey**: Path to the peer public key file in PEM format
+-   **-out**: Path to the save derived shared secret key file in DER format
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool derive-ecdh -keyid <KEY_ID> -curve <CURVE> --peerkey <PEER_PUB_KEY> -out <SHARED_SECRET_KEY>
 ./nxclitool disconnect
 ```

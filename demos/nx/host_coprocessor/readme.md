@@ -32,7 +32,11 @@ width="600" />
   - 2 SAs provision root CA public key and certificates
   - On SA Host co processor set configuration 0x10, I2C support, I2C
     address and ProtocolOptions of Controller Session Key.
-  - run nxclitool for provision **Refer** [**nxclitool_scripts**](../nx_cli_tool/scripts/nxclitool_host_copro_perso_x509.bat)
+  - run nxclitool for provision.
+    - **A30 Sample Refer** [**nxclitool_scripts**](../../../binaries/configuration/a30_hostcert_depth2_x509_rev3_nistp/nxclitool_prov_device_root_cert.bat)
+    - **NTAG Sample Refer** [**nxclitool_scripts**](../../../binaries/configuration/ntag_hostcert_depth2_x509_rev3_nistp/nxclitool_prov_device_root_cert.bat)
+    - **Other Sample Refer** [**nxclitool_scripts**](../../../binaries/configuration/other_hostcert_depth2_x509_rev3_nistp/nxclitool_prov_device_root_cert.bat)
+    - **NXP INIT CONFIG Sample Refer** [**nxclitool_scripts**](../nx_cli_tool/scripts/nxclitool_host_copro_perso_x509.bat)
 
 ## About the Example
 

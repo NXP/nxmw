@@ -50,7 +50,7 @@ set SIGMA_ST=(%TOOL_PATH%\nxclitool connect -smcom %SMCOM% -port %PORT% -auth %A
 
 IF %AUTH%==symmetric %SYMM_ST% ELSE IF %AUTH%==none %NONE_ST% ELSE %SIGMA_ST%
 
-%TOOL_PATH%\nxclitool genkey -keyid %KEY_ID% -curve %CURVE% -out %OUT_FILE_PATH%
+%TOOL_PATH%\nxclitool genkey -keyid %KEY_ID% -curve %CURVE% -enable sign -waccess 0xE -out %OUT_FILE_PATH%
 
 %TOOL_PATH%\nxclitool disconnect
 

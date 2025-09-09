@@ -60,7 +60,6 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 leafcachesize = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-intermcachesize")) {
             if (intermcachesize_flag != TRUE) {
@@ -73,7 +72,6 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 intermcachesize = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-featureselection")) {
             if (featureselection_flag != TRUE) {
@@ -86,7 +84,6 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 featureselection = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-wcomm")) {
             if (mngcertrepo_wcomm_flag != TRUE) {
@@ -103,7 +100,6 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 LOG_E("\"-wcomm\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-waccess")) {
             if (mngcertrepo_waccess_flag != TRUE) {
@@ -120,7 +116,6 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
                 LOG_E("\"-waccess\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
@@ -129,8 +124,11 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
         }
     }
 
-    sm_status = nx_GetConfig_CertMgmt(
-        &pSession->s_ctx, &rspleafcachesize, &rspintermcachesize, &rspfeatureselection, &rspacmanagecertrepo);
+    sm_status = nx_GetConfig_CertMgmt(&((sss_nx_session_t *)pSession)->s_ctx,
+        &rspleafcachesize,
+        &rspintermcachesize,
+        &rspfeatureselection,
+        &rspacmanagecertrepo);
     ENSURE_OR_GO_EXIT(sm_status == SM_OK);
 
     if (leafcachesize_flag == FALSE) {
@@ -158,8 +156,8 @@ sss_status_t nxclitool_set_cert_mgnt(int argc, const char *argv[], nxclitool_sss
         acmanagecertrepo |= write_access_cond;
     }
 
-    sm_status =
-        nx_SetConfig_CertMgmt(&pSession->s_ctx, leafcachesize, intermcachesize, featureselection, acmanagecertrepo);
+    sm_status = nx_SetConfig_CertMgmt(
+        &((sss_nx_session_t *)pSession)->s_ctx, leafcachesize, intermcachesize, featureselection, acmanagecertrepo);
     ENSURE_OR_GO_EXIT(SM_OK == sm_status);
 
     printf("\n");

@@ -870,9 +870,6 @@ smStatus_t nx_DeCrypt(struct SeSession *pSessionCtx,
     LOG_MAU8_D(" Input:rspBuf", rsp, *rspLength);
 
     if (*rspLength >= 2) {
-        if ((rsp[(*rspLength) - 2] << 8 | rsp[(*rspLength) - 1]) > UINT16_MAX) {
-            goto exit;
-        }
         rv = rsp[(*rspLength) - 2] << 8 | rsp[(*rspLength) - 1];
 
         if ((rv == SM_OK || rv == SM_OK_ALT) &&

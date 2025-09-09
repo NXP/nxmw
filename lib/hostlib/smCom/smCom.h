@@ -18,15 +18,15 @@
 extern "C" {
 #endif
 
-#define SMCOM_OK 0x9000               //!< Communication successful
-#define SMCOM_SND_FAILED 0x7010       //!< Communication failed while sending data
-#define SMCOM_RCV_FAILED 0x7011       //!< Communication failed while receiving data
-#define SMCOM_COM_FAILED 0x7012       //!< Cannot open communication link with ax device
-#define SMCOM_PROTOCOL_FAILED 0x7013  //!< APDU exchange protocol failed to be established successfully
-#define SMCOM_NO_ATR 0x7014           //!< No ATR can be retrieved
-#define SMCOM_NO_PRIOR_INIT 0x7015    //!< The callbacks doing the actual transfer have not been installed
+#define SMCOM_OK 0x9000 //!< Communication successful
+#define SMCOM_SND_FAILED 0x7010 //!< Communication failed while sending data
+#define SMCOM_RCV_FAILED 0x7011 //!< Communication failed while receiving data
+#define SMCOM_COM_FAILED 0x7012 //!< Cannot open communication link with ax device
+#define SMCOM_PROTOCOL_FAILED 0x7013 //!< APDU exchange protocol failed to be established successfully
+#define SMCOM_NO_ATR 0x7014 //!< No ATR can be retrieved
+#define SMCOM_NO_PRIOR_INIT 0x7015 //!< The callbacks doing the actual transfer have not been installed
 #define SMCOM_COM_ALREADY_OPEN 0x7016 //!< Communication link is already open with device
-#define SMCOM_COM_INIT_FAILED 0x7017  //!< Communication init failed
+#define SMCOM_COM_INIT_FAILED 0x7017 //!< Communication init failed
 
 /**
  * Contains APDU exchanged between Host and Secure Modulde.

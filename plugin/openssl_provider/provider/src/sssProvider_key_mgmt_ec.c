@@ -32,7 +32,6 @@
 
 #define SSS_DEFAULT_EC_KEY_ID 0x04
 #define NX_MAGIC_NUM_SIZE 8
-#define SECP521R1_KEY_BIT_LEN 521
 #define NX_MAGIC_NUM                                   \
     {                                                  \
         0xB6, 0xB5, 0xA6, 0xA5, 0xB6, 0xB5, 0xA6, 0xA5 \
@@ -708,11 +707,11 @@ static int sss_keymgmt_ec_gen_set_params(void *keydata, const OSSL_PARAM params[
     char grp_name[32] = {
         0,
     };
-    char *pgrp_name     = &grp_name[0];
-    char *grp_name_tmp  = NULL;
-    char *keyId_str     = NULL;
-    int index           = 0;
-    long int strtol_ret = 0;
+    char *pgrp_name              = &grp_name[0];
+    char *grp_name_tmp           = NULL;
+    char *keyId_str              = NULL;
+    int index                    = 0;
+    unsigned long int strtol_ret = 0;
 
     sssProv_Print(LOG_DBG_ON, "Enter - %s \n", __FUNCTION__);
 
@@ -736,8 +735,8 @@ static int sss_keymgmt_ec_gen_set_params(void *keydata, const OSSL_PARAM params[
         pStoreCtx->keyid = SSS_DEFAULT_EC_KEY_ID;
     }
     else {
-        strtol_ret = strtol(keyId_str, NULL, 0);
-        if ((strtol_ret > 0) && ((uint32_t)strtol_ret < UINT32_MAX)) {
+        strtol_ret = strtoul(keyId_str, NULL, 0);
+        if ((strtol_ret > 0) && (strtol_ret < UINT32_MAX)) {
             pStoreCtx->keyid = strtol_ret;
         }
         else {
@@ -834,12 +833,7 @@ static void *sss_keymgmt_ec_gen(void *keydata, OSSL_CALLBACK *osslcb, void *cbar
         status = sss_key_object_init(&pStoreCtx->object, &pStoreCtx->pProvCtx->p_ex_sss_boot_ctx->ks);
         ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
-        if (pStoreCtx->key_len == 66) { /* secp521r1 key bit length */
-            keyLen = SECP521R1_KEY_BIT_LEN;
-        }
-        else {
-            keyLen = pStoreCtx->key_len * 8;
-        }
+        keyLen = pStoreCtx->key_len * 8;
 
         status = sss_key_object_allocate_handle(
             &pStoreCtx->object, pStoreCtx->keyid, kSSS_KeyPart_Pair, cipherType, keyLen, kKeyObject_Mode_Persistent);

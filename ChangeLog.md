@@ -1,5 +1,25 @@
 # Changelog
 
+## \[v02.06.00\]
+- CMSIS Driver support for MCXN947 and MCXA153 platforms added.
+- Restructured MCU GPIO APIs - Platform specific gpio apis are now defined in boards files.
+- NX CLI tool enhancements
+	- New commands added dgst-sha256, dgst-sign, dgst-verify, derive-ecdh. For details refer - [**NX CLI Tool**](demos/nx/nx_cli_tool/readme.md)
+	- Added enable and waccess options for genkey command
+	- Updated get-uid command to write uid in a file
+-  New examples -
+	- Mbedtls lwip client Example supports MCUs such as MCXN947. Refer [**mbedtls_3_x_lwip_client example**](demos/nx/mbedtls_3_x_lwip_client/readme.md)
+	- Added Secure Dynamic Messaging (SDM) examples for provisioning and verification of NTAG-X-DNA
+	- SDM Provisioning - Encrypted PICC with Signature. Refer [**ex_sdm_prov_encpicc_sig example**](demos/nx/sdm/sdm_apps/sdm_prov_encpicc_sig/readme.md)
+	- SDM Verification - Encrypted PICC with Signature. Refer [**ex_sdm_ver_encpicc_sig example**](demos/nx/sdm/sdm_apps/sdm_ver_encpicc_sig/readme.md)
+	- SDM Provisioning - UID with RCTR and Signature. Refer [**ex_sdm_prov_uid_rctr_sig example**](demos/nx/sdm/sdm_apps/sdm_prov_uid_rctr_sig/readme.md)
+	- SDM Verification - UID with RCTR and Signature. Refer [**ex_sdm_ver_encpicc_sig example**](demos/nx/sdm/sdm_apps/sdm_ver_uid_rctr_sig/readme.md)
+- ex_t1oi2c Standalone example added for MCXA153. Refer [**ex_t1oi2c example**](lib/hostlib/smCom/T1oI2C/example/linux/readme.md)
+- west.yml file of MCU SDK updated to to clone nxp-iot-agent module.
+- USB-C Example changed to use authentication key from slot id 1.
+- Secure Authenticator APIs Documentation added.
+- Fixes for static analysis findings.
+
 ## \[v02.05.01\]
 - Removed unused module in west.yml file
 

@@ -8,6 +8,7 @@ FILE(
     GLOB
     KSDK_STARTUP_FILE
     ${NXMW_TOP_DIR}/../mcuxsdk/devices/LPC/LPC5500/LPC55S69/gcc/startup_LPC55S69_cm33_core0.S
+    ${NXMW_TOP_DIR}/../mcuxsdk/components/misc_utilities/fsl_syscall_stub.c
     ${KSDK_VENEER_FILES}
 )
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 /** @file */
@@ -25,6 +25,11 @@
 
 /** Version of the SSS API */
 #define SSS_API_VERSION (0x00000001u)
+
+/**
+ * @file fsl_sss_api.h
+ * @brief The SSS APIs are functional APIs to abstract the access to various types of Cryptographic Sub Systems.
+ */
 
 /** @brief Enum indicating results of the SSS API calls.
  *
@@ -64,7 +69,8 @@ typedef enum
     kType_SSS_SecureElement = SSS_ENUM(0x08 << 8, 0x00),
     /** To connect to nx subsystem */
     kType_SSS_SE_NX = SSS_ENUM(kType_SSS_SecureElement, 0x03),
-    kType_SSS_SubSystem_LAST
+    /** Reserved */
+    kType_SSS_SubSystem_LAST,
 } sss_type_t;
 
 /** Destination connection type */
@@ -107,7 +113,7 @@ typedef enum
 typedef enum /* _sss_algorithm */
 {
     kAlgorithm_None,
-    /* AES */
+    /** AES */
     kAlgorithm_SSS_AES_ECB        = SSS_ENUM_ALGORITHM(AES, 0x01),
     kAlgorithm_SSS_AES_CBC        = SSS_ENUM_ALGORITHM(AES, 0x02),
     kAlgorithm_SSS_AES_CTR        = SSS_ENUM_ALGORITHM(AES, 0x03),
@@ -116,33 +122,33 @@ typedef enum /* _sss_algorithm */
     kAlgorithm_SSS_AES_GCM_INT_IV = SSS_ENUM_ALGORITHM(AES, 0x06),
     kAlgorithm_SSS_AES_CTR_INT_IV = SSS_ENUM_ALGORITHM(AES, 0x07),
     kAlgorithm_SSS_AES_CCM_INT_IV = SSS_ENUM_ALGORITHM(AES, 0x08),
-    /* DES */
+    /** DES */
     kAlgorithm_SSS_DES_ECB            = SSS_ENUM_ALGORITHM(DES, 0x01),
     kAlgorithm_SSS_DES_CBC            = SSS_ENUM_ALGORITHM(DES, 0x02),
     kAlgorithm_SSS_DES_CBC_ISO9797_M1 = SSS_ENUM_ALGORITHM(DES, 0x05),
     kAlgorithm_SSS_DES_CBC_ISO9797_M2 = SSS_ENUM_ALGORITHM(DES, 0x06),
-    /* DES3 */
+    /** DES3 */
     kAlgorithm_SSS_DES3_ECB            = SSS_ENUM_ALGORITHM(DES, 0x03),
     kAlgorithm_SSS_DES3_CBC            = SSS_ENUM_ALGORITHM(DES, 0x04),
     kAlgorithm_SSS_DES3_CBC_ISO9797_M1 = SSS_ENUM_ALGORITHM(DES, 0x07),
     kAlgorithm_SSS_DES3_CBC_ISO9797_M2 = SSS_ENUM_ALGORITHM(DES, 0x08),
-    /* digest */
+    /** Digest */
     kAlgorithm_SSS_SHA1   = SSS_ENUM_ALGORITHM(SHA, 0x01),
     kAlgorithm_SSS_SHA224 = SSS_ENUM_ALGORITHM(SHA, 0x02),
     kAlgorithm_SSS_SHA256 = SSS_ENUM_ALGORITHM(SHA, 0x03),
     kAlgorithm_SSS_SHA384 = SSS_ENUM_ALGORITHM(SHA, 0x04),
     kAlgorithm_SSS_SHA512 = SSS_ENUM_ALGORITHM(SHA, 0x05),
-    /* MAC */
-    kAlgorithm_SSS_CMAC_AES    = SSS_ENUM_ALGORITHM(MAC, 0x01), /* CMAC-128 */
+    /** MAC */
+    kAlgorithm_SSS_CMAC_AES    = SSS_ENUM_ALGORITHM(MAC, 0x01), /*CMAC-128 */
     kAlgorithm_SSS_HMAC_SHA1   = SSS_ENUM_ALGORITHM(MAC, 0x02),
     kAlgorithm_SSS_HMAC_SHA224 = SSS_ENUM_ALGORITHM(MAC, 0x03),
     kAlgorithm_SSS_HMAC_SHA256 = SSS_ENUM_ALGORITHM(MAC, 0x04),
     kAlgorithm_SSS_HMAC_SHA384 = SSS_ENUM_ALGORITHM(MAC, 0x05),
     kAlgorithm_SSS_HMAC_SHA512 = SSS_ENUM_ALGORITHM(MAC, 0x06),
-    kAlgorithm_SSS_DES_CMAC8   = SSS_ENUM_ALGORITHM(MAC, 0x07), /* Only with OneShot mode */
-    /* Diffie-Helmann */
+    kAlgorithm_SSS_DES_CMAC8   = SSS_ENUM_ALGORITHM(MAC, 0x07), //!< Only with OneShot mode
+    /** Diffie-Hellman */
     kAlgorithm_SSS_ECDH = SSS_ENUM_ALGORITHM(DH, 0x02),
-    /* ECDSA */
+    /** ECDSA */
     kAlgorithm_SSS_ECDSA_SHA1   = SSS_ENUM_ALGORITHM(ECDSA, 0x01),
     kAlgorithm_SSS_ECDSA_SHA224 = SSS_ENUM_ALGORITHM(ECDSA, 0x02),
     kAlgorithm_SSS_ECDSA_SHA256 = SSS_ENUM_ALGORITHM(ECDSA, 0x03),
@@ -152,9 +158,8 @@ typedef enum /* _sss_algorithm */
 
 #undef SSS_ENUM_ALGORITHM
 
-/** High level algorihtmic operations.
+/** @brief Enum indicating High level algorithmic operations.
  *
- * Augmented by @ref sss_algorithm_t
  */
 typedef enum
 {
@@ -170,8 +175,8 @@ typedef enum
     kMode_SSS_Mac_Validate        = 10, //!< MAC Validate
 } sss_mode_t;
 
-/**
- * Permissions of an object. Only apply to host crypto key object.
+/** @brief Enum indicating Permissions of an object. Only apply to host crypto key object..
+ *
  */
 typedef enum
 {
@@ -194,8 +199,8 @@ typedef enum
     kAccessPermission_SSS_All_Permission = 0x1F,
 } sss_access_permission_t;
 
-/**
- * Persistent / Non persistent mode of a key
+/** @brief Enum indicating Persistent / Non persistent mode of a key.
+ *
  */
 typedef enum
 {
@@ -210,7 +215,9 @@ typedef enum
     kKeyObject_Mode_Transient = 2,
 } sss_key_object_mode_t;
 
-/** Part of a key */
+/** @brief Enum indicating Part of a key.
+ *
+ */
 typedef enum
 {
     kSSS_KeyPart_NONE,
@@ -224,29 +231,33 @@ typedef enum
     kSSS_KeyPart_Pair = 4,
 } sss_key_part_t;
 
-/** For all cipher types, key bit length is provides at the time key is inserted/generated */
+/** @brief Enum For all cipher types, key bit length is provides at the time key is inserted/generated.
+ *
+ */
 typedef enum
 {
     kSSS_CipherType_NONE = 0,
-    kSSS_CipherType_AES, /*! For NX Secure Authenticator - Use this to access cryptoRequestKey */
+    kSSS_CipherType_AES, //!< For NX Secure Authenticator - Use this to access cryptoRequestKey.
     kSSS_CipherType_CMAC,
     kSSS_CipherType_HMAC,
     kSSS_CipherType_AppKeys,
-    kSSS_CipherType_EC_NIST_P,    /*! Keys Part of NIST-P Family */
-    kSSS_CipherType_EC_BRAINPOOL, /*! Keys Part of Brainpool Family */
-    kSSS_CipherType_Binary,
-    kSSS_CipherType_Certificate,
-    kSSS_CipherType_CARootKeys_NIST_P,
-    kSSS_CipherType_CARootKeys_BRAINPOOL,
-    kSSS_CipherType_ReservedPin,
-    kSSS_CipherType_BufferSlots, /*! Static / Transient Buffer slots. Applicable only for NX Secure Authenticator */
+    kSSS_CipherType_EC_NIST_P,    //!< Keys Part of NIST-P Family.
+    kSSS_CipherType_EC_BRAINPOOL, //!< Keys Part of Brainpool Family.
+    kSSS_CipherType_Binary, //!< Used for storing raw binary blobs that do not fall under standard cryptographic key types.
+    kSSS_CipherType_Certificate,          //!< Used for storing X.509 or other types of digital certificates.
+    kSSS_CipherType_CARootKeys_NIST_P,    //!< Used for storing root public keys based on NIST P-curve ECC standards.
+    kSSS_CipherType_CARootKeys_BRAINPOOL, //!< Used for storing root public keys based on Brainpool ECC standards.
+    kSSS_CipherType_ReservedPin,          //!< Reserved for storing PINs or similar authentication data.
+    kSSS_CipherType_BufferSlots, //!< Static / Transient Buffer slots. Applicable only for NX Secure Authenticator.
 } sss_cipher_type_t;
 
-/** Slot type */
+/** @brief Enum indicating Slot type.
+ *
+ */
 typedef enum
 {
-    kSSS_Slot_Type_Transient = 0,
-    kSSS_Slot_Type_Static    = 1,
+    kSSS_Slot_Type_Transient = 0, //!< Transient slot. Keys is stored temporarily.
+    kSSS_Slot_Type_Static    = 1, ///< Static slot: key is stored persistently.
 } sss_slot_type_t;
 
 /** @brief Root session
@@ -293,7 +304,7 @@ typedef struct
 {
     /** key store holding the data and other properties */
     sss_key_store_t *keyStore;
-    /** The type/part of object is referneced from @ref sss_key_part_t */
+    /** The type/part of object is refernced from @ref sss_key_part_t */
     uint32_t objectType;
     /** cipherType type from @ref sss_cipher_type_t */
     uint32_t cipherType;
@@ -308,7 +319,9 @@ typedef struct
     } extension;
 } sss_object_t;
 
-/** @brief Typedef for the symmetric crypto context */
+/** @brief Typedef for the symmetric crypto context 
+ * 
+ */
 typedef struct
 {
     /** Virtual connection between application (user context) and specific
@@ -350,7 +363,9 @@ typedef struct
     } extension;
 } sss_aead_t;
 
-/** Message Digest operations */
+/** @brief Message Digest operations
+ *
+ */
 typedef struct
 {
     /** Virtual connection between application (user context) and specific
@@ -377,7 +392,7 @@ typedef struct
     /** Virtual connection between application (user context) and specific
      * security subsystem and function thereof. */
     sss_session_t *session;
-    /** Key to be used for ... */
+    /** Key to be used for mac. */
     sss_object_t *keyObject;
     /** Algorithm to be applied, e.g. MAC/CMAC */
     sss_algorithm_t algorithm;
@@ -414,15 +429,19 @@ typedef struct
     } extension;
 } sss_asymmetric_t;
 
-/** Communication Modes */
+/** @brief Enum indicating Communication Modes.
+ *
+ */
 typedef enum
 {
-    kCommMode_Plain = 0x00,
-    kCommMode_MAC   = 0x01,
-    kCommMode_FULL  = 0x03,
+    kCommMode_Plain = 0x00, //!< No protection: message is transmitted in clear.
+    kCommMode_MAC   = 0x01, //!< MAC protection for integrity and authenticity.
+    kCommMode_FULL  = 0x03, //!< Full protection for integrity, authenticity and confidentiality.
 } sss_CommMode_t;
 
-/** Header for a IS716 APDU */
+/** @brief Header for a ISO 7816 APDU
+ *
+ */
 typedef struct
 {
     /** ISO 7816 APDU Header */
@@ -434,7 +453,9 @@ typedef struct
     ];
 } tlvHeader_t;
 
-/** Key derivation */
+/** @brief Key derivation
+ *
+ */
 typedef struct
 {
     /** Pointer to the session */
@@ -453,7 +474,9 @@ typedef struct
     } extension;
 } sss_derive_key_t;
 
-/** Random number generator context */
+/** @brief Random number generator context
+ *
+ */
 typedef struct
 {
     /** Pointer to the session */
@@ -494,7 +517,7 @@ extern "C" {
  * @param[in]     subsystem        Indicates which security subsystem is
  *                                 selected to be used.
  * @param[in]     application_id   ObjectId/AuthenticationID Connecting to:
- *          - ``application_id`` == 0 => Super use / Plaform user
+ *          - ``application_id`` == 0 => Super use / Platform user
  *          - Anything else => Authenticated user
  * @param[in]     connection_type  How are we connecting to the system.
  *          - Plain: Lowest level. On SE, it only works with non-authentication mode.
@@ -586,7 +609,7 @@ sss_status_t sss_key_store_generate_key(
     sss_key_store_t *keyStore, sss_object_t *keyObject, size_t keyBitLen, void *options);
 
 /** @brief This function exports plain key[] from key store. As Secure Authenticator doesn't support reading key value,
- * this funtion returned the ECC public key value stored in keyOject. These public key comes from generating ECC
+ * this function returned the ECC public key value stored in keyObject. These public key comes from generating ECC
  * keypair or ECDH with ephemeral key operation.
  *
  * @param[in] keyStore Key store context
@@ -615,7 +638,6 @@ sss_status_t sss_key_store_erase_key(sss_key_store_t *keyStore, sss_object_t *ke
  *
  * @param[out]     keyStore   The key store
  *
- * @return     The sss status.
  */
 void sss_key_store_context_free(sss_key_store_t *keyStore);
 
@@ -669,7 +691,7 @@ sss_status_t sss_key_object_allocate_handle(sss_object_t *keyObject,
  *
  *             See @ref sss_key_object_allocate_handle.
  *
- *             After calling this API, Ideally keyObject should become equivlant
+ *             After calling this API, Ideally keyObject should become equivalent
  *             to as set after the calling of @ref
  *             sss_key_object_allocate_handle api.
  *
@@ -686,7 +708,6 @@ sss_status_t sss_key_object_get_handle(sss_object_t *keyObject, sss_cipher_type_
  *
  * @param[in]   keyObject Pointer to key object context.
  *
- * @return      The sss status.
  */
 void sss_key_object_free(sss_object_t *keyObject);
 
@@ -719,12 +740,13 @@ sss_status_t sss_derive_key_context_init(sss_derive_key_t *context,
     sss_algorithm_t algorithm,
     sss_mode_t mode);
 
-/** @brief Asymmetric key derivation Diffie-Helmann
+/** @brief Asymmetric key derivation Diffie-Hellman in single step.
+ * 
  *  The function cryptographically derives a key from another key.
- *  For example Diffie-Helmann.
+ *  For example Diffie-Hellman.
  *
  * @param[in] context Pointer to derive key context.
- * @param[in] otherPartyKeyObject Public key of the other party in the Diffie-Helmann algorithm
+ * @param[in] otherPartyKeyObject Public key of the other party in the Diffie-Hellman algorithm
  * @param[in,out] derivedKeyObject Reference to a derived key
  *
  * @returns Status of the operation
@@ -735,9 +757,10 @@ sss_status_t sss_derive_key_context_init(sss_derive_key_t *context,
 sss_status_t sss_derive_key_dh_one_go(
     sss_derive_key_t *context, sss_object_t *otherPartyKeyObject, sss_object_t *derivedKeyObject);
 
-/** @brief Asymmetric key derivation Diffie-Helmann
+/** @brief Asymmetric key derivation Diffie-Hellman two step part1
+ * 
  *  The function cryptographically derives a key from another key.
- *  For example Diffie-Helmann.
+ *  For example Diffie-Hellman.
  *
  * @param[in] context Pointer to derive key context.
  *
@@ -748,12 +771,13 @@ sss_status_t sss_derive_key_dh_one_go(
  */
 sss_status_t sss_derive_key_dh_two_step_part1(sss_derive_key_t *context);
 
-/** @brief Asymmetric key derivation Diffie-Helmann
+/** @brief Asymmetric key derivation Diffie-Hellman two step part2
+ * 
  *  The function cryptographically derives a key from another key.
- *  For example Diffie-Helmann.
+ *  For example Diffie-Hellman.
  *
  * @param[in] context Pointer to derive key context.
- * @param[in] otherPartyKeyObject Public key of the other party in the Diffie-Helmann algorithm
+ * @param[in] otherPartyKeyObject Public key of the other party in the Diffie-Hellman algorithm
  * @param[in,out] derivedKeyObject Reference to a derived key
  *
  * @returns Status of the operation
@@ -765,6 +789,7 @@ sss_status_t sss_derive_key_dh_two_step_part2(
     sss_derive_key_t *context, sss_object_t *otherPartyKeyObject, sss_object_t *derivedKeyObject);
 
 /** @brief Symmetric key derivation
+ * 
  *  The function cryptographically derives a key from another key.
  *  For example HKDF-ExtractandExpand, HKDF-Expand.
  *
@@ -792,7 +817,6 @@ sss_status_t sss_derive_key_one_go(sss_derive_key_t *context,
  *
  * @param[out] context Pointer to derive key context.
  *
- * @return     The sss status.
  */
 void sss_derive_key_context_free(sss_derive_key_t *context);
 
@@ -806,7 +830,8 @@ void sss_derive_key_context_free(sss_derive_key_t *context);
  */
 
 /** @brief Asymmetric context init.
- *  The function initializes asymmetric context with initial values.
+ * 
+ * The function initializes asymmetric context with initial values.
  *
  * @param[out] context Pointer to asymmetric crypto context.
  * @param[in] session Associate SSS session with asymmetric context.
@@ -825,8 +850,9 @@ sss_status_t sss_asymmetric_context_init(sss_asymmetric_t *context,
     sss_algorithm_t algorithm,
     sss_mode_t mode);
 
-/** @brief Asymmetric signature of a message digest
- *  The function signs a message digest.
+/** @brief Asymmetric signature of a message digest.
+ *  
+ * The function signs a message digest.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] digest Input buffer containing the input message digest
@@ -842,8 +868,9 @@ sss_status_t sss_asymmetric_context_init(sss_asymmetric_t *context,
 sss_status_t sss_asymmetric_sign_digest(
     sss_asymmetric_t *context, uint8_t *digest, size_t digestLen, uint8_t *signature, size_t *signatureLen);
 
-/** @brief Asymmetric verify of a message digest
- *  The function verifies a message digest.
+/** @brief Asymmetric verify of a message digest.
+ *  
+ * The function verifies a message digest.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] digest Input buffer containing the input message digest
@@ -859,8 +886,9 @@ sss_status_t sss_asymmetric_sign_digest(
 sss_status_t sss_asymmetric_verify_digest(
     sss_asymmetric_t *context, uint8_t *digest, size_t digestLen, uint8_t *signature, size_t signatureLen);
 
-/** @brief Asymmetric signature of a message
- *  The function signs a message.
+/** @brief Asymmetric signature of a message.
+ *  
+ * The function signs a message in one go.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
@@ -876,13 +904,14 @@ sss_status_t sss_asymmetric_verify_digest(
 sss_status_t sss_asymmetric_sign_one_go(
     sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen, uint8_t *signature, size_t *signatureLen);
 
-/** @brief Asymmetric signature of a message init
- *  The function signs a message.
+/** @brief Initialize asymmetric signature operation.
+ *  
+ * The function signs a message in a multi-step operation.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
  * @param[in] srcLen Length of the srcData in bytes
-
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -891,13 +920,15 @@ sss_status_t sss_asymmetric_sign_one_go(
 
 sss_status_t sss_asymmetric_sign_init(sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen);
 
-/** @brief Asymmetric signature of a message update
- *  The function signs a message.
+/** @brief Update asymmetric signature operation with message data.
+ * 
+ * This function feeds a chunk of the message to the signing operation.
+ * The signing operation is finalized with a call to @ref sss_asymmetric_sign_finish().
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
  * @param[in] srcLen Length of the srcData in bytes
-
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -905,15 +936,16 @@ sss_status_t sss_asymmetric_sign_init(sss_asymmetric_t *context, uint8_t *srcDat
  */
 sss_status_t sss_asymmetric_sign_update(sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen);
 
-/** @brief Asymmetric signature of a message Finish
- *  The function signs a message.
+/** @brief Finalize asymmetric signature operation.
+ * 
+ * This function completes the signing process and outputs the generated signature.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
  * @param[in] srcLen Length of the srcData in bytes
  * @param[out] signature Output buffer written with the signature of the srcData
  * @param[in, out] signatureLen Length of the signature in bytes
-
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -924,7 +956,8 @@ sss_status_t sss_asymmetric_sign_finish(
     sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen, uint8_t *signature, size_t *signatureLen);
 
 /** @brief Asymmetric verify of a message
- *  The function verifies a message.
+ * 
+ * The function verifies a message in one go.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
@@ -941,8 +974,9 @@ sss_status_t sss_asymmetric_sign_finish(
 sss_status_t sss_asymmetric_verify_one_go(
     sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen, uint8_t *signature, size_t signatureLen);
 
-/** @brief Asymmetric verify of a message
- *  The function verifies a message.
+/** @brief Initialize asymmetric verify operation.
+ * 
+ * This function initializes the asymmetric verification process in a multi-step operation.
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
@@ -955,8 +989,10 @@ sss_status_t sss_asymmetric_verify_one_go(
  */
 sss_status_t sss_asymmetric_verify_init(sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen);
 
-/** @brief Asymmetric verify of a message
- *  The function verifies a message.
+/** @brief Update asymmetric verify operation with message data.
+ * 
+ * This function feeds a chunk of the message to the verification operation.
+ * The verification operation is finalized with a call to @ref sss_asymmetric_verify_finish().
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
@@ -969,15 +1005,17 @@ sss_status_t sss_asymmetric_verify_init(sss_asymmetric_t *context, uint8_t *srcD
  */
 sss_status_t sss_asymmetric_verify_update(sss_asymmetric_t *context, uint8_t *srcData, size_t srcLen);
 
-/** @brief Asymmetric verify of a message
- *  The function verifies a message.
+/** @brief Finalize asymmetric verify operation.
+ * 
+ * This function completes the verification process by checking the provided signature
+ * against the accumulated message data
  *
  * @param[in] context Pointer to asymmetric context.
  * @param[in] srcData Input buffer containing the input message
  * @param[in] srcLen Length of the srcData in bytes
  * @param[in] signature Input buffer containing the signature to verify
  * @param[in] signatureLen Length of the signature in bytes
-
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1003,7 +1041,8 @@ void sss_asymmetric_context_free(sss_asymmetric_t *context);
  */
 
 /** @brief Symmetric context init.
- *  The function initializes symmetric context with initial values.
+ * 
+ * The function initializes symmetric context with initial values.
  *
  * @param[out] context Pointer to symmetric crypto context.
  * @param[in] session Associate SSS session with symmetric context.
@@ -1023,15 +1062,17 @@ sss_status_t sss_symmetric_context_init(sss_symmetric_t *context,
     sss_mode_t mode);
 
 /** @brief Symmetric cipher in one blocking function call.
- *  The function blocks current thread until the operation completes or an error occurs.
+ * 
+ * The function blocks current thread until the operation completes or an error occurs.
  *
  * @param[in] context Pointer to symmetric crypto context.
  * @param[in] iv Buffer containing the symmetric operation Initialization Vector. When using internal IV algorithms (only encrypt)
- * for SE, iv buffer will be filled with genereted Initialization Vector.
+ * for SE, iv buffer will be filled with generated Initialization Vector.
  * @param[in] ivLen Length of the Initialization Vector in bytes.
  * @param[in] srcData Buffer containing the input data (block aligned).
  * @param[out] destData Buffer containing the output data.
  * @param[in] dataLen Size of input and output data buffer in bytes.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1039,13 +1080,17 @@ sss_status_t sss_symmetric_context_init(sss_symmetric_t *context,
 sss_status_t sss_cipher_one_go(
     sss_symmetric_t *context, uint8_t *iv, size_t ivLen, const uint8_t *srcData, uint8_t *destData, size_t dataLen);
 
-/** @brief Symmetric cipher init.
- *  The function starts the symmetric cipher operation.
+/** @brief Initialize the symmetric cipher operation.
+ * 
+ * This function starts the symmetric encryption or decryption operation.
+ * If the algorithm supports internal IV generation (e.g., on Secure Authenticator),
+ * the IV buffer will be populated with the generated IV during encryption
  *
  * @param[in] context Pointer to symmetric crypto context.
  * @param[in] iv Buffer containing the symmetric operation Initialization Vector. When using internal IV algorithms (only encrypt)
- * for SE, iv buffer will be filled with genereted Initialization Vector.
+ * for SE, iv buffer will be filled with generated Initialization Vector.
  * @param[in] ivLen Length of the Initialization Vector in bytes.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1053,6 +1098,7 @@ sss_status_t sss_cipher_one_go(
 sss_status_t sss_cipher_init(sss_symmetric_t *context, uint8_t *iv, size_t ivLen);
 
 /** @brief Symmetric cipher update.
+ * 
  * Input data does not have to be a multiple of block size. Subsequent calls to this function are possible.
  * Unless one or more calls of this function have supplied sufficient input data, no output is generated.
  * The cipher operation is finalized with a call to @ref sss_cipher_finish().
@@ -1063,6 +1109,7 @@ sss_status_t sss_cipher_init(sss_symmetric_t *context, uint8_t *iv, size_t ivLen
  * @param[out] destData Buffer containing the output data.
  * @param[in,out] destLen Length of the output data in bytes. Buffer length on entry, reflects actual output size on
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1071,7 +1118,10 @@ sss_status_t sss_cipher_init(sss_symmetric_t *context, uint8_t *iv, size_t ivLen
 sss_status_t sss_cipher_update(
     sss_symmetric_t *context, const uint8_t *srcData, size_t srcLen, uint8_t *destData, size_t *destLen);
 
-/** @brief Symmetric cipher finalize.
+/** @brief Finalize the symmetric cipher operation.
+ *
+ * This function completes the symmetric encryption or decryption process.
+ * It processes the final chunk of input data and writes the resulting output.
  *
  * @param[in] context Pointer to symmetric crypto context.
  * @param[in] srcData Buffer containing final chunk of input data.
@@ -1079,6 +1129,7 @@ sss_status_t sss_cipher_update(
  * @param[out] destData Buffer containing output data.
  * @param[in,out] destLen Length of output data in bytes. Buffer length on entry, reflects actual output size on
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1105,11 +1156,11 @@ void sss_symmetric_context_free(sss_symmetric_t *context);
 /** @brief Aead context init.
  *  The function initializes aead context with initial values.
  *
- * @param context Pointer to aead context.
- * @param session Associate SSS session with aead context.
- * @param keyObject Associate SSS session with key object.
- * @param algorithm One of the aead algorithms defined by @ref sss_algorithm_t.
- * @param mode One of the modes defined by @ref sss_mode_t.
+ * @param[out] context Pointer to aead context.
+ * @param[in] session Associate SSS session with aead context.
+ * @param[in] keyObject Associate SSS session with key object.
+ * @param[in] algorithm One of the aead algorithms defined by @ref sss_algorithm_t.
+ * @param[in] mode One of the modes defined by @ref sss_mode_t.
  *
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
@@ -1120,19 +1171,20 @@ void sss_symmetric_context_free(sss_symmetric_t *context);
 sss_status_t sss_aead_context_init(
     sss_aead_t *context, sss_session_t *session, sss_object_t *keyObject, sss_algorithm_t algorithm, sss_mode_t mode);
 
-/** @brief Symmetric cipher finalize.
+/** @brief AEAD in one blocking function call.
  *
- * @param context Pointer to symmetric crypto context.
- * @param srcData Buffer containing final chunk of input data.
- * @param destData Buffer containing output data.
- * @param[in,out] size Length of output data in bytes. Buffer length on entry, reflects actual output size on
- * @param nonce Buffer containing Nonce data.
+ * @param[in] context Pointer to aead crypto context.
+ * @param[in] srcData Buffer containing final chunk of input data.
+ * @param[in] destData Buffer containing output data.
+ * @param[in] size Length of output data in bytes. Buffer length on entry, reflects actual output size on
+ * @param[in] nonce Buffer containing Nonce data.
  * @param[in,out] nonceLen Length of nonce data in bytes. Buffer length on entry, reflects actual nonce Length on
- * @param aad Buffer containing aad data.
+ * @param[in] aad Buffer containing aad data.
  * @param[in] aadLen Length of aad data in bytes. Buffer length on entry, reflects actual aad Length on
- * @param tag Buffer containing tag data.
- * @param[in, out] tagLen Length of tag data in bytes. Buffer length on entry, reflects actual tag Length on
+ * @param[out] tag Buffer containing tag data.
+ * @param[in,out] tagLen Length of tag data in bytes. Buffer length on entry, reflects actual tag Length on
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1149,15 +1201,18 @@ sss_status_t sss_aead_one_go(sss_aead_t *context,
     uint8_t *tag,
     size_t *tagLen);
 
-/** @brief Symmetric cipher finalize.
+/** @brief Initialize AEAD operation.
  *
- * @param context Pointer to symmetric crypto context.
- * @param nonce Buffer containing Nonce data.
+ * Prepares the AEAD context for encryption or decryption using the provided parameters
+ * 
+ * @param[in] context Pointer to aead crypto context.
+ * @param[in] nonce Buffer containing Nonce data.
  * @param[in,out] nonceLen Length of nonce data in bytes. Buffer length on entry, reflects actual nonce Length on
- * @param[in] aadLen Length of aad data in bytes.
  * @param[in] tagLen Length of tag data in bytes.
+ * @param[in] aadLen Length of aad data in bytes.
  * @param[in] payloadLen Length of total input data in bytes.
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1166,12 +1221,15 @@ sss_status_t sss_aead_one_go(sss_aead_t *context,
 sss_status_t sss_aead_init(
     sss_aead_t *context, uint8_t *nonce, size_t nonceLen, size_t tagLen, size_t aadLen, size_t payloadLen);
 
-/** @brief Symmetric cipher finalize.
- *
- * @param context Pointer to symmetric crypto context.
- * @param aadData Buffer containing aad data.
+/** @brief Feed a chunk of Additional Authenticated Data (AAD).
+ * 
+ * This function can be called multiple times to provide AAD in chunks.
+ * 
+ * @param[in] context Pointer to symmetric crypto context.
+ * @param[in] aadData Buffer containing aad data.
  * @param[in] aadDataLen Length of aad data in bytes. Buffer length on entry, reflects actual aad Length on
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1179,14 +1237,18 @@ sss_status_t sss_aead_init(
  */
 sss_status_t sss_aead_update_aad(sss_aead_t *context, const uint8_t *aadData, size_t aadDataLen);
 
-/** @brief Symmetric cipher finalize.
+/** @brief Aead Process a chunk of input data.
  *
- * @param context Pointer to symmetric crypto context.
- * @param srcData Buffer containing final chunk of input data.
- * @param srcLen Length of final chunk of input data in bytes.
- * @param destData Buffer containing output data.
+ * This function can be called multiple times to process input data in chunks.
+ * The aead operation is finalized with a call to @ref sss_aead_finish().
+ * 
+ * @param[in] context Pointer to aead crypto context.
+ * @param[in] srcData Buffer containing final chunk of input data.
+ * @param[in] srcLen Length of final chunk of input data in bytes.
+ * @param[in] destData Buffer containing output data.
  * @param[in,out] destLen Length of output data in bytes. Buffer length on entry, reflects actual output size on
  * return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1195,16 +1257,19 @@ sss_status_t sss_aead_update_aad(sss_aead_t *context, const uint8_t *aadData, si
 sss_status_t sss_aead_update(
     sss_aead_t *context, const uint8_t *srcData, size_t srcLen, uint8_t *destData, size_t *destLen);
 
-/** @brief Symmetric cipher finalize.
+/** @brief Finalize the AEAD operation.
  *
- * @param context Pointer to symmetric crypto context.
- * @param srcData Buffer containing final chunk of input data.
- * @param srcLen Length of final chunk of input data in bytes.
- * @param destData Buffer containing output data.
+ * This function completes the AEAD encryption or decryption operation and either 
+ * generates or verifies the authentication tag, depending on the mode.
+ * 
+ * @param[in] context Pointer to aead crypto context.
+ * @param[in] srcData Buffer containing final chunk of input data.
+ * @param[in] srcLen Length of final chunk of input data in bytes.
+ * @param[out] destData Buffer containing output data.
  * @param[in,out] destLen Length of output data in bytes. Buffer length on entry, reflects actual output size on
- * @param tag Buffer containing tag data.
- * @param[in, out] tagLen Length of tag data in bytes. Buffer length on entry, reflects actual tag Length on
- * return.
+ * @param[in,out] tag Buffer containing tag data.
+ * @param[in,out] tagLen Length of tag data in bytes. Buffer length on entry, reflects actual tag Length on return.
+ * 
  * @returns Status of the operation
  * @retval #kStatus_SSS_Success The operation has completed successfully.
  * @retval #kStatus_SSS_Fail The operation has failed.
@@ -1219,9 +1284,9 @@ sss_status_t sss_aead_finish(sss_aead_t *context,
     size_t *tagLen);
 
 /** @brief Aead context release.
- *  The function frees symmetric context.
+ *  The function frees aead context.
  *
- * @param context Pointer to Aead crypto context.
+ * @param[in] context Pointer to Aead crypto context.
  */
 void sss_aead_context_free(sss_aead_t *context);
 /**
@@ -1234,7 +1299,8 @@ void sss_aead_context_free(sss_aead_t *context);
  */
 
 /** @brief Digest context init.
- *  The function initializes digest context with initial values.
+ * 
+ * The function initializes digest context with initial values.
  *
  * @param[out] context Pointer to digest context.
  * @param[in] session Associate SSS session with digest context.
@@ -1250,7 +1316,8 @@ sss_status_t sss_digest_context_init(
     sss_digest_t *context, sss_session_t *session, sss_algorithm_t algorithm, sss_mode_t mode);
 
 /** @brief Message digest in one blocking function call.
- *  The function blocks current thread until the operation completes or an error occurs.
+ * 
+ * The function blocks current thread until the operation completes or an error occurs.
  *
  * @param[in] context Pointer to digest context.
  * @param[in] message Input message
@@ -1265,8 +1332,10 @@ sss_status_t sss_digest_context_init(
 sss_status_t sss_digest_one_go(
     sss_digest_t *context, const uint8_t *message, size_t messageLen, uint8_t *digest, size_t *digestLen);
 
-/** @brief Init for digest multi step operation.
+/** @brief Initializes the digest context for multi-step operation.
  *
+ * This function prepares the digest context for processing a message in multiple steps.
+ * 
  * @param[in] context Pointer to digest context.
  *
  * @returns Status of the operation
@@ -1275,8 +1344,12 @@ sss_status_t sss_digest_one_go(
  */
 sss_status_t sss_digest_init(sss_digest_t *context);
 
-/** @brief Update for digest multi step operation.
+/** @brief Update the digest with a chunk of the message.
  *
+ * This function processes a portion of the input message. It can be called 
+ * multiple times to process the entire message in chunks. The digest operation 
+ * must be finalized by calling @ref sss_digest_finish().
+ * 
  * @param[in] context Pointer to digest context.
  * @param[in] message Buffer with a message chunk.
  * @param[in] messageLen Length of the input buffer in bytes.
@@ -1287,8 +1360,10 @@ sss_status_t sss_digest_init(sss_digest_t *context);
  */
 sss_status_t sss_digest_update(sss_digest_t *context, const uint8_t *message, size_t messageLen);
 
-/** @brief Finish for digest multi step operation.
+/** @brief Finalize the digest operation and retrieve the message digest.
  *
+ * This function completes the digest computation and outputs the final hash value.
+ * 
  * @param[in] context Pointer to digest context.
  * @param[out] digest Output message digest
  * @param[in,out] digestLen Message digest byte length
@@ -1321,7 +1396,9 @@ void sss_digest_context_free(sss_digest_t *context);
  * @param[out]   context random generator context.
  * @param[in]   session Session context.
  *
- * @return  sss status
+ * @returns Status of the operation
+ * @retval #kStatus_SSS_Success The operation has completed successfully.
+ * @retval #kStatus_SSS_Fail The operation has failed.
  */
 sss_status_t sss_rng_context_init(sss_rng_context_t *context, sss_session_t *session);
 
@@ -1332,16 +1409,20 @@ sss_status_t sss_rng_context_init(sss_rng_context_t *context, sss_session_t *ses
  * @param[out]   random_data buffer to hold random data.
  * @param[in]   dataLen required random number length
  *
- * @return  sss status
+ * @returns Status of the operation
+ * @retval #kStatus_SSS_Success The operation has completed successfully.
+ * @retval #kStatus_SSS_Fail The operation has failed.
  */
 sss_status_t sss_rng_get_random(sss_rng_context_t *context, uint8_t *random_data, size_t dataLen);
 
 /**
- * @brief free random genertor context.
+ * @brief free random generator context.
  *
  * @param[out]   context generator context.
  *
- * @return  sss status
+ * @returns Status of the operation
+ * @retval #kStatus_SSS_Success The operation has completed successfully.
+ * @retval #kStatus_SSS_Fail The operation has failed.
  */
 sss_status_t sss_rng_context_free(sss_rng_context_t *context);
 
@@ -1355,7 +1436,8 @@ sss_status_t sss_rng_context_free(sss_rng_context_t *context);
  */
 
 /** @brief MAC context init.
- *  The function initializes mac context with initial values.
+ * 
+ * The function initializes mac context with initial values.
  *
  * @param[out] context Pointer to mac context.
  * @param[in] session Associate SSS session with mac context.
@@ -1372,7 +1454,8 @@ sss_status_t sss_mac_context_init(
     sss_mac_t *context, sss_session_t *session, sss_object_t *keyObject, sss_algorithm_t algorithm, sss_mode_t mode);
 
 /** @brief Message MAC in one blocking function call.
- *  The function blocks current thread until the operation completes or an error occurs.
+ *  
+ * The function blocks current thread until the operation completes or an error occurs.
  *
  * @param[in] context Pointer to mac context.
  * @param[in] message Input message
@@ -1387,8 +1470,9 @@ sss_status_t sss_mac_context_init(
 sss_status_t sss_mac_one_go(
     sss_mac_t *context, const uint8_t *message, size_t messageLen, uint8_t *mac, size_t *macLen);
 
-/** @brief Init mac for a message.
- *  The function blocks current thread until the operation completes or an error occurs.
+/** @brief Initializes the MAC operation for a message.
+ *  
+ * This function prepares the MAC context for processing.
  *
  * @param[in] context Pointer to mac context.
  *
@@ -1398,9 +1482,11 @@ sss_status_t sss_mac_one_go(
  */
 sss_status_t sss_mac_init(sss_mac_t *context);
 
-/** @brief Update mac for a message.
+/** @brief Updates the MAC with a chunk of the message.
  *
- *  The function blocks current thread until the operation completes or an error occurs.
+ * This function processes a portion of the input message. It can be called 
+ * multiple times to process the entire message in chunks.
+ * The mac operation must be finalized by calling @ref sss_mac_finish().
  *
  * @param[in] context Pointer to mac context.
  * @param[in] message Buffer with a message chunk.
@@ -1412,8 +1498,9 @@ sss_status_t sss_mac_init(sss_mac_t *context);
  */
 sss_status_t sss_mac_update(sss_mac_t *context, const uint8_t *message, size_t messageLen);
 
-/** @brief Finish mac for a message.
- *  The function blocks current thread until the operation completes or an error occurs.
+/** @brief Finalize mac for a message.
+ * 
+ * This function completes the MAC computation and outputs the resulting MAC.
  *
  * @param[in] context Pointer to mac context.
  * @param[in,out] mac Output message MAC

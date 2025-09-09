@@ -116,7 +116,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     incrValue = 3;
     sm_status = nx_IncrCounterFile(&((sss_nx_session_t *)pSession)->s_ctx, fileNo, incrValue, Nx_CommMode_NA);
     ENSURE_OR_GO_CLEANUP(sm_status == SM_OK);
-    LOG_I("Increase counter by 0x%x", incrValue);
+    LOG_I("Increase counter by 0x%zx", incrValue);
 
     /*Get counter from counter file*/
     sm_status = nx_GetFileCounters(&((sss_nx_session_t *)pSession)->s_ctx, fileNo, &counter, Nx_CommMode_NA);

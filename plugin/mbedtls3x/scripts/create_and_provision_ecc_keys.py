@@ -16,7 +16,7 @@ from utils import *
 log = logging.getLogger(__name__)
 
 #KeyID
-CLIENT_KEY_PAIR_ID = 0x00000000
+CLIENT_KEY_PAIR_ID = 0x00000002
 
 example_text = '''
 Example invocation:

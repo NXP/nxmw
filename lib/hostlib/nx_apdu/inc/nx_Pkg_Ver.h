@@ -1,4 +1,4 @@
-/* Copyright 2019-2021 NXP
+/* Copyright 2019-2021, 2025 NXP
  * 
  * SPDX-License-Identifier: BSD-3-Clause
  * 
@@ -10,18 +10,18 @@
 
 /* clang-format off */
 #define NX_PKG_PROD_NAME          "NX_PKG"
-#define NX_PKG_VER_STRING_NUM     "v02.05.01_20250515"
-#define NX_PKG_PROD_NAME_VER_FULL "NX_PKG_v02.05.01_20250515"
+#define NX_PKG_VER_STRING_NUM     "v02.06.00_20250825"
+#define NX_PKG_PROD_NAME_VER_FULL "NX_PKG_v02.05.01_20250825"
 #define NX_PKG_VER_MAJOR          (2u)
-#define NX_PKG_VER_MINOR          (5u)
-#define NX_PKG_VER_DEV            (1u)
+#define NX_PKG_VER_MINOR          (6u)
+#define NX_PKG_VER_DEV            (0u)
 
-/* v02.05 = 20005u */
+/* v02.06 = 20006u */
 #define NX_PKG_VER_MAJOR_MINOR ( 0 \
     | (NX_PKG_VER_MAJOR * 10000u)    \
     | (NX_PKG_VER_MINOR))
 
-/* v02.05.00 = 200050000ULL */
+/* v02.06.00 = 200060000ULL */
 #define NX_PKG_VER_MAJOR_MINOR_DEV ( 0 \
     | (NX_PKG_VER_MAJOR * 10000*10000u)    \
     | (NX_PKG_VER_MINOR * 10000u)    \

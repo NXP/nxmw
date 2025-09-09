@@ -202,7 +202,11 @@ int main(int argc, const char *argv[])
     }
 
 #if EX_SSS_BOOT_OPEN_HOST_SESSION && SSS_HAVE_HOSTCRYPTO_ANY
-    ex_sss_boot_open_host_session((PCONTEXT));
+    // Note: If no NX Type is selected, host_session_open is not done.
+    status = ex_sss_boot_open_host_session((PCONTEXT));
+    if (kStatus_SSS_Success != status) {
+        LOG_W("Error in ex_sss_boot_open_host_session \n");
+    }
 #endif
 
 #if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS) || \
@@ -301,6 +305,12 @@ exit:
         exit(1);
     }
 #else
+    if (kStatus_SSS_Success == status) {
+        platform_success_indicator();
+    }
+    else {
+        platform_failure_indicator();
+    }
     vTaskDelete(NULL);
 #endif
 }

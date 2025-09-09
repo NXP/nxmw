@@ -21,6 +21,9 @@ The overall architecture looks like this:
 
 - Nx middleware stack. Refer [**Build**](../../../doc/windows/readme.md).
 
+  - `NXMW_CMSIS_Driver=Disabled` Uses MCU-specific port files
+  - `NXMW_CMSIS_Driver=Enabled` Uses CMSIS-compliant drivers, supported platforms MCXA153 and MCXN947
+
 Build project:
 
 - Project: `vcom`

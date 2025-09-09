@@ -1,17 +1,28 @@
 /*
  *
- * Copyright 2024 NXP
+ * Copyright 2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 /* ************************************************************************** */
 /* Includes                                                                   */
 /* ************************************************************************** */
+#if defined(SSS_USE_FTR_FILE)
+#include "fsl_sss_ftr.h"
+#else
+#include "fsl_sss_ftr_default.h"
+#endif
 
 #include <stddef.h>
 #include "phEseTypes.h"
 #include "phEseStatus.h"
 #include "phNxpEse_Api.h"
+
+#if defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED)
+#include "platform.h"
+#else
+#define PRINTF printf
+#endif
 
 int main()
 {
@@ -36,11 +47,13 @@ int main()
 
     /* Get free memory command APDU */
     uint8_t getFreeMem_cmd[] = {0x90, 0x6E, 0x00, 0x00, 0x00, 0x00, 0x00};
-
+#if defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED)
+    platform_boot_direct();
+#endif
     /* T=1oi2c open session */
     status = phNxpEse_open(conn_ctx, initParams, NULL);
     if (status != ESESTATUS_SUCCESS) {
-        printf("phNxpEse_open Failed\n");
+        PRINTF("phNxpEse_open Failed\n\r");
         goto exit;
     }
 
@@ -48,7 +61,7 @@ int main()
     AtrRsp.p_data = cip;
     status        = phNxpEse_init(conn_ctx, initParams, &AtrRsp);
     if (status != ESESTATUS_SUCCESS) {
-        printf("phNxpEse_init failed\n");
+        PRINTF("phNxpEse_init failed\n\r");
         goto exit;
     }
 
@@ -59,7 +72,7 @@ int main()
     pRspTrans.p_data = rx_buffer;
     status           = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
     if (status != ESESTATUS_SUCCESS) {
-        printf("phNxpEse_Transceive Failed\n");
+        PRINTF("phNxpEse_Transceive Failed\n\r");
         goto exit;
     }
 
@@ -71,27 +84,27 @@ int main()
 
     status = phNxpEse_Transceive(conn_ctx, &pCmdTrans, &pRspTrans);
     if (status != ESESTATUS_SUCCESS) {
-        printf("phNxpEse_Transceive Failed\n");
+        PRINTF("phNxpEse_Transceive Failed\n\r");
         goto exit;
     }
 
     memcpy(freememBuf, rx_buffer, 3);
     freememsize = (uint32_t)((freememBuf[2] << 16) | (freememBuf[1] << 8) | freememBuf[0]);
 
-    printf("Available free memory: %u bytes\n", freememsize);
+    PRINTF("Available free memory: %lu bytes\n\r", freememsize);
 
 exit:
 
     /* Session close Commands */
     status = phNxpEse_close(conn_ctx);
     if (status != ESESTATUS_SUCCESS) {
-        printf("phNxpEse_close Failed\n");
+        PRINTF("phNxpEse_close Failed\n\r");
     }
 
     if (status == ESESTATUS_SUCCESS) {
-        printf("ex_t1oi2c Example Success !!!...\n");
+        PRINTF("ex_t1oi2c Example Success !!!...\n\r");
     }
     else {
-        printf("ex_t1oi2c Example Failed !!!...\n");
+        PRINTF("ex_t1oi2c Example Failed !!!...\n\r");
     }
 }

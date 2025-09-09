@@ -18,6 +18,17 @@ void nxclitool_show_command_help_generate()
         "  -keyid:\tKey ID for asymmetric key pair in NX SE. Key ID should be in HEX format. Example: 0x02. Accepted "
         "range:\n");
     printf("\t\t  0x00 to 0x04\n");
+    printf("  -enable\tOperation to be performed by the key. Accepted values:\n");
+    printf("\t\t  none\n");
+    printf("\t\t  ecdh\n");
+    printf("\t\t  sign\n");
+    printf("\t\t  sigmai\n");
+    printf("\t\t  sdm\n");
+    printf("  -waccess\tWrite Access for key policy. Accepted values:\n");
+    printf("\t\t  0x00 to 0x0C\tAuth Required\n");
+    printf("\t\t  0x0D\t\tFree over I2C\n");
+    printf("\t\t  0x0E\t\tFree Access\n");
+    printf("\t\t  0x0F\t\tNo Access\n");
     printf("\n");
 }
 
@@ -27,6 +38,8 @@ sss_status_t nxclitool_do_generate_key(int argc,
     nx_connect_ctx_t *pconn_ctx,
     uint32_t key_id,
     Nx_ECCurve_t curve_type,
+    NXCLITOOL_OPERATION_t operation,
+    uint8_t write_acc_cond,
     char file_out_path[],
     bool file_out_flag)
 {
@@ -36,24 +49,79 @@ sss_status_t nxclitool_do_generate_key(int argc,
     size_t key_byte_len           = 256;
     FILE *fh                      = NULL;
 
+    ENSURE_OR_GO_CLEANUP(write_acc_cond <= 0x0F);
 #if SSS_HAVE_NX_TYPE
-    const sss_policy_u key_gen_policy = {.type = KPolicy_GenECKey,
-        .policy                                = {.genEcKey = {
+    sss_policy_u keyGenPolicy  = {.type = KPolicy_GenECKey,
+        .policy                        = {.genEcKey = {
                        .freezeKUCLimit        = 0,
                        .cardUnilateralEnabled = 0,
-                       .sdmEnabled            = 1,
+                       .sdmEnabled            = 0,
                        .sigmaiEnabled         = 0,
                        .ecdhEnabled           = 0,
                        .eccSignEnabled        = 1,
                        .writeCommMode         = kCommMode_SSS_Full,
-                       .writeAccessCond       = Nx_AccessCondition_Auth_Required_0x0,
+                       .writeAccessCond       = write_acc_cond,
                        .kucLimit              = 0,
                        .userCommMode          = kCommMode_SSS_NA,
                    }}};
-    sss_policy_t ec_key_policy        = {.nPolicies = 1, .policies = {&key_gen_policy}};
+    sss_policy_t ec_key_policy = {.nPolicies = 1, .policies = {&keyGenPolicy}};
 #endif
 
-    LOG_I("Using Key ID as 0x%X", key_id);
+    switch (operation) {
+    case NXCLITOOL_OPERATION_NONE:
+        keyGenPolicy.policy.genEcKey.eccSignEnabled = 0;
+        keyGenPolicy.policy.genEcKey.ecdhEnabled    = 0;
+        keyGenPolicy.policy.genEcKey.sigmaiEnabled  = 0;
+        keyGenPolicy.policy.genEcKey.sdmEnabled     = 0;
+        break;
+    case NXCLITOOL_OPERATION_SIGN:
+        keyGenPolicy.policy.genEcKey.eccSignEnabled = 1;
+        keyGenPolicy.policy.genEcKey.ecdhEnabled    = 0;
+        break;
+    case NXCLITOOL_OPERATION_ECDH:
+        keyGenPolicy.policy.genEcKey.eccSignEnabled = 0;
+        keyGenPolicy.policy.genEcKey.ecdhEnabled    = 1;
+        break;
+    case NXCLITOOL_OPERATION_SIGMAI:
+        keyGenPolicy.policy.genEcKey.sigmaiEnabled = 1;
+        break;
+    case NXCLITOOL_OPERATION_SDM:
+        keyGenPolicy.policy.genEcKey.sdmEnabled = 1;
+        break;
+    default:
+        LOG_E("Invalid Operation for setting key");
+        goto cleanup;
+    }
+
+    switch (write_acc_cond) {
+    case 0x00:
+    case 0x01:
+    case 0x02:
+    case 0x03:
+    case 0x04:
+    case 0x05:
+    case 0x06:
+    case 0x07:
+    case 0x08:
+    case 0x09:
+    case 0x0A:
+    case 0x0B:
+    case 0x0C:
+        LOG_I("Using write access condition as AUTH REQUIRED 0x%X", write_acc_cond);
+        break;
+    case 0x0D:
+        LOG_I("Using write access condition as FREE OVER I2C");
+        break;
+    case 0x0E:
+        LOG_I("Using write access condition as FREE ACCESS");
+        break;
+    case 0x0F:
+        LOG_I("Using write access condition as NO ACCESS");
+        break;
+    default:
+        LOG_E("Invalid write access condition");
+        break;
+    }
 
     switch (curve_type) {
     case Nx_ECCurve_NA:
@@ -72,6 +140,8 @@ sss_status_t nxclitool_do_generate_key(int argc,
         LOG_E("Invalid curve type");
         break;
     }
+
+    LOG_I("Using Key ID as 0x%X", key_id);
 
     status = sss_key_store_context_init(&pboot_ctx->ks, &pboot_ctx->session);
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);

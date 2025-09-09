@@ -630,7 +630,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         goto exit;
     }
 
-#if defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)
+#if defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS == 1)
     status = ex_sss_boot_open_host_session(pCtx);
     ENSURE_OR_GO_EXIT(kStatus_SSS_Success == status);
 #endif

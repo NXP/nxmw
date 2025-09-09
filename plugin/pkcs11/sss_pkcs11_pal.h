@@ -124,7 +124,7 @@ extern ex_sss_boot_ctx_t *pex_sss_demo_boot_ctx;
 /*
  * ISO Member bodies OID parts
  */
-#define MBEDTLS_OID_COUNTRY_US "\x86\x48"     /* {us(840)} */
+#define MBEDTLS_OID_COUNTRY_US "\x86\x48" /* {us(840)} */
 #define MBEDTLS_OID_ORG_ANSI_X9_62 "\xce\x3d" /* ansi-X9-62(10045) */
 #define MBEDTLS_OID_ANSI_X9_62 MBEDTLS_OID_ISO_MEMBER_BODIES MBEDTLS_OID_COUNTRY_US MBEDTLS_OID_ORG_ANSI_X9_62
 

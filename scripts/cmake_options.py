@@ -233,6 +233,14 @@ LIST_SA_TYPE = [
 for e, _, _ in LIST_SA_TYPE:
     pass
 
+LIST_CMSIS_Driver = [
+    ("Disabled", "CMSIS I2C driver Disabled", True),
+    ("Enabled", "CMSIS I2C driver Enabled", True),
+]
+
+for e, _, _ in LIST_CMSIS_Driver:
+    pass
+
 ALL_VALUES = [
     ("NXMW_NX_Type", "NX_R_DA",
      ("The NX Secure Authenticator Type",
@@ -337,6 +345,10 @@ ALL_VALUES = [
      ("Enable host certificates of A30 for sigma-I Authentication",
       "When Secure Authenticator type is selected, respective host certificates are enabled in nx library.",
       ), LIST_SA_TYPE),
+    ("NXMW_CMSIS_DRIVER", "Disabled",
+     ("CMSIS I2C driver for communicating with SA", "",
+      "CMSIS I2C driver for communicating with SA. (Disabled by Default)",
+      ), LIST_CMSIS_Driver),
 ]
 
 ALL_PATH_VALUES = [

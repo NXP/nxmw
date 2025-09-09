@@ -48,7 +48,7 @@ typedef unsigned char bool; // C++ and GCC has bool.
 #define false(0)
 #define true(1)
 #endif //_MSC_VER < 1600
-#else  // _MSC_VER
+#else // _MSC_VER
 typedef unsigned char bool; // C++ and GCC has bool.
 #endif
 #endif /* bool */
@@ -106,7 +106,7 @@ typedef U16 SM_Error_t;
 
 /* ------------------------------ */
 // Error/status word
-#define SW_OK (0x9000)     //!< Operation successfull
+#define SW_OK (0x9000) //!< Operation successfull
 #define SW_ALT_OK (0x9100) //!< Operation successfull
 
 #define ERR_CONNECT_LINK_FAILED (0x7001)
@@ -119,11 +119,11 @@ typedef U16 SM_Error_t;
 // #define SMCOM_SND_FAILED 0x7010
 // #define SMCOM_RCV_FAILED 0x7011
 
-#define ERR_MEMORY (0x7020)         //!< Memory allocation error
-#define ERR_GENERAL_ERROR (0x7021)  //!< Non-specific error code
+#define ERR_MEMORY (0x7020) //!< Memory allocation error
+#define ERR_GENERAL_ERROR (0x7021) //!< Non-specific error code
 #define ERR_WRONG_RESPONSE (0x7022) //!< Semantic error discovered while parsing APDU response
-#define ERR_API_ERROR (0x7023)      //!< Illegal parameter value passed to API
-#define ERR_TLV_MISSING (0x7024)    //!< Specific TAG is missing from APDU response
+#define ERR_API_ERROR (0x7023) //!< Illegal parameter value passed to API
+#define ERR_TLV_MISSING (0x7024) //!< Specific TAG is missing from APDU response
 #define ERR_HASH_COMPARE_FAILS (0x7025)
 #define ERR_BUF_TOO_SMALL (0x7026) //!< Buffer provided is too small
 #define ERR_CRYPTO_ENGINE_FAILED \
@@ -132,8 +132,8 @@ typedef U16 SM_Error_t;
 #define ERR_NOT_IMPLEMENTED (0x7029)
 #define ERR_FILE_SYSTEM (0x7030)
 #define ERR_NO_PRIVATE_KEY (0x7031)
-#define ERR_IDENT_IDX_RANGE (0x7032)        //!< Identifier or Index of Reference Key is out of bounds
-#define ERR_CRC_CHKSUM_VERIFY (0x7033)      //!< CRC checksum verify error
+#define ERR_IDENT_IDX_RANGE (0x7032) //!< Identifier or Index of Reference Key is out of bounds
+#define ERR_CRC_CHKSUM_VERIFY (0x7033) //!< CRC checksum verify error
 #define ERR_INTERNAL_BUF_TOO_SMALL (0x7034) //!< In A71CH PSP 1.6 this had value 0x7033. Code was already taken by A71CL
 
 #define SCP_OK (SW_OK)
@@ -143,7 +143,7 @@ typedef U16 SM_Error_t;
 #define SCP_PARAMETER_ERROR (0x7044)
 
 #define SCP_RSP_MAC_FAIL (0x7050) //!< MAC on APDU response is not correct
-#define SCP_DECODE_FAIL (0x7051)  //!< Encrypted Response did not decode to correctly padded plaintext
+#define SCP_DECODE_FAIL (0x7051) //!< Encrypted Response did not decode to correctly padded plaintext
 
 #ifdef __cplusplus
 }

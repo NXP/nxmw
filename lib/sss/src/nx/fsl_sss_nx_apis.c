@@ -3549,7 +3549,7 @@ int util_replace_substring(
         return -1;
     }
 
-    if ((newSubstringLen - oldSubstringLen) >= ((UINT_MAX - i) / counter)) {
+    if ((counter > 0) && ((newSubstringLen - oldSubstringLen) >= ((UINT_MAX - i) / counter))) {
         return -1;
     }
 

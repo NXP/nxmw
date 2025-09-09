@@ -7,8 +7,8 @@ the IC. It performs cryptographic operations for security critical communication
 Common Criteria EAL 6+ security certified with AVA_VAN.5 on product level and supports a generic
 
 <p align=left>
-<img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="middle"/>
-<img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="150"p align="middle"/>
+<img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="left"/>
+<img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="300"p align="middle"/>
 </p>
 
 
@@ -65,7 +65,7 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 | boards             | Platform porting specific files                                         |
 | demos              | Examples / Use cases / Access manager                                   |
 | doc                | Documentation                                                           |
-| ext                | Openssl and PKCS11 dependencies required to build / run MW demos        |
+| ext                | OpenSSL and PKCS11 dependencies required to build / run MW demos        |
 | lib                | Session Manager Code, SSS APIs, NX APIs to use NX SA                    |
 | mcu_sdk            | Files for cloning and building from MCU SDK                             |
 | mcux_project       | Standalone MCUXpresso projects for various supported MCUs               |
@@ -76,7 +76,7 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 | CMakeLists.txt     | Root Cmake file                                                         |
 | LICENSE.txt        | License                                                                 |
 | README.md          | Readme document                                                         |
-| SCR.txt            | Software Content Register                                               |
+| SBOM.spdx          | Software Bill Of Materials                                              |
 
 ## Useful Links
 

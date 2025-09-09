@@ -40,7 +40,6 @@ int sessionCount         = 0;
 bool cryptokiInitialized = false;
 bool mutex_initialised   = false;
 
-
 /**
  * @brief PKCS#11 interface functions implemented by this Cryptoki module.
  */
@@ -318,10 +317,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_DigestUpdate)
     }
     pxSession->digestUpdateCalled = CK_TRUE;
     do {
-        if (ulPartLen > SIZE_MAX) {
-            xResult = CKR_FUNCTION_FAILED;
-            goto exit;
-        }
+        ENSURE_OR_GO_EXIT(ulPartLen <= SIZE_MAX);
         chunk = (ulPartLen > PKCS11_MAX_DIGEST_INPUT_DATA) ? PKCS11_MAX_DIGEST_INPUT_DATA : (size_t)ulPartLen;
 
         sss_status = sss_digest_update(&pxSession->digest_ctx, pPart + offset, chunk);
@@ -384,7 +380,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_DigestInit)
     sss_status = sss_digest_context_init(
         &pxSession->digest_ctx, &pex_sss_demo_boot_ctx->host_session, algorithm, kMode_SSS_Digest);
 #else
-    sss_status         = kStatus_SSS_Fail;
+    sss_status = kStatus_SSS_Fail;
 #endif
     ENSURE_OR_GO_EXIT(sss_status == kStatus_SSS_Success);
 
@@ -436,7 +432,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_GenerateRandom)
 #elif SSS_HAVE_HOSTCRYPTO_ANY
     sss_status = sss_host_rng_context_init(&sss_rng_ctx, &pex_sss_demo_boot_ctx->host_session /* host Session */);
 #else
-    sss_status         = kStatus_SSS_Fail;
+    sss_status = kStatus_SSS_Fail;
 #endif
     ENSURE_OR_GO_EXIT(sss_status == kStatus_SSS_Success);
 
@@ -783,7 +779,6 @@ CK_DEFINE_FUNCTION(CK_RV, C_Sign)
             status = sss_mac_one_go(&ctx_hmac, &data[0], dataLen, &hmacOutput[0], &hmacOutputLen);
             ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
         }
-
 
         if (NULL != pucSignature) {
             ENSURE_OR_GO_EXIT(*pulSignatureLen >= hmacOutputLen);
@@ -1159,7 +1154,6 @@ CK_DEFINE_FUNCTION(CK_RV, C_OpenSession)
 #endif
         sss_status = ex_sss_key_store_and_object_init(pex_sss_demo_boot_ctx);
         ENSURE_OR_GO_EXIT(sss_status == kStatus_SSS_Success);
-
     }
 #endif
 
@@ -1950,10 +1944,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_SignUpdate)
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
             }
             do {
-                if (ulPartLen > SIZE_MAX) {
-                    xResult = CKR_FUNCTION_FAILED;
-                    goto exit;
-                }
+                ENSURE_OR_GO_EXIT(ulPartLen <= SIZE_MAX);
                 chunk = (ulPartLen > PKCS11_MAX_HMAC_INPUT_DATA) ? PKCS11_MAX_HMAC_INPUT_DATA : ulPartLen;
 
                 status = sss_mac_update(&pxSessionObj->ctx_hmac, pPart + offset, chunk);
@@ -1981,10 +1972,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_SignUpdate)
             }
 
             do {
-                if (ulPartLen > SIZE_MAX) {
-                    xResult = CKR_FUNCTION_FAILED;
-                    goto exit;
-                }
+                ENSURE_OR_GO_EXIT(ulPartLen <= SIZE_MAX);
                 chunk = (ulPartLen > PKCS11_MAX_DIGEST_INPUT_DATA) ? PKCS11_MAX_DIGEST_INPUT_DATA : ulPartLen;
 
                 status = sss_digest_update(&pxSessionObj->digest_ctx, pPart + offset, chunk);
@@ -2209,10 +2197,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_VerifyUpdate)
                 ENSURE_OR_GO_EXIT(status == kStatus_SSS_Success);
             }
             do {
-                if (ulPartLen > SIZE_MAX) {
-                    xResult = CKR_FUNCTION_FAILED;
-                    goto exit;
-                }
+                ENSURE_OR_GO_EXIT(ulPartLen <= SIZE_MAX);
                 chunk = (ulPartLen > PKCS11_MAX_HMAC_INPUT_DATA) ? PKCS11_MAX_HMAC_INPUT_DATA : ulPartLen;
 
                 status = sss_mac_update(&pxSessionObj->ctx_hmac, pPart + offset, chunk);
@@ -2240,10 +2225,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_VerifyUpdate)
             }
 
             do {
-                if (ulPartLen > SIZE_MAX) {
-                    xResult = CKR_FUNCTION_FAILED;
-                    goto exit;
-                }
+                ENSURE_OR_GO_EXIT(ulPartLen <= SIZE_MAX);
                 chunk = (ulPartLen > PKCS11_MAX_DIGEST_INPUT_DATA) ? PKCS11_MAX_DIGEST_INPUT_DATA : ulPartLen;
 
                 status = sss_digest_update(&pxSessionObj->digest_ctx, pPart + offset, chunk);

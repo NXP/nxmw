@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
@@ -10,6 +10,9 @@
 #include <nxLog_msg.h>
 #include <string.h>
 #include <fsl_sss_util_asn1_der.h>
+#if SSS_HAVE_NX_TYPE
+#include "fsl_sss_nx_apis.h"
+#endif
 
 #if SSS_HAVE_HOSTCRYPTO_MBEDTLS
 #include "mbedtls/base64.h"
@@ -26,6 +29,8 @@
 #define MAX_FILE_PATH_LEN 512
 #define MAX_FILE_DATA_BUF_SIZE 2048
 #define MAX_PEM_MARKER_LEN 50
+#define MAX_SIGNATURE_LEN 72
+#define MAX_PUBLIC_KEY_LEN 92
 #define NXCLITOOL_SSS_BOOT_SSS_PCSC_READER_DEFAULT "NXP Semiconductors P71 T=0, T=1 Driver 0"
 #define NXCLITOOL_SSS_BOOT_SSS_COMPORT_DEFAULT "\\\\.\\COM7"
 #define NXCLITOOL_SSS_BOOT_SSS_I2C_PORT_DEFAULT "/dev/ttyACM0"
@@ -59,7 +64,9 @@ typedef enum
 {
     NXCLITOOL_OPERATION_NONE = 0,
     NXCLITOOL_OPERATION_SIGN,
-    NXCLITOOL_OPERATION_ECDH
+    NXCLITOOL_OPERATION_ECDH,
+    NXCLITOOL_OPERATION_SIGMAI,
+    NXCLITOOL_OPERATION_SDM,
 } NXCLITOOL_OPERATION_t;
 
 void nxclitool_show_usage()
@@ -90,6 +97,10 @@ void nxclitool_show_usage()
     printf("  setbin\t\t\tSets data to a standard data file inside SA\n");
     printf("  setkey\t\t\tSet a private key inside SA\n");
     printf("  i2c_mgnt\t\t\tSet config i2c management SA\n");
+    printf("  dgst-sha256\t\t\t Do message digest with SA\n");
+    printf("  dgst-sign\t\t\tDo ecdsa sign with SA\n");
+    printf("  dgst-verify\t\t\tDo ecdsa verify with SA\n");
+    printf("  derive-ecdh\t\t\tDerive-ecdh key with SA\n");
     printf("\n");
     printf("For individual command help, enter the command with \"-help\" flag in the end\n");
     printf("EXAMPLE:  nxclitool [COMMAND] -help\n");
@@ -275,10 +286,7 @@ int nxclitool_perso_util_asn1_get_ec_pair_key_index(const uint8_t *input,
                 break;
             }
             ENSURE_OR_GO_EXIT((UINT_MAX - i) >= taglen);
-            if (i + taglen == inLen) {
-                continue;
-            }
-            else {
+            if (i + taglen != inLen) {
                 i = i + taglen;
             }
         }
@@ -546,7 +554,9 @@ int nxclitool_fetch_parameters(int argc,
     char file_in_path[],
     char file_out_path[],
     bool *file_out_flag,
-    NXCLITOOL_OPERATION_t *operation)
+    NXCLITOOL_OPERATION_t *operation,
+    char file_pubkey_path[],
+    char file_signature_path[])
 {
     sss_status_t status         = kStatus_SSS_Fail;
     bool rng_bytes_flag         = (rng_bytes == NULL);
@@ -563,6 +573,8 @@ int nxclitool_fetch_parameters(int argc,
     bool key_type_flag          = (key_type == NULL);
     bool file_in_flag           = (file_in_path == NULL);
     bool operation_flag         = (operation == NULL);
+    bool file_pubkey_flag       = (file_pubkey_path == NULL);
+    bool file_signature_flag    = (file_signature_path == NULL);
 
     int temp_int_holder = 0;
 
@@ -589,7 +601,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-bytes\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-curve")) {
             if (curve_type != NULL) {
@@ -615,7 +626,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-curve\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-repoid")) {
             if (repo_id != NULL) {
@@ -630,7 +640,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-repoid\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-keyid")) {
             if (key_id != NULL) {
@@ -645,7 +654,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-keyid\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-certlevel")) {
             if (cert_level != NULL) {
@@ -662,7 +670,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-certlevel\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-certtype")) {
             if (is_pkcs7 != NULL) {
@@ -685,7 +692,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-certtype\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-wcomm")) {
             if (write_comm_mode != NULL) {
@@ -702,7 +708,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-wcomm\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-waccess")) {
             if (write_access_cond != NULL) {
@@ -719,7 +724,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-waccess\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-rcomm")) {
             if (read_comm_mode != NULL) {
@@ -736,7 +740,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-rcomm\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-raccess")) {
             if (read_access_cond != NULL) {
@@ -753,7 +756,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-raccess\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-kcomm")) {
             if (known_comm_mode != NULL) {
@@ -770,7 +772,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-kcomm\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-keytype")) {
             if (key_type != NULL) {
@@ -802,7 +803,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-keytype\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-in")) {
             if (file_in_path != NULL) {
@@ -816,7 +816,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-in\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-out")) {
             if (file_out_path != NULL) {
@@ -830,7 +829,6 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-out\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-enable")) {
             if (operation != NULL) {
@@ -846,6 +844,12 @@ int nxclitool_fetch_parameters(int argc,
                 else if (0 == strcmp(argv[i], "ecdh")) {
                     *operation = NXCLITOOL_OPERATION_ECDH;
                 }
+                else if (0 == strcmp(argv[i], "sigmai")) {
+                    *operation = NXCLITOOL_OPERATION_SIGMAI;
+                }
+                else if (0 == strcmp(argv[i], "sdm")) {
+                    *operation = NXCLITOOL_OPERATION_SDM;
+                }
                 else {
                     LOG_E("Invalid parameter for \"-enable\". Check usage below");
                     return 1;
@@ -856,7 +860,32 @@ int nxclitool_fetch_parameters(int argc,
                 LOG_E("\"-enable\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
+        }
+        else if ((0 == strcmp(argv[i], "-pubkey")) || (0 == strcmp(argv[i], "-peerkey"))) {
+            if (file_pubkey_path != NULL) {
+                i++;
+                CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
+                strcpy(file_pubkey_path, argv[i]);
+                file_pubkey_flag = TRUE;
+                i++;
+            }
+            else {
+                LOG_E("\"-pubkey or -peerkey\" is not required for this operation. Check usage below");
+                return 1;
+            }
+        }
+        else if (0 == strcmp(argv[i], "-signature")) {
+            if (file_signature_path != NULL) {
+                i++;
+                CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
+                strcpy(file_signature_path, argv[i]);
+                file_signature_flag = TRUE;
+                i++;
+            }
+            else {
+                LOG_E("\"-signature\" is not required for this operation. Check usage below");
+                return 1;
+            }
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
@@ -867,7 +896,7 @@ int nxclitool_fetch_parameters(int argc,
 
     if (!(rng_bytes_flag && repo_id_flag && key_id_flag && curve_type_flag && cert_level_flag && is_pkcs7_flag &&
             write_comm_mode_flag && write_access_cond_flag && read_comm_mode_flag && read_access_cond_flag &&
-            known_comm_mode_flag && file_in_flag && operation_flag)) {
+            known_comm_mode_flag && file_in_flag && operation_flag && file_pubkey_flag && file_signature_flag)) {
         if (!rng_bytes_flag) {
             LOG_E("\"-bytes\" option is required for this operation. Refer usage for this command.");
         }
@@ -906,6 +935,12 @@ int nxclitool_fetch_parameters(int argc,
         }
         if (!operation_flag) {
             LOG_E("\"-enable\" option is required for this operation. Refer usage for this command.");
+        }
+        if (!file_pubkey_flag) {
+            LOG_E("\"-pubkey\" option is required for this operation. Refer usage for this command.");
+        }
+        if (!file_signature_flag) {
+            LOG_E("\"-signature\" option is required for this operation. Refer usage for this command.");
         }
         return 1;
     }

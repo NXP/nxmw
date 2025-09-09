@@ -110,6 +110,9 @@ IF(SSS_HAVE_KSDK)
             ../../mcuxsdk/components/aws_iot/using_mbedtls_pkcs11/*.c
             ../../mcuxsdk/middleware/lwip/port/sys_arch/dynamic/sys_arch.c
             ../../mcuxsdk/drivers/mcx_enet/fsl_enet.c
+            ../../mcuxsdk/middleware/lwip/port/sys_arch.c
+            ../../mcuxsdk/middleware/lwip/src/api/netdb.c
+            ../../mcuxsdk/middleware/lwip/src/api/sockets.c
             ../../mcuxsdk/middleware/lwip/port/enet_ethernetif_lpc.c
         )
     ENDIF()

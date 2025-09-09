@@ -435,9 +435,7 @@ U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen)
 
     status = smCom_TransceiveRaw(conn_ctx, tx_buf, tx_len, responseData, &responseDataLen);
     if (status == SW_OK && responseDataLen == 2) {
-        rv = (U16)responseData[0];
-        rv <<= 8;
-        rv |= (U16)responseData[1];
+        rv = ((responseData[0] << 8) & 0xFF00) | (responseData[1] & 0xFF);
     }
 
 cleanup:
