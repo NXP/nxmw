@@ -510,6 +510,30 @@ ELSE()
             "A30;NTAG_X_DNA;NXP_INT_CONFIG;Other;"
     )
 ENDIF()
+
+SET(
+    NXMW_CMSIS_Driver
+    "Disabled"
+    CACHE
+        STRING
+        "CMSIS Driver diabled"
+)
+
+IF(NXPInternal)
+    SET_PROPERTY(
+        CACHE NXMW_CMSIS_Driver
+        PROPERTY
+            STRINGS
+            "Disabled;Enabled;"
+    )
+ELSE()
+    SET_PROPERTY(
+        CACHE NXMW_CMSIS_Driver
+        PROPERTY
+            STRINGS
+            "Disabled;Enabled;"
+    )
+ENDIF()
 IF("${NXMW_NX_Type}" STREQUAL "None")
     # SET(WithNXMW_NX_Type_None ON)
     SET(SSS_HAVE_NX_TYPE_NONE "1")
@@ -1385,3 +1409,27 @@ ELSE()
     MESSAGE(STATUS "Only supported values are 'A30, NTAG_X_DNA, NXP_INT_CONFIG, Other'")
 ENDIF()
 
+IF("${NXMW_CMSIS_Driver}" STREQUAL "Disabled")
+    # SET(WithNXMW_CMSIS_Driver_Disabled ON)
+    SET(SSS_HAVE_CMSIS_DRIVER_DISABLED "1")
+ELSE()
+    # SET(WithNXMW_CMSIS_Driver_Disabled OFF)
+    SET(SSS_HAVE_CMSIS_DRIVER_DISABLED "0")
+ENDIF()
+
+IF("${NXMW_CMSIS_Driver}" STREQUAL "Enabled")
+    # SET(WithNXMW_CMSIS_Driver_Enabled ON)
+    SET(SSS_HAVE_CMSIS_DRIVER_ENABLED "1")
+ELSE()
+    # SET(WithNXMW_CMSIS_Driver_Enabled OFF)
+    SET(SSS_HAVE_CMSIS_DRIVER_ENABLED "0")
+ENDIF()
+
+IF("${NXMW_CMSIS_Driver}" STREQUAL "Disabled")
+    # OK
+ELSEIF("${NXMW_CMSIS_Driver}" STREQUAL "Enabled")
+    # OK
+ELSE()
+    MESSAGE(SEND_ERROR "For 'NXMW_CMSIS_Driver' '${NXMW_CMSIS_Driver}' is invalid.")
+    MESSAGE(STATUS "Only supported values are 'Disabled, Enabled'")
+ENDIF()

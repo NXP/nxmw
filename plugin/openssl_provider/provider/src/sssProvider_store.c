@@ -86,6 +86,7 @@ static void *sss_store_object_open(void *provctx, const char *uri)
             if (fclose(pFile) != 0) {
                 sssProv_Print(LOG_FLOW_ON, "file close failed \n");
             }
+            pFile = NULL;
             OPENSSL_free(pStoreCtx);
             OPENSSL_free(baseuri);
             return NULL;
@@ -94,6 +95,7 @@ static void *sss_store_object_open(void *provctx, const char *uri)
             if (fclose(pFile) != 0) {
                 sssProv_Print(LOG_FLOW_ON, "file close failed \n");
             }
+            pFile = NULL;
             OPENSSL_free(pStoreCtx);
             OPENSSL_free(baseuri);
             return NULL;
@@ -113,6 +115,7 @@ static void *sss_store_object_open(void *provctx, const char *uri)
             if (fclose(pFile) != 0) {
                 sssProv_Print(LOG_FLOW_ON, "file close failed \n");
             }
+            pFile = NULL;
             goto cleanup;
         }
 

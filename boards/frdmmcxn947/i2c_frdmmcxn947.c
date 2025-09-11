@@ -255,5 +255,4 @@ unsigned int axI2CRead(void *conn_ctx, unsigned char bus, unsigned char addr, un
 
     return I2C_OK;
 }
-
 #endif /* FSL_FEATURE_SOC_I2C_COUNT */

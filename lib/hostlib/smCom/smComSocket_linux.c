@@ -78,7 +78,7 @@ U16 smComSocket_Open(void **conn_ctx, U8 *pIpAddrString, U16 portNo, U8 *pCip, U
 #ifdef ACCESS_MGR_UNIX_SOCKETS
     pSockCtx->sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 #else
-    pSockCtx->sockfd   = socket(AF_INET, SOCK_STREAM, 0);
+    pSockCtx->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 #endif
     if (pSockCtx->sockfd < 0) {
         printf("ERROR opening socket");

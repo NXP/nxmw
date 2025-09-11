@@ -272,7 +272,7 @@ typedef struct phNxpEseProto7816_PCB_bits
  */
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
 #define PH_PROTO_7816_HEADER_LEN 0x04 // LEN field is 2 byte
-#endif                                // SSS_HAVE_SMCOM_T1OI2C_GP1_0
+#endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
 /*!
  * \brief 7816-3 protocol frame CRC length
  */

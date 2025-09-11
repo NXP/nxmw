@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -73,9 +73,13 @@ void platform_boot_direct_impl()
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
-    LED_BLUE_INIT(1);
-    LED_GREEN_INIT(1);
-    LED_RED_INIT(1);
+    // Enable GPIO clock for LED
+    CLOCK_EnableClock(kCLOCK_Gpio0);
+    CLOCK_EnableClock(kCLOCK_Gpio1);
+
+    LED_BLUE_INIT(LOGIC_LED_OFF);
+    LED_GREEN_INIT(LOGIC_LED_OFF);
+    LED_RED_INIT(LOGIC_LED_OFF);
 
     LED_BLUE_ON();
 

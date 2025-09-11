@@ -283,7 +283,7 @@ static int sss_ecdsa_signature_digest_update(void *ctx, const unsigned char *dat
     int ret                              = 0;
 
     sssProv_Print(LOG_DBG_ON, "Enter - %s \n", __FUNCTION__);
-    sssProv_Print(LOG_DBG_ON, "Input data length = %d \n", datalen);
+    sssProv_Print(LOG_DBG_ON, "Input data length = %zu \n", datalen);
 
     ENSURE_OR_GO_CLEANUP(data != NULL);
     ENSURE_OR_GO_CLEANUP(pEcdsaCtx != NULL);

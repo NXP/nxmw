@@ -8,6 +8,7 @@ FILE(
     GLOB
     KSDK_STARTUP_FILE
     ${NXMW_TOP_DIR}/../mcuxsdk/devices/MCX/MCXN/MCXN947/gcc/startup_MCXN947_cm33_core0.S
+    ${NXMW_TOP_DIR}/../mcuxsdk/components/misc_utilities/fsl_syscall_stub.c
 )
 
 ADD_DEFINITIONS(

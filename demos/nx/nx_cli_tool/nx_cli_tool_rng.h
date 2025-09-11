@@ -13,8 +13,8 @@ sss_status_t nxclitool_do_rng(nxclitool_sss_boot_ctx_t *pboot_ctx, nx_connect_ct
 {
     sss_status_t status       = kStatus_SSS_Fail;
     size_t rng_data_len       = sizeof(uint8_t) * rng_bytes;
-    uint8_t *rng_data         = malloc(rng_data_len);
     sss_rng_context_t ctx_rng = {0};
+    uint8_t *rng_data         = malloc(rng_data_len);
     if (rng_data == NULL) {
         LOG_E("Error in dynamic allocation!!");
         goto cleanup;

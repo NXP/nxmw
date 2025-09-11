@@ -23,7 +23,7 @@ Initiator can issue to the an Auth Responder :
     `usb_c_rootcert.c` to use test
     RootCA: usb_c_auth/usb_c_rootcert.c
 
->**Note:** If building and running this demo with SIGMA-I, make sure to personalize the SA on repo ID other than 0x00 as this ID is used by `usb_c_provisioning` to inject keys and certificates which will overwrite the certificate repository. For details on personalization, refer [**NX Personalization**](../../nx/nx_Personalization/readme.md)
+>**Note:** If building and running this demo with SIGMA-I, make sure to personalize the SA on repo ID other than 0x01 as this ID is used by `usb_c_provisioning` to inject keys and certificates which will overwrite the certificate repository. For details on personalization, refer [**NX Personalization**](../../nx/nx_Personalization/readme.md)
 
 ## GetCertificateChainDigest (GET_DIGESTS)
 

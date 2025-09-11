@@ -38,9 +38,9 @@ typedef enum
     kType_SE_Conn_Type_SIZE = 0x7FFF
 } SSS_Conn_Type_t;
 
-#define SELECT_APPLET 0      //!< Select predefined applet
-#define SELECT_NONE 1        //!< Don't issue a select
-#define SELECT_SSD 2         //!< Select SSD
+#define SELECT_APPLET 0 //!< Select predefined applet
+#define SELECT_NONE 1 //!< Don't issue a select
+#define SELECT_SSD 2 //!< Select SSD
 #define SELECT_APPLICATION 2 //!< Select Application
 
 /**

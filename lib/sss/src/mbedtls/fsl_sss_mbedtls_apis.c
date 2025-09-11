@@ -764,7 +764,7 @@ sss_status_t sss_mbedtls_asymmetric_sign_digest(
     ret = mbedtls_pk_sign(
         pKey, md_alg, digest, digestLen, signature, *signatureLen, signatureLen, mbedtls_ctr_drbg_random, pS->ctr_drbg);
 #else
-    ret    = mbedtls_pk_sign(
+    ret = mbedtls_pk_sign(
         pKey, md_alg, digest, digestLen, signature, signatureLen, mbedtls_ctr_drbg_random, pS->ctr_drbg);
 #endif
     ENSURE_OR_GO_EXIT(ret == 0);
@@ -1817,7 +1817,7 @@ sss_status_t sss_mbedtls_aead_update(
             memcpy(inputData, context->cache_data, context->cache_data_len);
             inputData_len = context->cache_data_len;
             memcpy((inputData + inputData_len), srcData, (NX_CIPHER_BLOCK_SIZE - context->cache_data_len));
-            ENSURE_OR_GO_CLEANUP(UINT_MAX >= (inputData_len + NX_CIPHER_BLOCK_SIZE - context->cache_data_len));
+            ENSURE_OR_GO_CLEANUP(inputData_len <= SIZE_MAX - (NX_CIPHER_BLOCK_SIZE - context->cache_data_len));
             inputData_len += (NX_CIPHER_BLOCK_SIZE - context->cache_data_len);
             src_offset += (NX_CIPHER_BLOCK_SIZE - context->cache_data_len);
             blockoutLen = outBuffSize;
@@ -2188,7 +2188,7 @@ sss_status_t sss_mbedtls_mac_one_go(
 #if SSS_HAVE_MBEDTLS_3_X
                                 *macLen = context->cipher_ctx->private_cipher_info->private_block_size;
 #else
-                                *macLen     = context->cipher_ctx->cipher_info->block_size;
+                                *macLen = context->cipher_ctx->cipher_info->block_size;
 #endif
                                 status = kStatus_SSS_Success;
                             }
@@ -2424,7 +2424,7 @@ sss_status_t sss_mbedtls_mac_finish(sss_mbedtls_mac_t *context, uint8_t *mac, si
 #if SSS_HAVE_MBEDTLS_3_X
                 *macLen = ctx->private_cipher_info->private_block_size;
 #else
-                *macLen     = ctx->cipher_info->block_size;
+                *macLen = ctx->cipher_info->block_size;
 #endif
                 status = kStatus_SSS_Success;
             }
@@ -2467,7 +2467,7 @@ sss_status_t sss_mbedtls_mac_finish(sss_mbedtls_mac_t *context, uint8_t *mac, si
 #if SSS_HAVE_MBEDTLS_3_X
                 *macLen = mbedtls_md_get_size(hmacctx->private_md_info);
 #else
-                *macLen     = mbedtls_md_get_size(hmacctx->md_info);
+                *macLen = mbedtls_md_get_size(hmacctx->md_info);
 #endif
                 status = kStatus_SSS_Success;
             }

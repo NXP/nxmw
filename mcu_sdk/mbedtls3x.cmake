@@ -65,6 +65,8 @@ ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(
     ${PROJECT_NAME}
+    PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/middleware/lwip/port/sys_arch/dynamic
+    PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/middleware/lwip/src/include
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/include
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/library
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x

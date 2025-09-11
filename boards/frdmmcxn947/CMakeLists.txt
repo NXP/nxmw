@@ -42,7 +42,18 @@ FILE(
     ${NXMW_TOP_DIR}/../mcuxsdk/components/str/fsl_str.c
 )
 
-IF((SSS_HAVE_NX_TYPE) AND (NOT(SSS_HAVE_SMCOM_PN7150)))
+IF(SSS_HAVE_NX_TYPE AND SSS_HAVE_CMSIS_DRIVER_ENABLED)
+    LIST(
+        APPEND
+        board_files
+        ${NXMW_TOP_DIR}/boards/cmsis_driver/i2c_cmsis.c
+        ${NXMW_TOP_DIR}/boards/cmsis_driver/hardware_init.c
+        ${NXMW_TOP_DIR}/../mcuxsdk/components/cmsis_drivers/cmsis_lpi2c/fsl_lpi2c_cmsis.c
+        ${NXMW_TOP_DIR}/../mcuxsdk/components/cmsis_drivers/cmsis_gpio/fsl_gpio_cmsis.c
+    )
+ENDIF()
+
+IF((SSS_HAVE_NX_TYPE) AND (NOT(SSS_HAVE_CMSIS_DRIVER_ENABLED)))
     LIST(
         APPEND
         board_files
@@ -67,6 +78,10 @@ ELSE()
     )
 ENDIF()
 
+IF(SSS_HAVE_RTOS_FREERTOS AND SSS_HAVE_CMSIS_DRIVER_ENABLED)
+    LIST(REMOVE_ITEM board_files "${NXMW_TOP_DIR}/../mcuxsdk/rtos/freertos/freertos-drivers/lpflexcomm/lpi2c/fsl_lpi2c_freertos.c")
+ENDIF()
+
 ADD_LIBRARY(board ${board_files})
 
 TARGET_INCLUDE_DIRECTORIES(
@@ -77,6 +92,20 @@ TARGET_INCLUDE_DIRECTORIES(
         ${NXMW_TOP_DIR}/lib/hostlib/nx_utils
         ${NXMW_TOP_DIR}/lib/hostlib/nx_log
 )
+
+IF (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+TARGET_INCLUDE_DIRECTORIES(
+    board
+    PUBLIC
+        ${NXMW_TOP_DIR}/../mcuxsdk/components/cmsis_drivers/cmsis_lpi2c/
+        ${NXMW_TOP_DIR}/../mcuxsdk/arch/arm/CMSIS/Driver/Include/
+        ${NXMW_TOP_DIR}/../mcuxsdk/drivers/lpi2c/
+        ${NXMW_TOP_DIR}/../mcuxsdk/drivers/edma4/
+        ${NXMW_TOP_DIR}/boards/cmsis_driver/
+        ${NXMW_TOP_DIR}/../mcuxsdk/arch/arm/CMSIS/Driver/Include/GPIO/
+        ${NXMW_TOP_DIR}/../mcuxsdk/components/cmsis_drivers/cmsis_gpio/
+)
+ENDIF()
 
 TARGET_INCLUDE_DIRECTORIES(
     board

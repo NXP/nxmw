@@ -55,7 +55,7 @@ U32 smComVCom_Open(void **vcom_ctx, const char *portname)
     gfileDescriptor = open(portname, O_RDWR | O_NOCTTY);
     LOG_I("gfileDescriptor = %d", gfileDescriptor);
     if (gfileDescriptor < 0) {
-        LOG_E("error %d opening %s: %s\r\n", errno, portname, strerror_r(errno, bufSetSchedParam, sizeSetSchedParam));
+        LOG_E("error %d opening %s: %d\r\n", errno, portname, strerror_r(errno, bufSetSchedParam, sizeSetSchedParam));
         goto error;
     }
     if (0 == smUartSetInterfaceAttrib(gfileDescriptor, B115200)) {

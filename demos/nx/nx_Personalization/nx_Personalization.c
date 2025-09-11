@@ -935,7 +935,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
             else if (strcmp(argv[tmp_argc - 3], "-m") == 0) {
                 inputBitmap = strtol(argv[tmp_argc - 2], NULL, 16);
                 if ((inputBitmap >= 0) && (inputBitmap <= NX_AC_BITMAP_MAX)) {
-                    LOG_I("AC Bitmap is 0x%x", inputBitmap);
+                    LOG_I("AC Bitmap is 0x%lx", inputBitmap);
                     acBitmap = (uint16_t)inputBitmap;
                 }
                 else {

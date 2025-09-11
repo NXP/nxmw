@@ -31,6 +31,9 @@
 #include "sm_timer.h"
 
 #include "nxLog_msg.h"
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+#include "app.h"
+#endif
 
 #define ESTABLISH_SCI2C 0x00
 #define RESUME_SCI2C 0x01
@@ -96,44 +99,25 @@ void state_vcom_read_write(
 #if defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED)
                 case GPIO_PIN_INIT: {
                     LOG_I("GPIO_PIN_INIT ........ ");
-                    uint8_t setInOutDir      = 0;
-                    uint8_t gpioPIN          = s_RecvBuff[4];
-                    setInOutDir              = s_RecvBuff[5];
-                    gpio_pin_config_t config = {
-                        setInOutDir,
-                        0,
-                    };
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, BOARD_PIO1_8_GPIO_PIN, &config);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, BOARD_PIO1_5_GPIO_PIN, &config);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PinInit(GPIO0, BOARD_PIO0_26_GPIO_PIN, &config);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PinInit(GPIO0, BOARD_PIO0_25_GPIO_PIN, &config);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PinInit(GPIO2, BOARD_P2_16_GPIO_PIN, &config);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PinInit(GPIO2, BOARD_P2_12_GPIO_PIN, &config);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
+                    uint8_t setInOutDir = 0;
+                    uint8_t gpioPIN     = s_RecvBuff[4];
+                    setInOutDir         = s_RecvBuff[5];
+                    if (gpioPIN == MCU_GPIO_PIN_IO2 || gpioPIN == MCU_GPIO_PIN_IO1) {
+                        gpioPIN = (gpioPIN == MCU_GPIO_PIN_IO2) ? BOARD_GPIO_PIN_IO2 : BOARD_GPIO_PIN_IO1;
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+                        EXAMPLE_GPIO_INTERFACE.Setup(gpioPIN, NULL);
+                        EXAMPLE_GPIO_INTERFACE.SetDirection(gpioPIN, setInOutDir);
+#else
+                        gpio_pin_config_t config = {
+                            setInOutDir,
+                            0,
+                        };
+                        INIT_GPIO_PIN(gpioPIN, &config);
 #endif
+                    }
+                    else {
+                        LOG_I("Invalid gpioPIN");
+                    }
                     targetBufferLen = sizeof(targetBuffer);
                     statusValue =
                         vcomPackageApduResponse(GPIO_PIN_INIT, 0x00, NULL, 0x00, targetBuffer, &targetBufferLen);
@@ -149,37 +133,18 @@ void state_vcom_read_write(
                 case GPIO_PORT_SET: {
                     LOG_I("GPIO_PORT_SET  ........ ");
                     uint8_t gpioPIN = s_RecvBuff[4];
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortSet(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_8_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortSet(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_5_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortSet(GPIO0, 1U << BOARD_PIO0_26_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortSet(GPIO0, 1U << BOARD_PIO0_25_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortSet(GPIO2, 1U << BOARD_P2_16_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortSet(GPIO2, 1U << BOARD_P2_12_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
+                    if (gpioPIN == MCU_GPIO_PIN_IO2 || gpioPIN == MCU_GPIO_PIN_IO1) {
+                        gpioPIN = (gpioPIN == MCU_GPIO_PIN_IO2) ? BOARD_GPIO_PIN_IO2 : BOARD_GPIO_PIN_IO1;
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+                        EXAMPLE_GPIO_INTERFACE.SetOutput(gpioPIN, SET_GPIO_HIGH);
+#else
+                        SET_GPIO_PIN(gpioPIN);
 #endif
+                    }
+                    else {
+                        LOG_I("Invalid gpioPIN");
+                    }
+
                     targetBufferLen = sizeof(targetBuffer);
                     statusValue =
                         vcomPackageApduResponse(GPIO_PORT_SET, 0x00, NULL, 0x00, targetBuffer, &targetBufferLen);
@@ -195,37 +160,17 @@ void state_vcom_read_write(
                 case GPIO_PORT_CLEAR: {
                     LOG_I("GPIO_PORT_CLEAR  ........ ");
                     uint8_t gpioPIN = s_RecvBuff[4];
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortClear(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_8_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortClear(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_5_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortClear(GPIO0, 1U << BOARD_PIO0_26_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortClear(GPIO0, 1U << BOARD_PIO0_25_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortClear(GPIO2, 1U << BOARD_P2_16_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortClear(GPIO2, 1U << BOARD_P2_12_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
+                    if (gpioPIN == MCU_GPIO_PIN_IO2 || gpioPIN == MCU_GPIO_PIN_IO1) {
+                        gpioPIN = (gpioPIN == MCU_GPIO_PIN_IO2) ? BOARD_GPIO_PIN_IO2 : BOARD_GPIO_PIN_IO1;
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+                        EXAMPLE_GPIO_INTERFACE.SetOutput(gpioPIN, SET_GPIO_LOW);
+#else
+                        CLEAR_GPIO_PIN(gpioPIN);
 #endif
+                    }
+                    else {
+                        LOG_I("Invalid gpioPIN");
+                    }
                     targetBufferLen = sizeof(targetBuffer);
                     statusValue =
                         vcomPackageApduResponse(GPIO_PORT_CLEAR, 0x00, NULL, 0x00, targetBuffer, &targetBufferLen);
@@ -242,37 +187,23 @@ void state_vcom_read_write(
                 case GPIO_PORT_TOGGLE: {
                     LOG_I("GPIO_PORT_TOGGLE  ........ ");
                     uint8_t gpioPIN = s_RecvBuff[4];
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortToggle(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_8_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortToggle(GPIO, BOARD_GPIO_PORT1, 1U << BOARD_PIO1_5_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortToggle(GPIO0, 1U << BOARD_PIO0_26_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortToggle(GPIO0, 1U << BOARD_PIO0_25_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        GPIO_PortToggle(GPIO2, 1U << BOARD_P2_16_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        GPIO_PortToggle(GPIO2, 1U << BOARD_P2_12_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
+                    if (gpioPIN == MCU_GPIO_PIN_IO2 || gpioPIN == MCU_GPIO_PIN_IO1) {
+                        gpioPIN = (gpioPIN == MCU_GPIO_PIN_IO2) ? BOARD_GPIO_PIN_IO2 : BOARD_GPIO_PIN_IO1;
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+                        uint8_t value = 0xFF;
+                        EXAMPLE_GPIO_INTERFACE.SetDirection(gpioPIN, SET_GPIO_PIN_INPUT);
+                        value = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+                        value = (value == SET_GPIO_HIGH) ? SET_GPIO_HIGH : SET_GPIO_LOW;
+                        EXAMPLE_GPIO_INTERFACE.SetDirection(gpioPIN, SET_GPIO_PIN_OUTPUT);
+                        EXAMPLE_GPIO_INTERFACE.SetOutput(gpioPIN, value);
+#else
+                        TOGGLE_GPIO_PIN(gpioPIN);
 #endif
+                    }
+                    else {
+                        LOG_I("Invalid gpioPIN");
+                    }
+
                     targetBufferLen = sizeof(targetBuffer);
                     statusValue =
                         vcomPackageApduResponse(GPIO_PORT_TOGGLE, 0x00, NULL, 0x00, targetBuffer, &targetBufferLen);
@@ -289,38 +220,18 @@ void state_vcom_read_write(
                     LOG_I("GPIO_PIN_READ  ........ ");
                     uint8_t gpioPIN = s_RecvBuff[4];
                     uint8_t a       = 0xFF;
-#if defined(SSS_HAVE_HOST_LPCXPRESSO55S) && (SSS_HAVE_HOST_LPCXPRESSO55S)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        a = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, BOARD_PIO1_8_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        a = (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, BOARD_PIO1_5_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        a = (uint8_t)GPIO_PinRead(GPIO0, BOARD_PIO0_26_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        a = (uint8_t)GPIO_PinRead(GPIO0, BOARD_PIO0_25_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-#elif defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)
-                    if (gpioPIN == MCU_GPIO_PIN_IO2) {
-                        a = (uint8_t)GPIO_PinRead(GPIO2, BOARD_P2_16_GPIO_PIN);
-                    }
-                    else if (gpioPIN == MCU_GPIO_PIN_IO1) {
-                        a = (uint8_t)GPIO_PinRead(GPIO2, BOARD_P2_12_GPIO_PIN);
-                    }
-                    else {
-                        LOG_I("Invalid gpioPIN");
-                    }
-
+                    if (gpioPIN == MCU_GPIO_PIN_IO2 || gpioPIN == MCU_GPIO_PIN_IO1) {
+                        gpioPIN = (gpioPIN == MCU_GPIO_PIN_IO2) ? BOARD_GPIO_PIN_IO2 : BOARD_GPIO_PIN_IO1;
+#if defined(SSS_HAVE_CMSIS_DRIVER_ENABLED) && (SSS_HAVE_CMSIS_DRIVER_ENABLED)
+                        EXAMPLE_GPIO_INTERFACE.SetDirection(gpioPIN, SET_GPIO_PIN_INPUT);
+                        a = EXAMPLE_GPIO_INTERFACE.GetInput(gpioPIN);
+#else
+                        a = READ_GPIO_PIN(gpioPIN);
 #endif
+                    }
+                    else {
+                        LOG_I("Invalid gpioPIN");
+                    }
                     targetBufferLen = sizeof(targetBuffer);
                     statusValue =
                         vcomPackageApduResponse(GPIO_PIN_READ, 0x00, &a, sizeof(a), targetBuffer, &targetBufferLen);

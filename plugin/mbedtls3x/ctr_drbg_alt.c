@@ -1067,7 +1067,7 @@ static const unsigned char result_nopr[] = {0x31,
     0xd1,
     0x3b,
     0xe8};
-#else  /* MBEDTLS_CTR_DRBG_USE_128_BIT_KEY */
+#else /* MBEDTLS_CTR_DRBG_USE_128_BIT_KEY */
 
 static const unsigned char entropy_source_pr[] = {0xca,
     0x58,

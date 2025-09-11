@@ -40,6 +40,14 @@ export AUTH_CURVE=prime256v1
 # Set repo ID here
 export REPO_ID=0x01
 
+# Out uid file
+if [ -d "output" ]; then
+    echo "output path exists"
+else
+    mkdir output
+fi
+export OUT_FILE_PATH=output/uid.txt
+
 # ######################################## GET UID SCRIPT BEGINS HERE ########################################
 
 if [ $AUTH == symmetric ]
@@ -52,6 +60,6 @@ else
 $TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -curve $AUTH_CURVE -repoid $REPO_ID
 fi
 
-$TOOL_PATH/nxclitool get-uid
+$TOOL_PATH/nxclitool get-uid -out $OUT_FILE_PATH
 
 $TOOL_PATH/nxclitool disconnect

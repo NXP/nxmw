@@ -62,7 +62,7 @@ sss_status_t nx_provision_read_file_from_fs(char *fileName, uint8_t *buffer, siz
             LOG_E("Error reading cert from %s", fileName);
             ret = fclose(fp);
             if (ret != 0) {
-                goto exit;
+                LOG_E("Error failed to close file");
             }
             goto exit;
         }

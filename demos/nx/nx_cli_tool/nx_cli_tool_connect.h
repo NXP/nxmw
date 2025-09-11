@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
@@ -69,7 +69,6 @@ int nxclitool_fetch_connect_parameters(int argc,
             host_name_flag = TRUE;
             strncpy(host_name, argv[i], MAX_HOST_NAME_LEN - 1); // To maintain end-of-string as null character
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-port")) {
             i++;
@@ -77,7 +76,6 @@ int nxclitool_fetch_connect_parameters(int argc,
             port_name_flag = TRUE;
             strncpy(port_name, argv[i], MAX_PORT_NAME_LEN - 1); // To maintain end-of-string as null character
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-auth")) {
             i++;
@@ -100,7 +98,6 @@ int nxclitool_fetch_connect_parameters(int argc,
                 return 1;
             }
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-sctunn")) {
             i++;
@@ -123,7 +120,6 @@ int nxclitool_fetch_connect_parameters(int argc,
                 return 1;
             }
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-keyid")) {
             i++;
@@ -137,7 +133,6 @@ int nxclitool_fetch_connect_parameters(int argc,
             *key_id = (uint8_t)temp_uint32_holder;
             ENSURE_OR_RETURN_ON_ERROR(status == kStatus_SSS_Success, 1);
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-curve")) {
             i++;
@@ -154,7 +149,6 @@ int nxclitool_fetch_connect_parameters(int argc,
                 return 1;
             }
             i++;
-            continue;
         }
         else if (0 == strcmp(argv[i], "-repoid")) {
             i++;
@@ -168,7 +162,6 @@ int nxclitool_fetch_connect_parameters(int argc,
             *repo_id = (uint8_t)temp_uint32_holder;
             ENSURE_OR_RETURN_ON_ERROR(status == kStatus_SSS_Success, 1);
             i++;
-            continue;
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);
@@ -340,6 +333,7 @@ void nxclitool_disconnect_with_se(int argc, const char *argv[])
 int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
 {
     int ret                                  = 1;
+    sss_status_t status                      = kStatus_SSS_Fail;
     FILE *fh                                 = NULL;
     char host_name[MAX_HOST_NAME_LEN]        = {0};
     char port_name[MAX_PORT_NAME_LEN]        = {0};
@@ -360,6 +354,8 @@ int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
     auth_compress_type_t compress_type;
     uint8_t se_cert_repo_id;
     uint16_t cert_ac_map;
+
+    ENSURE_OR_GO_CLEANUP(pconn_ctx != NULL);
 
     fh = fopen(TEMP_FILE_NAME, "r");
     if (fh == NULL) {
@@ -430,11 +426,15 @@ int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
     case knx_AuthType_None:
         break;
     case knx_AuthType_SYMM_AUTH:
-        nx_init_conn_context_symm_auth(pconn_ctx, auth_type, secure_tunnel_type, key_no, pcdcap2_flag);
+        status = nx_init_conn_context_symm_auth(pconn_ctx, auth_type, secure_tunnel_type, key_no, pcdcap2_flag);
+        if (status != kStatus_SSS_Success) {
+            ret = 1;
+            goto cleanup;
+        }
         break;
     case knx_AuthType_SIGMA_I_Prover:
     case knx_AuthType_SIGMA_I_Verifier:
-        nx_init_conn_context_sigma_auth(pconn_ctx,
+        status = nx_init_conn_context_sigma_auth(pconn_ctx,
             auth_type,
             secure_tunnel_type,
             host_cert_curve_type,
@@ -443,6 +443,10 @@ int nxclitool_check_connection_and_get_ctx(nx_connect_ctx_t *pconn_ctx)
             compress_type,
             se_cert_repo_id,
             cert_ac_map);
+        if (status != kStatus_SSS_Success) {
+            ret = 1;
+            goto cleanup;
+        }
         break;
     default:
         LOG_E("Invalid Auth type passed");

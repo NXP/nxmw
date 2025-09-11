@@ -39,8 +39,8 @@ extern "C" {
 // </Conditionally activate features at compile time>
 
 // Looking for a key reference in a key object can lead to either of the following results
-#define AX_ENGINE_INVOKE_NOTHING 0    // Do no nothing, key object is not valid
-#define AX_ENGINE_INVOKE_SE 1         // Found a reference to a key contained in the Secure Authenticator
+#define AX_ENGINE_INVOKE_NOTHING 0 // Do no nothing, key object is not valid
+#define AX_ENGINE_INVOKE_SE 1 // Found a reference to a key contained in the Secure Authenticator
 #define AX_ENGINE_INVOKE_OPENSSL_SW 2 // Pass on key object to OpenSSL SW implementation
 
 #define LOG_FLOW_MASK 0x01

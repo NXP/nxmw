@@ -69,14 +69,13 @@ typedef struct _usb_cdc_vcom_struct
 /* Define the infomation relates to abstract control model */
 typedef struct _usb_cdc_acm_info
 {
-    uint8_t
-        serialStateBuf[NOTIF_PACKET_SIZE + UART_BITMAP_SIZE]; /* Serial state buffer of the CDC device to notify the
+    uint8_t serialStateBuf[NOTIF_PACKET_SIZE + UART_BITMAP_SIZE]; /* Serial state buffer of the CDC device to notify the
                                                                      serial state to host. */
-    bool dtePresent;                                          /* A flag to indicate whether DTE is present.         */
-    uint16_t breakDuration;                                   /* Length of time in milliseconds of the break signal */
-    uint8_t dteStatus;                                        /* Status of data terminal equipment                  */
-    uint8_t currentInterface;                                 /* Current interface index.                           */
-    uint16_t uartState;                                       /* UART state of the CDC device.                      */
+    bool dtePresent;          /* A flag to indicate whether DTE is present.         */
+    uint16_t breakDuration;   /* Length of time in milliseconds of the break signal */
+    uint8_t dteStatus;        /* Status of data terminal equipment                  */
+    uint8_t currentInterface; /* Current interface index.                           */
+    uint16_t uartState;       /* UART state of the CDC device.                      */
 } usb_cdc_acm_info_t;
 
 #if (defined(SSS_HAVE_HOST_EMBEDDED) && (SSS_HAVE_HOST_EMBEDDED))

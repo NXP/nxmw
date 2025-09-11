@@ -762,6 +762,34 @@
 
 
 
+/** NXMW_CMSIS_DRIVER : CMSIS I2C driver for communicating with SA
+ *
+ * CMSIS I2C driver for communicating with SA. (Disabled by Default)
+ */
+
+/** CMSIS I2C driver Disabled */
+#define SSS_HAVE_CMSIS_DRIVER_DISABLED 1
+
+/** CMSIS I2C driver Enabled */
+#define SSS_HAVE_CMSIS_DRIVER_ENABLED 0
+
+#if (( 0                             \
+    + SSS_HAVE_CMSIS_DRIVER_DISABLED \
+    + SSS_HAVE_CMSIS_DRIVER_ENABLED  \
+    ) > 1)
+#        error "Enable only one of 'NXMW_CMSIS_DRIVER'"
+#endif
+
+
+#if (( 0                             \
+    + SSS_HAVE_CMSIS_DRIVER_DISABLED \
+    + SSS_HAVE_CMSIS_DRIVER_ENABLED  \
+    ) == 0)
+#        error "Enable at-least one of 'NXMW_CMSIS_DRIVER'"
+#endif
+
+
+
 #define SSS_HAVE_NX_TYPE \
  (SSS_HAVE_NX_TYPE_NX_R_DA | SSS_HAVE_NX_TYPE_NX_PICC)
 

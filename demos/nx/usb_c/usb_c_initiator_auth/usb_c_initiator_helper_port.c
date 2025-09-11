@@ -82,7 +82,7 @@ static int encodeASN1Signature(
     }
 
     if (*asn1SignatureLen < requiredSize) {
-        LOG_E("Too small buffer for ASN.1 signature. Required %u bytes", requiredSize);
+        LOG_E("Too small buffer for ASN.1 signature. Required %lu bytes", requiredSize);
         goto exit;
     }
 
@@ -371,9 +371,6 @@ static void parseCertGetPublicKey(uint8_t *pCert, size_t certLen, uint8_t *pPucP
             }
             memcpy((void *)pPucPublicKey, (void *)p, len);
             *pucPublicKeylen = len;
-        }
-        else {
-            *pucPublicKeylen = 0;
         }
     }
 

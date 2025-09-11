@@ -737,6 +737,8 @@ sss_status_t nxclitool_crt_repo_create(int argc, const char *argv[], nxclitool_s
             NULL,
             NULL,
             NULL,
+            NULL,
+            NULL,
             NULL)) {
         LOG_E("Failed to fetch parameters for Create Certificate Repository command. Check usage below");
         nxclitool_show_command_help_crt_repo_create_cmd();
@@ -917,6 +919,8 @@ sss_status_t nxclitool_crt_repo_load_cert_and_mapping(int argc, const char *argv
             &known_comm_mode,
             NULL,
             file_name,
+            NULL,
+            NULL,
             NULL,
             NULL,
             NULL)) {
@@ -1242,6 +1246,8 @@ sss_status_t nxclitool_crt_repo_load_key(int argc, const char *argv[], nxclitool
             file_name,
             NULL,
             NULL,
+            NULL,
+            NULL,
             NULL)) {
         LOG_E("Failed to fetch parameters for Load key command. Check usage below");
         nxclitool_show_command_help_crt_repo_loadkey_cmd();
@@ -1294,6 +1300,8 @@ sss_status_t nxclitool_crt_repo_activate(int argc, const char *argv[], nxclitool
             NULL,
             NULL,
             &known_comm_mode,
+            NULL,
+            NULL,
             NULL,
             NULL,
             NULL,
@@ -1375,6 +1383,8 @@ sss_status_t nxclitool_crt_repo_read_cert(int argc, const char *argv[], nxclitoo
             NULL,
             file_path,
             &file_flag,
+            NULL,
+            NULL,
             NULL)) {
         LOG_E("Failed to fetch parameters for read certificate command. Check usage below");
         nxclitool_show_command_help_crt_repo_read_crt_cmd();
@@ -1491,6 +1501,8 @@ sss_status_t nxclitool_crt_repo_read_metadata(int argc, const char *argv[], nxcl
             2,
             NULL,
             &repo_id,
+            NULL,
+            NULL,
             NULL,
             NULL,
             NULL,
@@ -1661,6 +1673,8 @@ sss_status_t nxclitool_crt_repo_reset(int argc, const char *argv[], nxclitool_ss
             &read_comm_mode,
             &read_access_cond,
             &known_comm_mode,
+            NULL,
+            NULL,
             NULL,
             NULL,
             NULL,

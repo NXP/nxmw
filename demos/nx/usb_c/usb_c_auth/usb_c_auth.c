@@ -1,12 +1,12 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "usb_c_auth.h"
 
-#define EX_SLOT_ID 0x00
+#define EX_SLOT_ID 0x01
 
 static int sendCommandGetDigests_RetrieveHashForSlot(uint8_t *pHash);
 static int sendCommandGetCertificate_RetrivePublicKeyVerifyHash(

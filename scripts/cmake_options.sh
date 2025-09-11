@@ -19,7 +19,7 @@ doNXMW_NX_Type_NX_PICC_ON="-DNXMW_NX_Type=NX_PICC" #MF (DF name 0xD2760000850100
 
 
 ### NXMW_Host : Host where the software stack is running
-# 
+#
 # e.g. Windows, PC Linux, Embedded Linux, Kinetis like embedded platform
 
 doNXMW_Host_PCWindows_ON="-DNXMW_Host=PCWindows" #PC/Laptop Windows
@@ -36,7 +36,7 @@ doNXMW_Host_frdmmcxn947_ON="-DNXMW_Host=frdmmcxn947" #Embedded frdmmcxn947
 
 
 ### NXMW_SMCOM : Communication Interface
-# 
+#
 # How the host library communicates to the Secure Authenticator.
 # This may be directly over an I2C interface on embedded platform.
 # Or sometimes over Remote protocol like JRCP_V1_AM / VCOM from PC.
@@ -57,7 +57,7 @@ doNXMW_SMCOM_JRCP_V1_AM_ON="-DNXMW_SMCOM=JRCP_V1_AM"
 
 
 ### NXMW_HostCrypto : Counterpart Crypto on Host
-# 
+#
 # What is being used as a cryptographic library on the host.
 # As of now only OpenSSL / mbedTLS is supported
 
@@ -73,7 +73,7 @@ doNXMW_HostCrypto_None_ON="-DNXMW_HostCrypto=None"
 
 
 ### NXMW_RTOS : Choice of Operating system
-# 
+#
 # Default would mean nothing special.
 # i.e. Without any RTOS on embedded system, or default APIs on PC/Linux
 
@@ -83,7 +83,7 @@ doNXMW_RTOS_FreeRTOS_ON="-DNXMW_RTOS=FreeRTOS" #Free RTOS for embedded systems
 
 
 ### NXMW_Auth : NX Authentication
-# 
+#
 # This settings is used by examples to connect using various options
 # to authenticate with the Nx SE.
 # Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for the combinations of session auth and secure tunneling modes.
@@ -109,7 +109,7 @@ doNXMW_Log_SeggerRTT_ON="-DNXMW_Log=SeggerRTT" #Segger Real Time Transfer (For T
 
 
 ### CMAKE_BUILD_TYPE : See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
-# 
+#
 # For embedded builds, this choices sets optimization levels.
 # For MSVC builds, build type is selected from IDE As well
 
@@ -123,7 +123,7 @@ doCMAKE_BUILD_TYPE__ON="-DCMAKE_BUILD_TYPE=" #Empty Allowed
 
 
 ### NXMW_Secure_Tunneling : Secure Tunneling(Secure Messaging)
-# 
+#
 # Successful Symmetric authentication and SIGMA-I mutual authentication results in the establishment of
 # session keys and session IVs.
 # These are used to encrypt and integrity protect the payloads to be exchanged.
@@ -139,11 +139,11 @@ doNXMW_Secure_Tunneling_NTAG_AES256_EV2_ON="-DNXMW_Secure_Tunneling=NTAG_AES256_
 
 
 ### NXMW_Auth_Asymm_Host_PK_Cache : Host public key cache
-# 
+#
 # Support a cache of validated public keys and parent certificates on host.
-# This is utilized to accelerate protocol execution time by removing the need 
+# This is utilized to accelerate protocol execution time by removing the need
 # to validate public key and certificates that have been previously verified. Refer to :numref:`nx-auth-sessions` --- :ref:`nx-auth-sessions` for more information.
-# 
+#
 # Secure authenticator cache is enabled by Cmd.SetConfiguration. Ref to section 4.6.2 for more information.
 
 doNXMW_Auth_Asymm_Host_PK_Cache_Disabled_ON="-DNXMW_Auth_Asymm_Host_PK_Cache=Disabled" #Host's Public Key And Parent Certificates Cache Disabled
@@ -152,8 +152,8 @@ doNXMW_Auth_Asymm_Host_PK_Cache_Enabled_ON="-DNXMW_Auth_Asymm_Host_PK_Cache=Enab
 
 
 ### NXMW_Auth_Asymm_Cert_Repo_Id : Certificate Repository Id
-# 
-# Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication. 
+#
+# Certificate Repository Id is used to identify certificate repository. Used in both personalization and demos with Sigma-I authentication.
 # In personalization, it indicates repository to be initialized. In demos, it indicates repository to be used for Sigma-I authentication
 
 doNXMW_Auth_Asymm_Cert_Repo_Id_0_ON="-DNXMW_Auth_Asymm_Cert_Repo_Id=0" #Certificate Repository 0
@@ -174,8 +174,8 @@ doNXMW_Auth_Asymm_Cert_Repo_Id_7_ON="-DNXMW_Auth_Asymm_Cert_Repo_Id=7" #Certific
 
 
 ### NXMW_Auth_Asymm_Cert_SK_Id : Certificate Private Key Id
-# 
-# Id of ECC private key associated with this 
+#
+# Id of ECC private key associated with this
 # repository. Used in personalization for Sigma-I.
 
 doNXMW_Auth_Asymm_Cert_SK_Id_0_ON="-DNXMW_Auth_Asymm_Cert_SK_Id=0" #Certificate Private KeyId 0
@@ -190,8 +190,8 @@ doNXMW_Auth_Asymm_Cert_SK_Id_4_ON="-DNXMW_Auth_Asymm_Cert_SK_Id=4" #Certificate 
 
 
 ### NXMW_Auth_Asymm_CA_Root_Key_Id : Key ID of CA Root Public Key
-# 
-# Id of CA root public key associated with this 
+#
+# Id of CA root public key associated with this
 # repository. Used in personalization for Sigma-I.
 
 doNXMW_Auth_Asymm_CA_Root_Key_Id_0_ON="-DNXMW_Auth_Asymm_CA_Root_Key_Id=0" #CA Root KeyId 0
@@ -206,7 +206,7 @@ doNXMW_Auth_Asymm_CA_Root_Key_Id_4_ON="-DNXMW_Auth_Asymm_CA_Root_Key_Id=4" #CA R
 
 
 ### NXMW_Auth_Symm_App_Key_Id : application Key ID
-# 
+#
 # Indicate application key which is used in symmetric authentication.
 
 doNXMW_Auth_Symm_App_Key_Id_0_ON="-DNXMW_Auth_Symm_App_Key_Id=0" #Application KeyId 0
@@ -221,8 +221,8 @@ doNXMW_Auth_Symm_App_Key_Id_4_ON="-DNXMW_Auth_Symm_App_Key_Id=4" #Application Ke
 
 
 ### NXMW_Auth_Asymm_Host_Curve : Host EC domain curve type
-# 
-# EC domain curve used for session key generation and 
+#
+# EC domain curve used for session key generation and
 # session signature. Used in demos with Sigma-I authentication.
 
 doNXMW_Auth_Asymm_Host_Curve_NIST_P_ON="-DNXMW_Auth_Asymm_Host_Curve=NIST_P" #EC Curve NIST-P
@@ -231,7 +231,7 @@ doNXMW_Auth_Asymm_Host_Curve_BRAINPOOL_ON="-DNXMW_Auth_Asymm_Host_Curve=BRAINPOO
 
 
 ### NXMW_OpenSSL : For PC, which OpenSSL to pick up
-# 
+#
 # On Linux based builds, this option has no impact, because the build system
 # picks up the default available/installed OpenSSL from the system directly.
 
@@ -248,9 +248,9 @@ doNXMW_MBedTLS_3_X_ON="-DNXMW_MBedTLS=3_X" #Use 3.X version
 
 
 ### NXMW_Auth_Symm_Diversify : Diversification of symmetric authentication key
-# 
+#
 # When enabled, key used for symmetric authentication is diversification key derived from master key.
-# 
+#
 # Otherwise master key is used.
 
 doNXMW_Auth_Symm_Diversify_Disabled_ON="-DNXMW_Auth_Symm_Diversify=Disabled" #Symm Auth Key Diversification Disabled
@@ -267,7 +267,7 @@ doNXMW_All_Auth_Code_Enabled_ON="-DNXMW_All_Auth_Code=Enabled" #Enable all authe
 
 
 ### NXMW_mbedTLS_ALT : ALT Engine implementation for mbedTLS
-# 
+#
 # When set to None, mbedTLS would not use ALT Implementation to connect to / use Secure Authenticator.
 # This needs to be set to PSA for PSA example over SSS APIs
 
@@ -276,7 +276,7 @@ doNXMW_mbedTLS_ALT_SSS_ON="-DNXMW_mbedTLS_ALT=SSS" #Use SSS Layer ALT implementa
 doNXMW_mbedTLS_ALT_PSA_ON="-DNXMW_mbedTLS_ALT=PSA" #Enable TF-M based on PSA as ALT
 
 #Not using any mbedTLS_ALT
-# 
+#
 # When this is selected, cloud demos can not work with mbedTLS
 
 doNXMW_mbedTLS_ALT_None_ON="-DNXMW_mbedTLS_ALT=None"
@@ -292,6 +292,15 @@ doNXMW_SA_Type_NTAG_X_DNA_ON="-DNXMW_SA_Type=NTAG_X_DNA" #Enable NTAG_X_DNA host
 doNXMW_SA_Type_NXP_INT_CONFIG_ON="-DNXMW_SA_Type=NXP_INT_CONFIG" #Enable NXP_INT_CONFIG host cert for sigma-I authentication
 
 doNXMW_SA_Type_Other_ON="-DNXMW_SA_Type=Other" #Enable Other host cert for sigma-I authentication
+
+
+### NXMW_CMSIS_DRIVER : CMSIS I2C driver for communicating with SA
+#
+# CMSIS I2C driver for communicating with SA. (Disabled by Default)
+
+doNXMW_CMSIS_DRIVER_Disabled_ON="-DNXMW_CMSIS_DRIVER=Disabled" #CMSIS I2C driver Disabled
+
+doNXMW_CMSIS_DRIVER_Enabled_ON="-DNXMW_CMSIS_DRIVER=Enabled" #CMSIS I2C driver Enabled
 
 # Create and use shared libraries
 doWithSharedLIB_ON="-DWithSharedLIB=ON"

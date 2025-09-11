@@ -290,11 +290,7 @@ sss_status_t ex_insert_hash_pk_to_cache(
         hashBufLen = NX_SHA256_BYTE_LEN;
 
         status = ex_sss_nx_read_cache_file(filename, hashBuf, &hashBufLen);
-        if (status == kStatus_SSS_Success) {
-            // Slot has been used.
-            continue;
-        }
-        else {
+        if (status != kStatus_SSS_Success) {
             // Find empty slot.
             // Write device leaf certifiacate to cache
             status = ex_sss_nx_write_cache_file(filename, pCertHashBuf, certHashBufLen);

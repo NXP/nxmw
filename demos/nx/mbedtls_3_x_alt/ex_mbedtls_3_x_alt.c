@@ -263,17 +263,17 @@ static int generate_reference_key(uint8_t *publickey,
 #ifdef MBEDTLS_ECDSA_SIGN_ALT
 sss_status_t ex_mbedtls3x_ecdsa_sign(ex_sss_boot_ctx_t *pCtx)
 {
-    sss_status_t status          = kStatus_SSS_Success;
-    sss_object_t keyPairSE       = {0};
-    sss_object_t refKey_host     = {0};
-    sss_object_t keyPair_host    = {0};
-    sss_asymmetric_t ctx_asymm   = {0};
-    sss_cipher_type_t cipherType = kSSS_CipherType_EC_NIST_P;
-    uint32_t keyid           = 0x02;
-    uint8_t signature[256]     = {0};
-    size_t signatureLen        = sizeof(signature);
-    uint8_t digest[32] = "Hello World";
-    size_t digestLen   = sizeof(digest);
+    sss_status_t status                = kStatus_SSS_Success;
+    sss_object_t keyPairSE             = {0};
+    sss_object_t refKey_host           = {0};
+    sss_object_t keyPair_host          = {0};
+    sss_asymmetric_t ctx_asymm         = {0};
+    sss_cipher_type_t cipherType       = kSSS_CipherType_EC_NIST_P;
+    uint32_t keyid                     = 0x02;
+    uint8_t signature[256]             = {0};
+    size_t signatureLen                = sizeof(signature);
+    uint8_t digest[32]                 = "Hello World";
+    size_t digestLen                   = sizeof(digest);
     const sss_policy_u eccKeyGenPolicy = {.type = KPolicy_GenECKey,
         .policy                                 = {.genEcKey = {
                        .freezeKUCLimit        = 0,
@@ -1106,10 +1106,11 @@ cleanup:
 
 sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 {
-    sss_status_t status = kStatus_SSS_Success;
+    sss_status_t status    = kStatus_SSS_Success;
     sss_status_t ex_status = kStatus_SSS_Success;
 
-#if (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)) && (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE==1))
+#if (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS == 1)) && \
+    (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE == 1))
     status = ex_sss_boot_open_host_session(pCtx);
     if (status != kStatus_SSS_Success) {
         ex_status = kStatus_SSS_Fail;
@@ -1235,8 +1236,9 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     LOG_I("\n\n");
 #endif
 #endif
-#if  (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS==1)) && (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE==1))
-exit :
+#if (defined(SSS_HAVE_RTOS_FREERTOS) && (SSS_HAVE_RTOS_FREERTOS == 1)) && \
+    (defined(SSS_HAVE_AUTH_NONE) && (SSS_HAVE_AUTH_NONE == 1))
+exit:
 #endif
     if (ex_status == kStatus_SSS_Success) {
         LOG_I("ex_mbedtls_3_x_alt Example Success !!!...");

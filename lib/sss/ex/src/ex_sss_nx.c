@@ -151,7 +151,7 @@ sss_status_t ex_sss_boot_nx_open(ex_sss_boot_ctx_t *pCtx, const char *portName)
     else if (pConnectCtx->auth.authType == knx_AuthType_SYMM_AUTH) {
 #if (SSS_HAVE_AUTH_SYMM_AUTH || SSS_HAVE_ALL_AUTH_CODE_ENABLED)
         status = nx_init_conn_context_symm_auth(
-            pConnectCtx, SSS_EX_NX_AUTH_MECH, SSS_EX_NX_SECURE_TUNNELING_MECH, SSS_HAVE_AUTH_SYMM_APP_KEY_ID, true);
+            pConnectCtx, SSS_EX_NX_AUTH_MECH, SSS_EX_NX_SECURE_TUNNELING_MECH, SSS_HAVE_AUTH_SYMM_APP_KEY_ID, false);
         ENSURE_OR_GO_EXIT(kStatus_SSS_Success == status);
 
         status = nx_prepare_host_for_auth(&pCtx->host_session, &pCtx->host_ks, pConnectCtx);

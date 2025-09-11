@@ -797,7 +797,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 
 #if SSS_HAVE_NX_TYPE
     LOG_I("\n");
-    LOG_I("ECDH with static keypair. Store shared secrect to internal buffer.");
+    LOG_I("ECDH with static keypair. Store shared secret to internal buffer.");
     status = ex_ecdh_static_keypair_internal_sharedsecret(pCtx);
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
@@ -807,7 +807,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
 
     LOG_I("\n");
-    LOG_I("ECDH with ephemeral keypair. Store shared secrect to internal buffer.");
+    LOG_I("ECDH with ephemeral keypair. Store shared secret to internal buffer.");
     status = ex_ecdh_ephem_keypair_internal_sharedsecret(pCtx);
 #endif
 

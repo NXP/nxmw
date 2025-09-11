@@ -497,7 +497,7 @@ static int phNxpEse_readPacket(void *conn_ctx, void *pDevHandle, uint8_t *pBuffe
             }
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
             total_count    = 4;
-            nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF);
+            nNbBytesToRead = ((pBuffer[2] << 8) & 0xFF00) | (pBuffer[3] & 0xFF);
 #endif
             /* Read the Complete data + two byte CRC*/
             ret = phPalEse_i2c_read(
@@ -538,7 +538,7 @@ static int phNxpEse_readPacket(void *conn_ctx, void *pDevHandle, uint8_t *pBuffe
         }
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
         total_count    = 4;
-        nNbBytesToRead = (pBuffer[2] << 8 & 0xFF) | (pBuffer[3] & 0xFF);
+        nNbBytesToRead = ((pBuffer[2] << 8) & 0xFF00) | (pBuffer[3] & 0xFF);
 #endif
         /* Read the Complete data + two byte CRC*/
         ret =

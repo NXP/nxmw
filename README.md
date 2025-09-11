@@ -65,7 +65,7 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 | boards             | Platform porting specific files                                         |
 | demos              | Examples / Use cases / Access manager                                   |
 | doc                | Documentation                                                           |
-| ext                | Openssl and PKCS11 dependencies required to build / run MW demos        |
+| ext                | OpenSSL and PKCS11 dependencies required to build / run MW demos        |
 | lib                | Session Manager Code, SSS APIs, NX APIs to use NX SA                    |
 | mcu_sdk            | Files for cloning and building from MCU SDK                             |
 | mcux_project       | Standalone MCUXpresso projects for various supported MCUs               |
@@ -76,7 +76,7 @@ For MCU cmake build, refer [**Getting Started on MCU cmake build**](doc/mcu_cmak
 | CMakeLists.txt     | Root Cmake file                                                         |
 | LICENSE.txt        | License                                                                 |
 | README.md          | Readme document                                                         |
-| SCR.txt            | Software Content Register                                               |
+| SBOM.spdx          | Software Bill Of Materials                                              |
 
 ## Useful Links
 

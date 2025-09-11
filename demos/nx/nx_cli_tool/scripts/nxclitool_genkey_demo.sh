@@ -60,6 +60,6 @@ else
 $TOOL_PATH/nxclitool connect -smcom $SMCOM -port $PORT -auth $AUTH -sctunn $SECURE_TUNNELING -curve $AUTH_CURVE -repoid $REPO_ID
 fi
 
-$TOOL_PATH/nxclitool genkey -keyid $KEY_ID -curve $CURVE -out $OUT_FILE_PATH
+$TOOL_PATH/nxclitool genkey -keyid $KEY_ID -curve $CURVE -enable sign -waccess 0xE -out $OUT_FILE_PATH
 
 $TOOL_PATH/nxclitool disconnect

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
@@ -103,7 +103,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *file_id = (uint8_t)temp_u32_holder;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-raccess")) {
             if (read_access != NULL) {
@@ -118,7 +117,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *read_access = (uint8_t)access_cond_local;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-waccess")) {
             if (write_access != NULL) {
@@ -133,7 +131,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *write_access = (uint8_t)access_cond_local;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-rwaccess")) {
             if (read_write_access != NULL) {
@@ -148,7 +145,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *read_write_access = (uint8_t)access_cond_local;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-caccess")) {
             if (change_access != NULL) {
@@ -163,7 +159,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *change_access = (uint8_t)access_cond_local;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-fcomm")) {
             if (comm_mode != NULL) {
@@ -178,7 +173,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *comm_mode = (uint8_t)comm_mode_local;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-offset")) {
             if (offset != NULL) {
@@ -193,7 +187,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *offset = (size_t)temp;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-bytes")) {
             if (bytes != NULL) {
@@ -208,7 +201,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 *bytes = (size_t)temp;
                 i++;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-in")) {
             if (file_in_path != NULL) {
@@ -222,7 +214,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 LOG_E("\"-in\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else if (0 == strcmp(argv[i], "-out")) {
             if (file_out_path != NULL) {
@@ -237,7 +228,6 @@ int nxclitool_fetch_parameters_set_get_bin(int argc,
                 LOG_E("\"-out\" is not required for this operation. Check usage below");
                 return 1;
             }
-            continue;
         }
         else {
             CHECK_INDEX_VALIDITY_OR_RETURN_ERROR(i, argc);

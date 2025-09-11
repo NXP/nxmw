@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -140,7 +140,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     ENSURE_OR_GO_CLEANUP(sm_status == SM_OK);
     LOG_I("File write successful !!!");
 
-    nx_sesson_bind(&((sss_nx_session_t *)pSession)->s_ctx, pConnectCtx2);
+    nx_session_bind(&((sss_nx_session_t *)pSession)->s_ctx, pConnectCtx2);
     LOG_I("Bind session 1 to session 2");
 
     pConnectCtx2->connType         = pCtx->nx_open_ctx.connType;
@@ -179,7 +179,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     }
     LOG_I("File read successful !!!");
 
-    nx_sesson_unbind(&((sss_nx_session_t *)pPfSession2)->s_ctx);
+    nx_session_unbind(&((sss_nx_session_t *)pPfSession2)->s_ctx);
     LOG_I("Unbind session 2");
 
     ex_sss_session_close(pCtx2);

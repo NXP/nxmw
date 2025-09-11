@@ -92,6 +92,14 @@
 #define BOARD_GPIO_PORT1 0x01
 #endif
 
+#define BOARD_GPIO_PIN_IO1      BOARD_PIO1_5_GPIO_PIN
+#define BOARD_GPIO_PIN_IO2      BOARD_PIO1_8_GPIO_PIN
+#define INIT_GPIO_PIN(pin,cfg)  GPIO_PinInit(GPIO, BOARD_GPIO_PORT1, (pin), (cfg))
+#define SET_GPIO_PIN(pin)       GPIO_PortSet(GPIO, BOARD_GPIO_PORT1, 1U << (pin))
+#define CLEAR_GPIO_PIN(pin)     GPIO_PortClear(GPIO, BOARD_GPIO_PORT1, 1U << (pin))
+#define TOGGLE_GPIO_PIN(pin)    GPIO_PortToggle(GPIO, BOARD_GPIO_PORT1, 1U << (pin))
+#define READ_GPIO_PIN(pin)      (uint8_t)GPIO_PinRead(GPIO, BOARD_GPIO_PORT1, (pin))
+
 #ifndef BOARD_SW1_GPIO
 #define BOARD_SW1_GPIO GPIO
 #endif

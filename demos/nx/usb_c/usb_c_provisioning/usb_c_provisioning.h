@@ -1,4 +1,4 @@
-/* Copyright 2023 NXP
+/* Copyright 2023, 2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -20,7 +20,7 @@
 /* Update the SLOT_ID to provision for another slot
  * Valid values are 0, 1, 2, 3
  */
-#define USB_C_PROVISIONING_SLOT_ID 0
+#define USB_C_PROVISIONING_SLOT_ID 1
 /* doc:end:usb_c-slot-id */
 
 extern const uint8_t usb_c_ec_priv_key[];

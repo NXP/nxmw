@@ -211,7 +211,10 @@ SET(
     " \
     -Xlinker --gc-sections \
     -Xlinker -static \
-    -Xlinker --sort-section=alignment "
+    -Xlinker --sort-section=alignment \
+    -Xlinker -no-warn-rwx-segments \
+    -Xlinker -print-memory-usage \
+    -Xlinker --cref "
 )
 # -Xlinker -z \ -Xlinker muldefs ")
 

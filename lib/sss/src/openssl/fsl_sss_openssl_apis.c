@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018-2020, 2022-2024 NXP
+ * Copyright 2018-2020, 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -2390,7 +2390,8 @@ sss_status_t sss_openssl_aead_finish(sss_openssl_aead_t *context,
         if (context->mode == kMode_SSS_Encrypt) {
             ret = EVP_EncryptFinal_ex(context->aead_ctx, destData, &len);
             ENSURE_OR_GO_EXIT(ret == 1);
-            ENSURE_OR_GO_EXIT(len <= INT_MAX);
+            ENSURE_OR_GO_EXIT((*destLen) <= INT_MAX);
+            ENSURE_OR_GO_EXIT(len <= (INT_MAX - (int)*destLen));
             (*destLen) += len;
             ENSURE_OR_GO_EXIT((*tagLen) <= INT_MAX);
             ret = EVP_CIPHER_CTX_ctrl(context->aead_ctx, EVP_CTRL_GCM_GET_TAG, (int)(*tagLen), tag);
@@ -2403,7 +2404,8 @@ sss_status_t sss_openssl_aead_finish(sss_openssl_aead_t *context,
 
             ret = EVP_DecryptFinal_ex(context->aead_ctx, destData + (*destLen), &len);
             ENSURE_OR_GO_EXIT(ret == 1);
-            ENSURE_OR_GO_EXIT(len <= INT_MAX);
+            ENSURE_OR_GO_EXIT((*destLen) <= INT_MAX);
+            ENSURE_OR_GO_EXIT(len <= (INT_MAX - (int)*destLen));
             (*destLen) += len;
         }
         else {
@@ -3551,7 +3553,6 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
     sss_status_t retval = kStatus_SSS_Success;
     EVP_PKEY *pKey      = NULL;
     const char *curve   = NULL;
-    int nid             = 0;
 
     if (keyObject->cipherType == kSSS_CipherType_EC_NIST_P) {
         switch (keyBitLen) {
@@ -3559,7 +3560,7 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
             curve = "P-256";
             break;
         default:
-            LOG_E("Key type EC_NIST_P not supported with key length 0x%X", keyBitLen);
+            LOG_E("Key type EC_NIST_P not supported with key length 0x%lX", keyBitLen);
             retval = kStatus_SSS_Fail;
             goto exit;
         }
@@ -3570,7 +3571,7 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
             curve = "brainpoolP256r1";
             break;
         default:
-            LOG_E("Key type EC_BRAINPOOL not supported with key length 0x%X", keyBitLen);
+            LOG_E("Key type EC_BRAINPOOL not supported with key length 0x%lX", keyBitLen);
             retval = kStatus_SSS_Fail;
             goto exit;
         }
@@ -3580,39 +3581,11 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
         retval = kStatus_SSS_Fail;
         goto exit;
     }
-
-    /*Generate EC keys for cipher type EC_MONTGOMERY*/
-    if (nid == NID_X448 || nid == NID_X25519 || nid == NID_ED25519) {
-        EVP_PKEY_CTX *pCtx = EVP_PKEY_CTX_new_id(nid, NULL);
-        if (pCtx == NULL) {
-            retval = kStatus_SSS_Fail;
-            goto exit;
-        }
-
-        if (1 != EVP_PKEY_keygen_init(pCtx)) {
-            retval = kStatus_SSS_Fail;
-            LOG_E("Unable to generate keys.");
-            EVP_PKEY_CTX_free(pCtx);
-            goto exit;
-        }
-
-        if (1 != EVP_PKEY_keygen(pCtx, &pKey)) {
-            retval = kStatus_SSS_Fail;
-            LOG_E("Unable to generate keys.");
-            EVP_PKEY_CTX_free(pCtx);
-            goto exit;
-        }
-
-        EVP_PKEY_CTX_free(pCtx);
-        keyObject->contents = pKey;
+    /*Generate EC Keys for other Cipher types*/
+    if (curve != NULL) {
+        pKey = EVP_EC_gen(curve);
     }
-    else {
-        /*Generate EC Keys for other Cipher types*/
-        if (curve != NULL) {
-            pKey = EVP_EC_gen(curve);
-        }
-        keyObject->contents = pKey;
-    }
+    keyObject->contents = pKey;
 
 exit:
     return retval;
@@ -3641,7 +3614,7 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
             nid = NID_X9_62_prime256v1;
             break;
         default:
-            LOG_E("Key type EC_NIST_P not supported with key length 0x%X", keyBitLen);
+            LOG_E("Key type EC_NIST_P not supported with key length 0x%lX", keyBitLen);
             goto exit;
         }
     }
@@ -3651,7 +3624,7 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
             nid = NID_brainpoolP256r1;
             break;
         default:
-            LOG_E("Key type EC_BRAINPOOL not supported with key length 0x%X", keyBitLen);
+            LOG_E("Key type EC_BRAINPOOL not supported with key length 0x%lX", keyBitLen);
             goto exit;
         }
     }
@@ -3659,32 +3632,6 @@ static sss_status_t sss_openssl_generate_ecp_key(sss_openssl_object_t *keyObject
         LOG_E("sss_openssl_generate_ecp_key: Invalid key type ");
         goto exit;
     }
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
-#else
-    if (nid == NID_X448 || nid == NID_X25519 || nid == NID_ED25519) {
-        EVP_PKEY_CTX *pCtx = EVP_PKEY_CTX_new_id(nid, NULL);
-        if (NULL == pCtx) {
-            LOG_E("Unable to allocate EVP_PKEY_CTX");
-            goto exit;
-        }
-        else {
-            if (1 != EVP_PKEY_keygen_init(pCtx)) {
-                LOG_E("Unable to generate keys.");
-                goto exit;
-            }
-            /* Assign the EC Key to generic Key context. */
-            ENSURE_OR_GO_EXIT(NULL != keyObject->contents)
-            pKey = (EVP_PKEY *)keyObject->contents;
-            if (1 != EVP_PKEY_keygen(pCtx, &pKey)) {
-                LOG_E("Unable to generate keys.");
-                goto exit;
-            }
-            EVP_PKEY_CTX_free(pCtx);
-            retval = kStatus_SSS_Success;
-            goto exit;
-        }
-    }
-#endif
 
     retval = kStatus_SSS_Fail;
     if (nid != 0) {

@@ -38,6 +38,10 @@ set AUTH_CURVE=prime256v1
 :: Set repo ID here
 set REPO_ID=0x01
 
+:: Change output file path
+IF EXIST output (echo "output path exists") else (mkdir output)
+set OUT_FILE_PATH=output\uid.txt
+
 :: ######################################## GET UID SCRIPT BEGINS HERE ########################################
 
 set SYMM_ST=(%TOOL_PATH%\nxclitool connect -smcom %SMCOM% -port %PORT% -auth %AUTH% -sctunn %SECURE_TUNNELING% -keyid 0x00)
@@ -46,6 +50,6 @@ set SIGMA_ST=(%TOOL_PATH%\nxclitool connect -smcom %SMCOM% -port %PORT% -auth %A
 
 IF %AUTH%==symmetric %SYMM_ST% ELSE IF %AUTH%==none %NONE_ST% ELSE %SIGMA_ST%
 
-%TOOL_PATH%\nxclitool get-uid
+%TOOL_PATH%\nxclitool get-uid -out %OUT_FILE_PATH%
 
 %TOOL_PATH%\nxclitool disconnect

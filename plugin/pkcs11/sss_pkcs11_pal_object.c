@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -366,6 +366,7 @@ exit:
 CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsInit)
 (CK_SESSION_HANDLE xSession, CK_ATTRIBUTE_PTR pxTemplate, CK_ULONG ulCount)
 {
+    CK_RV xResult             = CKR_FUNCTION_FAILED;
     P11SessionPtr_t pxSession = prvSessionPointerFromHandle(xSession);
     int classIndex            = 0;
     CK_BBOOL foundClass       = CK_FALSE;
@@ -374,7 +375,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsInit)
 
     ENSURE_OR_RETURN_ON_ERROR(cryptokiInitialized == 1, CKR_CRYPTOKI_NOT_INITIALIZED);
     ENSURE_OR_RETURN_ON_ERROR(pxSession != NULL, CKR_SESSION_HANDLE_INVALID);
-
+    ENSURE_OR_RETURN_ON_ERROR(sss_pkcs11_mutex_lock() == 0, CKR_CANT_LOCK);
     /*
      * Allow filtering on a single object class attribute.
      */
@@ -388,7 +389,8 @@ CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsInit)
         pxSession->xFindObjectClass      = pkcs11INVALID_OBJECT_CLASS; /* Invalid Class */
         pxSession->xFindObjectKeyType    = pkcs11INVALID_KEY_TYPE;     /* Invalid Key Type */
         pxSession->xFindObjectTotalFound = 0;
-        return CKR_OK;
+        xResult                          = CKR_OK;
+        goto exit;
     }
 
     for (i = 0; i < ulCount; i++) {
@@ -418,8 +420,10 @@ CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsInit)
     if (foundClass) {
         memcpy(&pxSession->xFindObjectClass, pxTemplate[classIndex].pValue, sizeof(CK_OBJECT_CLASS));
     }
-
-    return CKR_OK;
+    xResult = CKR_OK;
+exit:
+    ENSURE_OR_RETURN_ON_ERROR(sss_pkcs11_mutex_unlock() == 0, CKR_FUNCTION_FAILED);
+    return xResult;
 }
 
 /**
@@ -757,16 +761,21 @@ exit:
  */
 CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsFinal)(CK_SESSION_HANDLE xSession)
 {
+    CK_RV xResult             = CKR_FUNCTION_FAILED;
     P11SessionPtr_t pxSession = prvSessionPointerFromHandle(xSession);
 
     ENSURE_OR_RETURN_ON_ERROR(pxSession != NULL, CKR_SESSION_HANDLE_INVALID);
-    ENSURE_OR_RETURN_ON_ERROR((CK_BBOOL)CK_FALSE != pxSession->xFindObjectInit, CKR_OPERATION_NOT_INITIALIZED);
 
     LOG_D("%s", __FUNCTION__);
 
     /*
     * Clean-up find objects state.
     */
+    ENSURE_OR_RETURN_ON_ERROR(sss_pkcs11_mutex_lock() == 0, CKR_CANT_LOCK);
+    if ((CK_BBOOL)CK_FALSE == pxSession->xFindObjectInit) {
+        xResult = CKR_OPERATION_NOT_INITIALIZED;
+        goto exit;
+    }
     pxSession->labelPresent            = CK_FALSE;
     pxSession->keyIdPresent            = CK_FALSE;
     pxSession->xFindObjectInit         = CK_FALSE;
@@ -774,8 +783,12 @@ CK_DEFINE_FUNCTION(CK_RV, C_FindObjectsFinal)(CK_SESSION_HANDLE xSession)
     pxSession->xFindObjectTotalFound   = 0;
     pxSession->xFindObjectKeyType      = pkcs11INVALID_KEY_TYPE;
     pxSession->xFindObjectOutputOffset = 0;
-
-    return CKR_OK;
+    xResult                            = CKR_OK;
+exit:
+    if (sss_pkcs11_mutex_unlock() != 0) {
+        xResult = CKR_FUNCTION_FAILED;
+    }
+    return xResult;
 }
 
 /**
@@ -855,7 +868,7 @@ CK_DEFINE_FUNCTION(CK_RV, C_GenerateKey)
 
         keyLen = *((size_t *)pTemplate[attributeIndex].pValue);
         if ((keyLen != 16) && (keyLen != 32)) {
-            LOG_E("Unsupported key length %d", keyLen);
+            LOG_E("Unsupported key length %lu", keyLen);
             xResult = CKR_ARGUMENTS_BAD;
             goto exit;
         }
@@ -1014,11 +1027,8 @@ CK_DEFINE_FUNCTION(CK_RV, C_GenerateKeyPair)
             goto cont;
         }
 
-        return CKR_ARGUMENTS_BAD;
-    }
-    else {
-        xResult = CKR_MECHANISM_INVALID;
-        return xResult;
+        xResult = CKR_ARGUMENTS_BAD;
+        goto exit;
     }
 
 cont:

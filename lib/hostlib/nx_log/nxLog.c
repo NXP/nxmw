@@ -262,6 +262,7 @@ void nLog_au8(const char *comp, int level, const char *message, const unsigned c
         return;
     }
     if (NULL == array) {
+        nLog_ReleaseLock();
         return;
     }
     for (i = 0; i < array_len; i++) {

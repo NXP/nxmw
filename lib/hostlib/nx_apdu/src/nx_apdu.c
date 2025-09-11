@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -772,7 +772,7 @@ exit:
     return retStatus;
 }
 
-void nx_sesson_bind(SeSession_t *pSession, nx_connect_ctx_t *pConnectCtx2)
+void nx_session_bind(SeSession_t *pSession, nx_connect_ctx_t *pConnectCtx2)
 {
     if ((NULL != pSession) && (NULL != pConnectCtx2)) {
         pConnectCtx2->auth.ctx.symmAuth.dyn_ctx.CmdCtr     = pSession->ctx.pdynSymmAuthCtx->CmdCtr;
@@ -786,7 +786,7 @@ void nx_sesson_bind(SeSession_t *pSession, nx_connect_ctx_t *pConnectCtx2)
     return;
 }
 
-void nx_sesson_unbind(SeSession_t *pSession)
+void nx_session_unbind(SeSession_t *pSession)
 {
     if (NULL != pSession) {
         pSession->conn_ctx = NULL;
@@ -2483,15 +2483,12 @@ smStatus_t nx_SetConfig_HaltWakeupConfig(
     i2cWakeupAddress |= ((wakeupOptionA & NX_CONF_HALT_WAKEUPA_I2C_WAKEUP_ADDRESS_MASK)
                          << NX_CONF_HALT_WAKEUPA_I2C_WAKEUP_ADDRESS_BIT_SHIFT);
 
-    if ((i2cWakeupAddress & NX_CONF_HALT_WAKEUP_I2C_WAKEUP_ADDRESS_MASK) > NX_CONF_HALT_WAKEUP_I2C_WAKEUP_ADDRESS_MAX) {
-        goto cleanup;
-    }
+    ENSURE_OR_GO_CLEANUP(
+        (i2cWakeupAddress & NX_CONF_HALT_WAKEUP_I2C_WAKEUP_ADDRESS_MASK) <= NX_CONF_HALT_WAKEUP_I2C_WAKEUP_ADDRESS_MAX);
 
     i2cWakeupCycle = ((wakeupOptionB & NX_CONF_HALT_WAKEUPB_I2C_WAKEUP_CYCLE_MASK) >>
                       NX_CONF_HALT_WAKEUPB_I2C_WAKEUP_CYCLE_BITOFFSET);
-    if (i2cWakeupCycle > NX_CONF_HALT_WAKEUPA_I2C_WAKEUP_CYCLE_MAX) {
-        goto cleanup;
-    }
+    ENSURE_OR_GO_CLEANUP(i2cWakeupCycle <= NX_CONF_HALT_WAKEUPA_I2C_WAKEUP_CYCLE_MAX);
 
     tlvRet = SET_U8(
         "Option", &pCmdHeaderBuf, &cmdHeaderBufLen, Nx_ConfigOption_Halt_Wakeup_Config, NX_MAX_BUF_SIZE_CMD_HEADER);
@@ -5185,10 +5182,6 @@ smStatus_t nx_CreateCounterFile(pSeSession_t session_ctx,
     nLog("APDU", NX_LEVEL_DEBUG, "CreateCounterFile []");
 #endif /* VERBOSE_APDU_LOGS */
 
-    if (session_ctx == NULL) {
-        goto cleanup;
-    }
-
     if (fileNo > NX_FILE_MAX_FILE_NUMBER) {
         goto cleanup;
     }
@@ -5752,29 +5745,20 @@ smStatus_t nx_GetFileSettings(pSeSession_t session_ctx,
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *readAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_WRITE_OFFSET) & NX_FILE_AR_WRITE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *writeAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_READWRITE_OFFSET) & NX_FILE_AR_READWRITE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *readWriteAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_CHANGE_OFFSET) & NX_FILE_AR_CHANGE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *changeAccessCondition = (Nx_AccessCondition_t)tmpUint16;
-            }
-            else {
-                goto cleanup;
             }
 
             if (fileSize == NULL) {
@@ -5901,29 +5885,20 @@ smStatus_t nx_GetFileSettings(pSeSession_t session_ctx,
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *readAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_WRITE_OFFSET) & NX_FILE_AR_WRITE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *writeAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_READWRITE_OFFSET) & NX_FILE_AR_READWRITE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *readWriteAccessCondition = (Nx_AccessCondition_t)tmpUint16;
             }
-            else {
-                goto cleanup;
-            }
+
             tmpUint16 = (accessRights >> NX_FILE_AR_CHANGE_OFFSET) & NX_FILE_AR_CHANGE_MASK;
             if (tmpUint16 <= Nx_AccessCondition_No_Access) {
                 *changeAccessCondition = (Nx_AccessCondition_t)tmpUint16;
-            }
-            else {
-                goto cleanup;
             }
         }
 
@@ -6009,7 +5984,7 @@ smStatus_t nx_GetISOFileIDs(pSeSession_t session_ctx, uint8_t *fIDList, size_t *
     void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (fIDList == NULL) || (fIDListLen == NULL)) {
-        LOG_E("nx_GetFileIDs Invalid Parameters!!!");
+        LOG_E("nx_GetISOFileIDs Invalid Parameters!!!");
         goto cleanup;
     }
 
@@ -6161,7 +6136,7 @@ smStatus_t nx_WriteData(pSeSession_t session_ctx,
     void *options                  = &cmdCommMode;
 
     if ((session_ctx == NULL) || (data == NULL)) {
-        LOG_E("nx_ReadData Invalid Parameters!!!");
+        LOG_E("nx_WriteData Invalid Parameters!!!");
         goto cleanup;
     }
 
@@ -7391,10 +7366,6 @@ smStatus_t nx_CryptoRequest_ECCSign_Digest_Oneshot(pSeSession_t session_ctx,
         }
     }
     else {
-        if (inputDataLen > UINT8_MAX) {
-            retStatus = SM_NOT_OK;
-            goto cleanup;
-        }
         tlvRet =
             SET_U8("Input Data Length", &pCmdDataBuf, &cmdDataBufBufLen, (uint8_t)inputDataLen, NX_MAX_BUF_SIZE_CMD);
         ENSURE_OR_GO_CLEANUP(0 == tlvRet);

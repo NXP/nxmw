@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2019-2024 NXP
+ * Copyright 2019-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -11,7 +11,14 @@
 
 #include "nx_apdu_tlv.h"
 
-/** Halt/Wake-up configuration */
+/**
+ * @file nx_apdu.h
+ * @brief APDU interface for secure authenticator communication.
+ */
+
+/** @brief Halt/Wake-up configuration
+ *
+ */
 typedef struct
 {
     /** wake up from HALT state on presence of NFC field. */
@@ -32,7 +39,9 @@ typedef struct
     uint8_t gpioReset : 1;
 } nx_config_halt_wakeup_t;
 
-/** Deferred configuration options */
+/** @brief Deferred configuration options
+ *
+ */
 typedef struct
 {
     /** If this item is valid */
@@ -41,7 +50,9 @@ typedef struct
     uint8_t method;
 } nx_config_deferred_option_t;
 
-/** All deferred configurations */
+/** @brief All deferred configurations
+ *
+ */
 typedef struct
 {
     /** PICC Random ID Configuration */
@@ -52,7 +63,9 @@ typedef struct
     nx_config_deferred_option_t gpioConfig;
 } nx_config_deferral_t;
 
-/** Activate configurations */
+/** @brief Activate configurations
+ *
+ */
 typedef struct
 {
     /** activate SetConfiguration 0x01 (RandomID) */
@@ -65,8 +78,10 @@ typedef struct
     uint8_t changeFileSetting : 1;
 } nx_activate_config_t;
 
-/** File access parameters */
-typedef struct _nx_file_access_param_t
+/** @brief File access parameters
+ *
+ */
+typedef struct nx_file_access_param_t
 {
     /** File communication mode */
     Nx_CommMode_t commMode;
@@ -80,7 +95,9 @@ typedef struct _nx_file_access_param_t
     Nx_AccessCondition_t changeAccessCondition;
 } nx_file_access_param_t;
 
-/** File SDM configuration */
+/** @brief File SDM configuration
+ *
+ */
 typedef struct
 {
     /** SDM options */
@@ -117,7 +134,9 @@ typedef struct
     uint8_t sdmDeferMethod;
 } nx_file_SDM_config_t;
 
-/** Crypto Key meta data parameters */
+/** @brief Crypto Key meta data parameters
+ *
+ */
 typedef struct
 {
     /** Key ID */
@@ -128,7 +147,9 @@ typedef struct
     uint16_t keyPolicy;
 } nx_crypto_key_meta_data_t;
 
-/** ECC ey meta data parameters */
+/** @brief ECC ey meta data parameters
+ *
+ */
 typedef struct
 {
     /** Key ID */
@@ -147,7 +168,9 @@ typedef struct
     uint32_t keyUsageCtr;
 } nx_ecc_key_meta_data_t;
 
-/** CA Root Key meta data parameters */
+/** @brief CA Root Key meta data parameters
+ *
+ */
 typedef struct
 {
     /** Key ID */
@@ -172,24 +195,22 @@ extern "C" {
  * @param[in]   pSession     Session context of session 1.
  * @param[in]   pConnectCtx2 Session context of session 2.
  *
- * @return  status
  */
-void nx_sesson_bind(SeSession_t *pSession, nx_connect_ctx_t *pConnectCtx2);
+void nx_session_bind(SeSession_t *pSession, nx_connect_ctx_t *pConnectCtx2);
 
-/** nx_sesson_unbind
+/** nx_session_unbind
  * @brief               Unbind a session. It will clear the conn_ctx pointer which is shared with other session.
  *
  * @param[in]   pSession     Session context of session.
  *
- * @return  status
  */
-void nx_sesson_unbind(SeSession_t *pSession);
+void nx_session_unbind(SeSession_t *pSession);
 
 /** nx_FreeMem
  * @brief               Gets the amount of free memory.
  *
  * @param[in]   session_ctx     Session context.
- * @param[out]   freeMemSize Returned free memory size.
+ * @param[out]  freeMemSize     Returned free memory size.
  *
  * @return  status
  */
@@ -199,8 +220,8 @@ smStatus_t nx_FreeMem(pSeSession_t session_ctx, uint32_t *freeMemSize);
  * @brief   Gets Card UID.
  *
  * @param[in]   session_ctx        Session context.
- * @param[out]   pGetCardUID    Pointer to the buffer containing the Card UID value.
- * @param[out]   getCardUIDLen  Length of the buffer containing the Card UID value.
+ * @param[out]  pGetCardUID        Pointer to the buffer containing the Card UID value.
+ * @param[out]  getCardUIDLen      Length of the buffer containing the Card UID value.
  *
  * @return  status
 */
@@ -208,9 +229,9 @@ smStatus_t nx_GetCardUID(pSeSession_t session_ctx, uint8_t *pGetCardUID, size_t 
 /** nx_GetVersion
  * @brief   Gets Card Version Info.
  *
- * @param[in]   session_ctx        Session context.
- * @param[in]   getFabID    Whether or not to receive the Fab Identifier in the output.
- * @param[out]   pVersionInfo  Pointer to a structure containing version info.
+ * @param[in]   session_ctx    Session context.
+ * @param[in]   getFabID       Whether or not to receive the Fab Identifier in the output.
+ * @param[out]  pVersionInfo   Pointer to a structure containing version info.
  *
  * @return  status
 */
@@ -218,7 +239,7 @@ smStatus_t nx_GetVersion(pSeSession_t session_ctx, bool getFabID, Nx_VersionPara
 /** nx_Activate_Config
  * @brief   Command to activate deferred configuration.
  *
- * @param[in]   session_ctx        Session context.
+ * @param[in]   session_ctx   Session context.
  * @param[in]   configList    Buffer containing list of configurations to be activated.
  *
  * @return  status
@@ -228,7 +249,7 @@ smStatus_t nx_Activate_Config(pSeSession_t session_ctx, nx_activate_config_t *co
 /** nx_ManageCARootKey
  * @brief                  Manages various operations related to CARootKey like changing access conditions/communication mode etc..
  *
- * @param[in] session_ctx          Session context.
+ * @param[in] session_ctx      Session context.
  * @param[in] objectID         Key number of the key to be managed.
  * @param[in] curveID          Targeted curve ID.
  * @param[in] acBitmap         Access rights associated with CARootKey.
@@ -267,8 +288,8 @@ smStatus_t nx_ManageCARootKey(pSeSession_t session_ctx,
  * @param[in]   writeAccessCond   Access right required to update the key with this command.
  * @param[in]   privateKey        Private Key.
  * @param[in]   privateKeyLen     Private Key Length.
- * @param[out]   pubKey            Public Key.
- * @param[out]   pubKeyLen         Public Key Length.
+ * @param[out]  pubKey            Public Key.
+ * @param[out]  pubKeyLen         Public Key Length.
  * @param[in]   knownCommMode     Communication Mode set by the user.
  *
  * @return  status
@@ -441,9 +462,9 @@ smStatus_t nx_SetConfig_CertMgmt(pSeSession_t session_ctx,
  * @brief Updates the Watchdog Timer Configurations.
  *
  * @param[in]   session_ctx       Session context.
- * @param[in]   hWDTValue         Halt Watchog Timer (HWDT) Value.
- * @param[in]   aWDT1Value        Authorization Watchog Timer 1 (AWDT1) Value.
- * @param[in]   aWDT2Value        Authorization Watchog Timer 1 (AWDT2) Value.
+ * @param[in]   hWDTValue         Halt Watchdog Timer (HWDT) Value.
+ * @param[in]   aWDT1Value        Authorization Watchdog Timer 1 (AWDT1) Value.
+ * @param[in]   aWDT2Value        Authorization Watchdog Timer 1 (AWDT2) Value.
  *
  * @return  status
 */
@@ -474,7 +495,7 @@ smStatus_t nx_SetConfig_CryptoAPIMgmt(pSeSession_t session_ctx,
     Nx_slot_buffer_policy_t *SBPolicy);
 
 /** nx_SetConfig_AuthCounterLimit
- * @brief Updates the Authentication Counter and Limit Configuration.
+ * @brief Updates the Authentication Counter options and Authentication Counter Limit Configuration.
  *
  * @param[in]   session_ctx        Session context.
  * @param[in]   authCtrFileID      Targeted Counter file ID.
@@ -487,7 +508,7 @@ smStatus_t nx_SetConfig_AuthCounterLimit(
     pSeSession_t session_ctx, uint8_t authCtrFileID, uint8_t authCtrOption, uint32_t authCtrLimit);
 
 /** nx_SetConfig_HaltWakeupConfig
- * @brief Gets HALT and Wake-up configuration of the card.
+ * @brief Updates the HALT and Wake-up configuration of the card.
  *
  * @param[in]   session_ctx            Session context.
  * @param[out]   wakeupOptionA         Wake-up options (Byte A) bit 7 RFU, 6 GPIO wakeup is enables/disabled, 5-0 I2C Wakeup Address.
@@ -544,9 +565,9 @@ smStatus_t nx_GetConfig_PICCConfig(pSeSession_t session_ctx, uint8_t *PICCConfig
 /** nx_GetConfig_ATSUpdate
  * @brief Gets the ATS configuration of the card.
  *
- * @param[in]   session_ctx        Session context.
- * @param[out]   userATS           Pointer to buffer containing the user defined ATS configurations.
- * @param[out]   userATSLen        Length of the buffer containing the user defined ATS configurations.
+ * @param[in]   session_ctx       Session context.
+ * @param[out]  userATS           Pointer to buffer containing the user defined ATS configurations.
+ * @param[out]  userATSLen        Length of the buffer containing the user defined ATS configurations.
  *
  * @return  status
 */
@@ -575,7 +596,7 @@ smStatus_t nx_GetConfig_SAKUpdate(pSeSession_t session_ctx, uint8_t *sak1, uint8
 smStatus_t nx_GetConfig_SMConfig(pSeSession_t session_ctx, uint8_t *SMConfigA, uint8_t *SMConfigB);
 
 /** nx_GetConfig_CapData
- * @brief Update the PD Capability Data.
+ * @brief Gets PD Capability Data.
  *
  * @param[in]   session_ctx              Session context.
  * @param[out]   CapDataBuf               Capability data Buffer, consisting of 10 bytes: PDCap1 5th byte and PDCap2 6th byte
@@ -684,9 +705,9 @@ smStatus_t nx_GetConfig_CertMgmt(pSeSession_t session_ctx,
  * @brief Gets Watchddog Timer configuration of the card.
  *
  * @param[in]   session_ctx   Session context.
- * @param[out]   hWDTValue         Pointer to Halt Watchog Timer (HWDT) Value.
- * @param[out]   aWDT1Value        Pointer to Authorization Watchog Timer 1 (AWDT1) Value.
- * @param[out]   aWDT2Value        Pointer to Authorization Watchog Timer 1 (AWDT2) Value.
+ * @param[out]   hWDTValue         Pointer to Halt Watchdog Timer (HWDT) Value.
+ * @param[out]   aWDT1Value        Pointer to Authorization Watchdog Timer 1 (AWDT1) Value.
+ * @param[out]   aWDT2Value        Pointer to Authorization Watchdog Timer 1 (AWDT2) Value.
  *
  * @return  status
 */
@@ -748,7 +769,7 @@ smStatus_t nx_GetConfig_HaltWakeupConfig(pSeSession_t session_ctx,
     uint8_t *HALTOption);
 
 /** nx_GetConfig_DeferConfig
- * @brief Updates the defer configuration options.
+ * @brief Gets the defer configuration options.
  *
  * @param[in]   session_ctx        Session context.
  * @param[out]   deferralCount      Deferral Count (N).
@@ -847,7 +868,7 @@ smStatus_t nx_ManageGPIO_PowerOut(pSeSession_t session_ctx,
     Nx_CommMode_t knownCommMode);
 
 /** nx_ReadGPIO
- * @brief       Returns the GPIO statuses.
+ * @brief       Returns the GPIO status.
  *
  * @param[in]   session_ctx                       Session context.
  * @param[out]  tagTamperPermStatus               GPIO Byte 0 returns GPIO status (Close/Open/Invalid).
@@ -1270,13 +1291,13 @@ smStatus_t nx_ISOSelectFile(pSeSession_t session_ctx,
     size_t *FCIDataLen);
 
 /** nx_ISOReadBinary_ShortFile
- * @brief Writes data to a file.
+ * @brief Reads data from targeted file as encoded by P1.
  *
  * @param[in]   session_ctx      Session context.
  * @param[in]   shortISOFileID   ShortFile ID.
  * @param[in]   offset           offset.
- * @param[in]   data             Data to be written.
- * @param[in]   dataLen          Length of data to be written.
+ * @param[in]   data             Data read.
+ * @param[in]   dataLen          Length of data read.
  *
  * @return  status
 */
@@ -1284,19 +1305,19 @@ smStatus_t nx_ISOReadBinary_ShortFile(
     pSeSession_t session_ctx, uint8_t shortISOFileID, size_t offset, uint8_t *data, size_t *dataLen);
 
 /** nx_ISOReadBinary
- * @brief  Writes data to a file.
+ * @brief  Reads data from targeted file as encoded by P1.
  *
  * @param[in]   session_ctx      Session context.
  * @param[in]   offset           offset.
- * @param[in]   data             Data to be written.
- * @param[in]   dataLen          Length of data to be written.
+ * @param[in]   data             Data read.
+ * @param[in]   dataLen          Length of data read.
  *
  * @return  status
 */
 smStatus_t nx_ISOReadBinary(pSeSession_t session_ctx, size_t offset, uint8_t *data, size_t *dataLen);
 
 /** nx_ISOUpdateBinary_ShortFile
- * @brief  Writes data to a file.
+ * @brief  Writes data to a targeted file as encoded by P1.
  *
  * @param[in]   session_ctx      Session context.
  * @param[in]   shortISOFileID   ShortFile ID.
@@ -1310,7 +1331,7 @@ smStatus_t nx_ISOUpdateBinary_ShortFile(
     pSeSession_t session_ctx, uint8_t shortISOFileID, size_t offset, const uint8_t *data, size_t dataLen);
 
 /** nx_ISOUpdateBinary
- * @brief  writes data to a file.
+ * @brief  writes data to a targeted file as encoded by P1.
  *
  * @param[in]   session_ctx      Session context.
  * @param[in]   offset           Offset.
@@ -1635,7 +1656,7 @@ smStatus_t nx_CryptoRequest_ECCVerify_Digest_Oneshot(pSeSession_t session_ctx,
  * @param[out]  shareSecret              Shared Secret
  * @param[out]  shareSecretLen           Length of Shared Secret
  * @param[out]  pubKey                   Public Key
- * @param[out]  pubKeyLen                Length of Peblic Key
+ * @param[out]  pubKeyLen                Length of Public Key
  *
  * @return  status
  */
@@ -1655,7 +1676,7 @@ smStatus_t nx_CryptoRequest_ECDH_Oneshot(pSeSession_t session_ctx,
  * @param[in]    session_ctx              Session context.
  * @param[in]    keyID                    Id of ECC key pair to use
  * @param[out]   pubKey                   Public Key
- * @param[out]   pubKeyLen                Length of Peblic Key
+ * @param[out]   pubKeyLen                Length of Public Key
  *
  * @return  status
  */
@@ -2158,6 +2179,17 @@ smStatus_t nx_ProcessSM_Apply(pSeSession_t session_ctx,
     uint8_t *cipherData,
     size_t *cipherDataLen);
 
+/** nx_get_comm_mode
+ * @brief  Gets the commMode for given command byte.
+ *
+ * @param[in]   session_ctx              Session context.
+ * @param[in]   knownCommMode            Communication Mode set by the user.
+ * @param[in]   cmdByte                  Command byte value.
+ * @param[out]  out_commMode             Get communication Mode data nx supported.
+ * @param[out]  options                  Options is optional parameter can used to pass keyid or additional purpose.
+ *
+ * @return  status
+ */
 smStatus_t nx_get_comm_mode(pSeSession_t session_ctx,
     Nx_CommMode_t knownCommMode,
     uint8_t cmdByte,

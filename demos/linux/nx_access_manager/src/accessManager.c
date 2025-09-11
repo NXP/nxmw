@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 #ifdef ACCESS_MGR_UNIX_SOCKETS
     listeningSock = socket(AF_UNIX, socketType, 0);
 #else
-    listeningSock     = socket(AF_INET, socketType, 0);
+    listeningSock = socket(AF_INET, socketType, 0);
 #endif
     if (listeningSock < 0) {
         perror("socket");
