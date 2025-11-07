@@ -6,7 +6,6 @@
 #include <nx_apdu.h>
 #include <fsl_sss_nx_auth_types.h>
 #include <fsl_sss_nx_types.h>
-
 /* clang-format off */
 #define CERT_REPO_SIZE 0xC00
 #define EX_CERT_REPO_DEVICE_LEAF_PRIVATE_KEY \
@@ -70,8 +69,22 @@
         0xF6, 0x3C, 0xEE, 0x3D, 0x08, 0xC1, 0x88, 0x6B, 0xCD,   \
         0xEF, 0x97, 0xF0, 0xDE                                  \
     }
-/* clang-format on */
 
+#if defined(_MSC_VER)
+#define OS_PATH_SEPARATOR "\\"
+#else
+#define OS_PATH_SEPARATOR "/"
+#endif
+
+#define NXCLITOOL_MAX_DIR_LENGTH 512
+#define NXCLITOOL_MAX_PART1_DIR_LENGTH 50
+#define NXCLITOOL_MAX_FILE_LENGTH 40
+#define NXCLITOOL_MAX_EXTRA_DIR_LENGTH (NXCLITOOL_MAX_DIR_LENGTH + NXCLITOOL_MAX_PART1_DIR_LENGTH)
+#define NXCLITOOL_MAX_FILE_NAME_LENGTH (NXCLITOOL_MAX_EXTRA_DIR_LENGTH + NXCLITOOL_MAX_FILE_LENGTH)
+
+/* clang-format on */
+int isDerFileOrFolder(const char *path);
+void uidToDecimalString(uint8_t *uidBuffer, size_t uidLen, char *decimalStr, size_t strSize);
 sss_status_t nxclitool_get_cert_repo_command_parameters(int argc,
     const char *argv[],
     uint32_t *repo_id,
@@ -157,7 +170,7 @@ void nxclitool_show_command_help_crt_repo_load_cert_cmd()
     printf("\t\t  p1\n");
     printf("\t\t  p2\n");
     printf("\t\t  root\n");
-    printf("  -in\t\tPath to the certificate/key\n");
+    printf("  -in\t\tPath to the certificate/key/folder\n");
     printf("  -kcomm\tKnown Communication Mode, required to write to/read from the repository. Accepted values:\n");
     printf("\t\t  full\n");
     printf("\t\t  mac\n");
@@ -891,17 +904,19 @@ sss_status_t nxclitool_crt_repo_create(int argc, const char *argv[], nxclitool_s
 
 sss_status_t nxclitool_crt_repo_load_cert_and_mapping(int argc, const char *argv[], nxclitool_sss_boot_ctx_t *pCtx)
 {
-    sss_status_t status                   = kStatus_SSS_Fail;
-    smStatus_t sm_status                  = SM_NOT_OK;
-    uint32_t repo_id                      = 0x03;
-    NX_CERTIFICATE_LEVEL_t cert_level     = NX_CERTIFICATE_LEVEL_LEAF;
-    Nx_CommMode_t known_comm_mode         = Nx_CommMode_NA;
-    uint8_t *buffer[MAX_CERT_BUF_LEN + 1] = {0};
-    size_t buffer_len                     = 0;
-    char file_name[MAX_FILE_PATH_LEN]     = {0};
-    uint8_t tagged_cert[MAX_CERT_BUF_LEN] = {0};
-    size_t tagged_cert_len                = 0;
-    sss_nx_session_t *pSession            = (sss_nx_session_t *)&pCtx->session;
+    sss_status_t status                             = kStatus_SSS_Fail;
+    smStatus_t sm_status                            = SM_NOT_OK;
+    uint32_t repo_id                                = 0x03;
+    NX_CERTIFICATE_LEVEL_t cert_level               = NX_CERTIFICATE_LEVEL_LEAF;
+    Nx_CommMode_t known_comm_mode                   = Nx_CommMode_NA;
+    uint8_t *buffer[MAX_CERT_BUF_LEN + 1]           = {0};
+    size_t buffer_len                               = 0;
+    char file_name[MAX_FILE_PATH_LEN]               = {0};
+    uint8_t tagged_cert[MAX_CERT_BUF_LEN]           = {0};
+    size_t tagged_cert_len                          = 0;
+    char outputFile[NXCLITOOL_MAX_FILE_NAME_LENGTH] = {0};
+    sss_nx_session_t *pSession                      = (sss_nx_session_t *)&pCtx->session;
+    int ret                                         = -1;
 
     if (nxclitool_fetch_parameters(argc,
             argv,
@@ -973,11 +988,38 @@ sss_status_t nxclitool_crt_repo_load_cert_and_mapping(int argc, const char *argv
         break;
     }
 
-    LOG_I("Using certificate at path \"%s\"", file_name);
+    if (isDerFileOrFolder(file_name)) {
+        ENSURE_OR_GO_CLEANUP(strlen(file_name) <= NXCLITOOL_MAX_EXTRA_DIR_LENGTH)
+        uint8_t uidBuffer[10] = {0};
+        size_t uidLen         = sizeof(uidBuffer);
+        char hexString[23]; // 2 chars per byte + null terminator
 
-    FILE *fh = fopen(file_name, "rb");
+        sm_status = nx_GetCardUID(&pSession->s_ctx, uidBuffer, &uidLen);
+        ENSURE_OR_GO_CLEANUP(sm_status == SM_OK);
+
+        // Convert UID bytes to hex string
+        char *ptr = hexString;
+        ptr += sprintf(ptr, "0x");
+        for (size_t i = 0; i < uidLen; i++) {
+            ptr += sprintf(ptr, "%02X", uidBuffer[i]);
+        }
+        *ptr = '\0';
+
+        // Build filename: folderName + "/" + hexString + ".der"
+        ret = snprintf(outputFile, sizeof(outputFile), "%s%s%s.der", file_name, OS_PATH_SEPARATOR, hexString);
+        ENSURE_OR_GO_CLEANUP(ret >= 0);
+        LOG_I("Output file: %s\n", outputFile);
+    }
+    else {
+        // Create output file name using decimal UID
+        snprintf(outputFile, sizeof(outputFile), "%s", file_name);
+    }
+
+    LOG_I("Using certificate at path \"%s\"", outputFile);
+
+    FILE *fh = fopen(outputFile, "rb");
     if (NULL == fh) {
-        LOG_E("Unable to open the certificate file at path \"%s\"", file_name);
+        LOG_E("Unable to open the certificate file at path \"%s\"", outputFile);
         status = kStatus_SSS_Fail;
         goto cleanup;
     }
@@ -1012,6 +1054,17 @@ sss_status_t nxclitool_crt_repo_load_cert_and_mapping(int argc, const char *argv
 
 cleanup:
     return status;
+}
+
+int isDerFileOrFolder(const char *path)
+{
+    // Check if string ends with ".der"
+    const char *ext = strrchr(path, '.');
+    if (ext && ((strcmp(ext, ".der") == 0) || (strcmp(ext, ".bin") == 0))) {
+        return 0; // It's a .der file
+    }
+
+    return 1; // Not .der file
 }
 
 sss_status_t nxclitool_crt_repo_load_root_ca_key(int argc,

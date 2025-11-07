@@ -2050,7 +2050,8 @@ smStatus_t nx_SetConfig_GPIOMgmt(pSeSession_t session_ctx, Nx_gpio_config_t gpio
     tlvRet = SET_U8("GPIO2Mode", &pCmdDataBuf, &cmdDataBufBufLen, gpioConfig.gpio2Mode, NX_MAX_BUF_SIZE_CMD);
     ENSURE_OR_GO_CLEANUP(0 == tlvRet);
 
-    if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_Output) {
+    if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_Output ||
+        gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_NfcPausefileOut) {
         gpio2Config = gpioConfig.gpio2OutputInitStateHigh;
     }
     else if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_DownstreamPowerOut) {

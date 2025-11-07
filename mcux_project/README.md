@@ -5,6 +5,7 @@ These projects demonstrate usage of MCUXpresso-IDE to build and run the demos. P
 - LPC55S69
 - FRDM-MCXA153
 - FRDM-MCXN947
+- FRDM-MCAX156
 
 This section will give a brief about the MCUX projects.
 

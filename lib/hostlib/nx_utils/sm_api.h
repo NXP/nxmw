@@ -73,7 +73,7 @@ U16 SM_RjctConnectWithAID(
 U16 SM_I2CConnect(void **conn_ctx, SmCommState_t *commState, U8 *cip, U16 *cipLen, const char *pConnString);
 
 U16 SM_SendAPDU(U8 *cmd, U16 cmdLen, U8 *resp, U16 *respLen);
-
+U16 SM_I2CColdReset(void *conn_ctx);
 #if defined(SMCOM_JRCP_V1_AM)
 U16 SM_LockChannel();
 U16 SM_UnlockChannel();

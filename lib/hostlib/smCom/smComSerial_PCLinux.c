@@ -1,4 +1,4 @@
-/* Copyright 2020, 2023-2024 NXP
+/* Copyright 2020, 2023-2025 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -128,6 +128,11 @@ U32 smComVCom_GPIOToggle(void *conn_ctx, U8 gpioPIN)
 U32 smComVCom_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *pRx, U32 *pRxLen)
 {
     return smComSocket_GPIOReadFD(gfileDescriptor, gpioPIN, pRx, pRxLen);
+}
+
+U32 smComVCom_ColdReset(void *conn_ctx)
+{
+    return smComSocket_ColdResetFD(gfileDescriptor);
 }
 
 static int smUartSetInterfaceAttrib(int fd, uint32_t speed)

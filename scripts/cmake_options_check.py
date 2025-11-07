@@ -1,4 +1,4 @@
-# Copyright 2022-2023 NXP
+# Copyright 2022-2023,2025 NXP
 #
 # NXP Internal. Not to be shared outside NXP
 #
@@ -35,6 +35,7 @@ LIST_NX_VERSIONS_ALL = cmake_options.LIST_NX_VERSIONS_ALL
 LIST_EMBEDDED_PLATFORM = [
     "LPCXPRESSO55S",
     "FRDMMCXA153",
+    "FRDMMCXA156",
     "FRDMMCXN947",
 ]
 

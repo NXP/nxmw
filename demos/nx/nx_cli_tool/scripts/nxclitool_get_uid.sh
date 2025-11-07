@@ -46,7 +46,7 @@ if [ -d "output" ]; then
 else
     mkdir output
 fi
-export OUT_FILE_PATH=output/uid.txt
+export OUT_FILE_PATH=output/uid.csv
 
 # ######################################## GET UID SCRIPT BEGINS HERE ########################################
 

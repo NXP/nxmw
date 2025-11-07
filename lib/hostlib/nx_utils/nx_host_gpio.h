@@ -66,7 +66,6 @@ U16 nx_host_GPIOClear(void *conn_ctx, U8 gpioPIN);
 U16 nx_host_GPIOToggle(void *conn_ctx, U8 gpioPIN);
 U16 nx_host_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *resp, U16 *respLen);
 U16 nx_host_GPIOClose(void *conn_ctx, U8 gpioPIN);
-
 #ifdef __cplusplus
 }
 #endif

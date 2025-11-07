@@ -18,6 +18,18 @@ Options supported:
 12. **keypairAC**: Set ManageKeyPair access condition
 13. **caRootKeyCM**: Set ManageCARootKey communication mode
 14. **caRootKeyAC**: Set ManageCARootKey access condition
+15. **gpio2config**: Set GPIO2 Config Initial state after power-off cycle, enable i2csupport and backpower
+16. **gpio1padctrlA**: Set gpio1padctrlA to Debounce Filter value 2 MS bits
+17. **gpio1padctrlB**: Set gpio1padctrlB to Debounce Filter value 8 LS bits
+18. **gpio1padctrlC**: Set gpio1padctrlC to Debounce filter input filter selection
+19. **gpio1padctrlD**: Set gpio1padctrlD to input configuation, output configuation supply selection
+20. **gpio2padctrlA**: Set gpio2padctrlA to Debounce Filter value 2 MS bits
+21. **gpio2padctrlB**: Set gpio2padctrlB to Debounce Filter value 8 LS bits
+22. **gpio2padctrlC**: Set gpio2padctrlC to Debounce filter input filter selection
+23. **gpio2padctrlD**: Set gpio2padctrlD to input configuation, output configuation supply selection
+24. **nfcpausefileno**: Set nfcpausefile number
+25. **nfcpauseoffset**: Set nfcpause offset
+26. **nfcpauselength**: Set nfcpause length
 
 ## Prerequisites
 
@@ -61,6 +73,18 @@ option_list is a list of supported configuration options, where at least one opt
 - \[-keypairAC {0x0-0xF}\]
 - \[-caRootKeyCM {plainfull}\]
 - \[-caRootKeyAC {0x0-0xF}\]
+- \[-gpio2config {0x00-0x3}\]
+- \[-gpio1padctrlA {0x00-0x03}\]
+- \[-gpio1padctrlB {0x00-0xFF}\]
+- \[-gpio1padctrlC {debounce_enable}\]
+- \[-gpio1padctrlD {input_plain_pullup}\]
+- \[-gpio2padctrlA {0x00-0x03}\]
+- \[-gpio2padctrlB {0x00-0xFF}\]
+- \[-gpio2padctrlC {debounce_enable}\]
+- \[-gpio2padctrlD {input_plain_pullup}\]
+- \[-nfcpausefileno {0x00-0x1F}\]
+- \[-nfcpauseoffset {0x000000-0xFFFFFF}\]
+- \[-nfcpauselength {0x000000-0xFFFFFF}\]
 
 For example, to set GPIO1 to be in the output mode, following command can be run:
 
@@ -76,4 +100,3 @@ sss   :INFO :Session Open Succeed
 hostLib:INFO :SET config Example Success !!!...
 hostLib:INFO :ex_sss Finished
 ```
-

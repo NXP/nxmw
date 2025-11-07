@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -14,6 +14,10 @@
 #if defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM) || \
     defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) || defined(SSS_HAVE_HOST_RASPBIAN)
 #include "nx_host_gpio.h"
+#endif
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0) || \
+    defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+#include "sm_api.h"
 #endif
 #include "nx_apdu.h"
 #include "nx_enums.h"
@@ -91,7 +95,13 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
 
     ENSURE_OR_GO_CLEANUP(NULL != pCtx)
     pSession = (sss_nx_session_t *)&pCtx->session;
-
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+    sm_status = SM_I2CColdReset(&pSession->s_ctx.conn_ctx);
+    ENSURE_OR_GO_CLEANUP(SW_OK == sm_status);
+#elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+    sm_status = SM_I2CColdReset(NULL);
+    ENSURE_OR_GO_CLEANUP(SW_OK == sm_status);
+#endif
     // Init MCU GPIO and read initial status.
 #if SSS_HAVE_HOST_RASPBIAN
     respLen    = 0;
@@ -244,7 +254,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     else {
         LOG_I("HOST GPIO (PTB3) Status Changed: High");
     }
-    sm_status = SM_OK;
+    status = kStatus_SSS_Success;
 
 cleanup:
 
@@ -252,12 +262,18 @@ cleanup:
     nx_host_GPIOClose(NULL, NX_HOST_RPI_INPUT_PIN_GPIO2);
 #endif
 
-    if (SM_OK == sm_status) {
-        status = kStatus_SSS_Success;
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+    if (pSession != NULL) {
+        sm_status = SM_I2CColdReset(&pSession->s_ctx.conn_ctx);
+    }
+#elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+    sm_status = SM_I2CColdReset(NULL);
+#endif
+
+    if (SM_OK == sm_status && kStatus_SSS_Success == status) {
         LOG_I("ex_dual_interfaces Example Success !!!...");
     }
     else {
-        status = kStatus_SSS_Fail;
         LOG_E("ex_dual_interfaces Example Failed !!!...");
     }
     return status;

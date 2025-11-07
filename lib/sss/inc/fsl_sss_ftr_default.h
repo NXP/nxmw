@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -69,6 +69,9 @@
 /** Embedded frdmmcxa153 */
 #define SSS_HAVE_HOST_FRDMMCXA153 0
 
+/** Embedded frdmmcxa156 */
+#define SSS_HAVE_HOST_FRDMMCXA156 0
+
 /** Embedded frdmmcxn947 */
 #define SSS_HAVE_HOST_FRDMMCXN947 0
 
@@ -78,6 +81,7 @@
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
     + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXA156      \
     + SSS_HAVE_HOST_FRDMMCXN947      \
     ) > 1)
 #        error "Enable only one of 'NXMW_Host'"
@@ -90,6 +94,7 @@
     + SSS_HAVE_HOST_LPCXPRESSO55S    \
     + SSS_HAVE_HOST_RASPBIAN         \
     + SSS_HAVE_HOST_FRDMMCXA153      \
+    + SSS_HAVE_HOST_FRDMMCXA156      \
     + SSS_HAVE_HOST_FRDMMCXN947      \
     ) == 0)
 #        error "Enable at-least one of 'NXMW_Host'"
@@ -799,7 +804,7 @@
  (SSS_HAVE_HOSTCRYPTO_MBEDTLS | SSS_HAVE_HOSTCRYPTO_OPENSSL | SSS_HAVE_HOSTCRYPTO_USER)
 
 #define SSS_HAVE_HOST_EMBEDDED \
- (SSS_HAVE_HOST_LPCXPRESSO55S | SSS_HAVE_HOST_FRDMMCXA153 | SSS_HAVE_HOST_FRDMMCXN947)
+ (SSS_HAVE_HOST_LPCXPRESSO55S | SSS_HAVE_HOST_FRDMMCXA153 | SSS_HAVE_HOST_FRDMMCXA156 | SSS_HAVE_HOST_FRDMMCXN947)
 
 /** Deprecated items. Used here for backwards compatibility. */
 

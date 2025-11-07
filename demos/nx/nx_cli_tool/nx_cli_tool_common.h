@@ -101,6 +101,8 @@ void nxclitool_show_usage()
     printf("  dgst-sign\t\t\tDo ecdsa sign with SA\n");
     printf("  dgst-verify\t\t\tDo ecdsa verify with SA\n");
     printf("  derive-ecdh\t\t\tDerive-ecdh key with SA\n");
+    printf("  el2go-parser\t\t\tParse leaf certificate from JSON file matching deviceID\n");
+    printf("  update-eccpolicy\t\t\tupdate ecc key policy\n");
     printf("\n");
     printf("For individual command help, enter the command with \"-help\" flag in the end\n");
     printf("EXAMPLE:  nxclitool [COMMAND] -help\n");
@@ -119,6 +121,25 @@ sss_status_t nxclitool_get_uint32_from_hex_text(const char *key_id, uint32_t *sl
         return kStatus_SSS_Fail;
     }
     *slot = (uint32_t)val;
+    return kStatus_SSS_Success;
+}
+
+sss_status_t nxclitool_get_uint16_from_hex_text(const char *key_id, uint16_t *slot)
+{
+    long long val = 0;
+    if (strncmp(key_id, "0x", 2) != 0) {
+        LOG_E("Value in hex format is required here. Correct format is \"0x<ID>\"");
+        return kStatus_SSS_Fail;
+    }
+
+    val = strtoll(key_id, NULL, 16);
+
+    if (val < 0 || val > UINT16_MAX) {
+        LOG_E("Value out of range for uint16_t");
+        return kStatus_SSS_Fail;
+    }
+
+    *slot = (uint16_t)val;
     return kStatus_SSS_Success;
 }
 

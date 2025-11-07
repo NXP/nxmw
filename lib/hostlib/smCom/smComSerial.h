@@ -33,6 +33,7 @@ U32 smComVCom_GPIOSet(void *conn_ctx, U8 gpioPIN);
 U32 smComVCom_GPIOClear(void *conn_ctx, U8 gpioPIN);
 U32 smComVCom_GPIOToggle(void *conn_ctx, U8 gpioPIN);
 U32 smComVCom_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *pRx, U32 *pRxLen);
+U32 smComVCom_ColdReset(void *conn_ctx);
 
 #ifdef __cplusplus
 }

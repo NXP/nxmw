@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2020, 2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -73,6 +73,13 @@ U16 smComT1oI2C_Init(void **conn_ctx, const char *pConnString);
 * @return
 */
 U16 smComT1oI2C_Resume(void **conn_ctx, const char *pConnString);
+
+/**
+* @param conn_ctx  connection context
+* ColdReset the T=1 protocol stack
+* @return
+*/
+U16 smComT1oI2C_ColdReset(void *conn_ctx);
 
 #if defined(__cplusplus)
 }

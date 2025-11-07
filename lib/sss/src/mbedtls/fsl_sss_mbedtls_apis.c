@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018-2020, 2022-2024 NXP
+ * Copyright 2018-2020, 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -47,6 +47,7 @@
 static sss_status_t sss_mbedtls_drbg_seed(sss_mbedtls_session_t *pSession, const char *pers, size_t persLen);
 
 #if (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) || \
+    (defined(SSS_HAVE_HOST_FRDMMCXA156) && (SSS_HAVE_HOST_FRDMMCXA156)) || \
     (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)) || \
     (SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X)
 int mbedtls_entropy_func_3_X(void *data, unsigned char *output, size_t len);
@@ -2830,6 +2831,7 @@ exit:
 }
 
 #if (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) || \
+    (defined(SSS_HAVE_HOST_FRDMMCXA156) && (SSS_HAVE_HOST_FRDMMCXA156)) || \
     (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947)) || \
     (SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X)
 int mbedtls_entropy_func_3_X(void *data, unsigned char *output, size_t len)
@@ -2853,6 +2855,7 @@ static sss_status_t sss_mbedtls_drbg_seed(sss_mbedtls_session_t *pSession, const
 
 #if ((SSS_HAVE_HOST_LPCXPRESSO55S) && SSS_HAVE_HOSTCRYPTO_MBEDTLS && SSS_HAVE_MBEDTLS_3_X) || \
     (defined(SSS_HAVE_HOST_FRDMMCXA153) && (SSS_HAVE_HOST_FRDMMCXA153)) ||                    \
+    (defined(SSS_HAVE_HOST_FRDMMCXA156) && (SSS_HAVE_HOST_FRDMMCXA156)) ||                    \
     (defined(SSS_HAVE_HOST_FRDMMCXN947) && (SSS_HAVE_HOST_FRDMMCXN947))
     ret = mbedtls_ctr_drbg_seed(
         pSession->ctr_drbg, &mbedtls_entropy_func_3_X, pSession->entropy, (const unsigned char *)pers, persLen);

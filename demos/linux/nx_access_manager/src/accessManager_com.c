@@ -60,7 +60,8 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
     case 0:
         // Command has extended length represented by first 3 bytes
         i++;
-        localLen = (((size_t)cmd[i++]) << 8) + ((size_t)cmd[i++]);
+        localLen = ((size_t)cmd[i++]) << 8;
+        localLen += ((size_t)cmd[i++]);
         if ((MSG_HEADER_SIZE + MSG_EXTENDED_LENGTH_BYTES + localLen) > cmdLen) {
             LOG_E("Command buffer is smaller than expected");
             return status;
@@ -81,7 +82,9 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
         return status;
     }
 
-    localLen = (((size_t)cmd[i++]) << 8) + ((size_t)cmd[i++]);
+    localLen = ((size_t)cmd[i++]) << 8;
+    localLen += ((size_t)cmd[i++]);
+
     if ((cmdLen < localLen) || ((cmdLen - localLen < i) || (localLen > *cmdHeaderLen))) {
         return status;
     }
@@ -95,7 +98,9 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
     if (cmdLen - 2 < i) {
         return status;
     }
-    localLen = (((size_t)cmd[i++]) << 8) + ((size_t)cmd[i++]);
+    localLen = ((size_t)cmd[i++]) << 8;
+    localLen += ((size_t)cmd[i++]);
+
     if ((*cmdDataLen > NX_MAX_BUF_SIZE_CMD) || (localLen > *cmdDataLen)) {
         return status;
     }

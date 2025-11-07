@@ -45,7 +45,7 @@ static uint8_t g_senddata_i2c         = 0;
 
 U32 selectResponseDataLen = 0;
 
-#if defined(CPU_MCXA153VLH)
+#if defined(CPU_MCXA153VLH) || defined(CPU_MCXA156VLL)
 //USB_DMA_NONINIT_DATA_ALIGN
 USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) static U8 selectResponseData[1024 + 20];
 
@@ -309,6 +309,26 @@ void state_vcom_read_write(
                         g_senddata_i2c = 1;
                     }
                     break;
+                case COLD_RESET: {
+                    LOG_I("Cold reset");
+
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+                    sw = smComT1oI2C_ColdReset(NULL);
+#endif
+                    if (sw == SW_OK) {
+                        targetBufferLen = sizeof(targetBuffer);
+                        statusValue     = vcomPackageApduResponse(
+                            COLD_RESET, 0x00, (U8 *)&sw, sizeof(sw), targetBuffer, &targetBufferLen);
+                        if (statusValue == RJCT_OK) {
+                            memcpy(selectResponseData, targetBuffer, targetBufferLen);
+                            selectResponseDataLen = targetBufferLen;
+                            g_sendresp_vcom       = 1;
+                        }
+                        else {
+                            LOG_X16_E(statusValue);
+                        }
+                    }
+                } break;
                 case CLOSE_CONN:
                     LOG_I("Closing connection");
 

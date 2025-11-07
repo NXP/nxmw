@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2016-2018, 2020, 2022-2024 NXP
+ * Copyright 2016-2018, 2020, 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -196,4 +196,17 @@ exit:
     return ret;
 }
 
+U16 smComT1oI2C_ColdReset(void *conn_ctx)
+{
+    ESESTATUS status = ESESTATUS_SUCCESS;
+    U16 ret          = SMCOM_COM_FAILED;
+    status           = phNxpEse_reset(conn_ctx);
+    if (status != ESESTATUS_SUCCESS) {
+        LOG_E("Failed to Cold Reset ");
+        goto exit;
+    }
+    ret = SMCOM_OK;
+exit:
+    return ret;
+}
 #endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0

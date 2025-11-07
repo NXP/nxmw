@@ -1,4 +1,4 @@
-# Copyright 2023-2024 NXP
+# Copyright 2023-2025 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -44,14 +44,14 @@ IF(NXPInternal)
         CACHE NXMW_Host
         PROPERTY
             STRINGS
-            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxn947;"
+            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxa156;frdmmcxn947;"
     )
 ELSE()
     SET_PROPERTY(
         CACHE NXMW_Host
         PROPERTY
             STRINGS
-            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxn947;"
+            "PCWindows;PCLinux64;lpcxpresso55s;Raspbian;frdmmcxa153;frdmmcxa156;frdmmcxn947;"
     )
 ENDIF()
 
@@ -609,6 +609,14 @@ ELSE()
     SET(SSS_HAVE_HOST_FRDMMCXA153 "0")
 ENDIF()
 
+IF("${NXMW_Host}" STREQUAL "frdmmcxa156")
+    # SET(WithNXMW_Host_frdmmcxa156 ON)
+    SET(SSS_HAVE_HOST_FRDMMCXA156 "1")
+ELSE()
+    # SET(WithNXMW_Host_frdmmcxa156 OFF)
+    SET(SSS_HAVE_HOST_FRDMMCXA156 "0")
+ENDIF()
+
 IF("${NXMW_Host}" STREQUAL "frdmmcxn947")
     # SET(WithNXMW_Host_frdmmcxn947 ON)
     SET(SSS_HAVE_HOST_FRDMMCXN947 "1")
@@ -627,11 +635,13 @@ ELSEIF("${NXMW_Host}" STREQUAL "Raspbian")
     # OK
 ELSEIF("${NXMW_Host}" STREQUAL "frdmmcxa153")
     # OK
+ELSEIF("${NXMW_Host}" STREQUAL "frdmmcxa156")
+    # OK
 ELSEIF("${NXMW_Host}" STREQUAL "frdmmcxn947")
     # OK
 ELSE()
     MESSAGE(SEND_ERROR "For 'NXMW_Host' '${NXMW_Host}' is invalid.")
-    MESSAGE(STATUS "Only supported values are 'PCWindows, PCLinux64, lpcxpresso55s, Raspbian, frdmmcxa153, frdmmcxn947'")
+    MESSAGE(STATUS "Only supported values are 'PCWindows, PCLinux64, lpcxpresso55s, Raspbian, frdmmcxa153, frdmmcxa156, frdmmcxn947'")
 ENDIF()
 
 IF("${NXMW_SMCOM}" STREQUAL "None")

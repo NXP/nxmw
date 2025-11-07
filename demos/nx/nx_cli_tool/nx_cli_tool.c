@@ -21,6 +21,10 @@
 #include "nx_cli_tool_sha.h"
 #include "nx_cli_tool_ecdsa.h"
 #include "nx_cli_tool_ecdh.h"
+#if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)
+#include "nx_cli_tool_el2go_json_parser.h"
+#endif
+#include "nx_cli_tool_update_eccpolicy.h"
 
 /* ************************************************************************** */
 /* Function Definitions                                                       */
@@ -44,8 +48,7 @@ void nxclitool_execute_command(int argc, const char *argv[])
     bool file_out_flag                          = FALSE;
     NXCLITOOL_OPERATION_t operation             = NXCLITOOL_OPERATION_SIGN;
     Nx_AccessCondition_t write_acc_cond         = Nx_AccessCondition_Free_Access;
-
-    conn_ctx.portName = port_name;
+    conn_ctx.portName                           = port_name;
 
     // RNG
     if (0 == strcmp(argv[1], "rand")) {
@@ -653,16 +656,16 @@ void nxclitool_execute_command(int argc, const char *argv[])
 
     // Generate digest
     else if (0 == strcmp(argv[1], "dgst-sha256")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_sha();
+            return;
+        }
+
         if (argc < 3) {
             LOG_E("Too few arguments. Refer usage below");
             nxclitool_show_command_help_sha();
             ret = 1;
             goto cleanup;
-        }
-
-        if ((0 == strcmp(argv[argc - 1], "-help"))) {
-            nxclitool_show_command_help_sha();
-            return;
         }
 
         if (nxclitool_fetch_parameters(argc,
@@ -705,16 +708,16 @@ void nxclitool_execute_command(int argc, const char *argv[])
     }
     // dgst sign
     else if (0 == strcmp(argv[1], "dgst-sign")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_sign_message();
+            return;
+        }
+
         if (argc < 3) {
             LOG_E("Too few arguments. Refer usage below");
             nxclitool_show_command_help_sign_message();
             ret = 1;
             goto cleanup;
-        }
-
-        if ((0 == strcmp(argv[argc - 1], "-help"))) {
-            nxclitool_show_command_help_sign_message();
-            return;
         }
 
         if (nxclitool_fetch_parameters(argc,
@@ -757,16 +760,16 @@ void nxclitool_execute_command(int argc, const char *argv[])
     }
     // dgst sign
     else if (0 == strcmp(argv[1], "dgst-verify")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_verify_signature();
+            return;
+        }
+
         if (argc < 3) {
             LOG_E("Too few arguments. Refer usage below");
             nxclitool_show_command_help_verify_signature();
             ret = 1;
             goto cleanup;
-        }
-
-        if ((0 == strcmp(argv[argc - 1], "-help"))) {
-            nxclitool_show_command_help_verify_signature();
-            return;
         }
 
         if (nxclitool_fetch_parameters(argc,
@@ -809,16 +812,16 @@ void nxclitool_execute_command(int argc, const char *argv[])
     }
     // do ecdh
     else if (0 == strcmp(argv[1], "derive-ecdh")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_derive_ecdh();
+            return;
+        }
+
         if (argc < 3) {
             LOG_E("Too few arguments. Refer usage below");
             nxclitool_show_command_help_derive_ecdh();
             ret = 1;
             goto cleanup;
-        }
-
-        if ((0 == strcmp(argv[argc - 1], "-help"))) {
-            nxclitool_show_command_help_derive_ecdh();
-            return;
         }
 
         if (nxclitool_fetch_parameters(argc,
@@ -859,6 +862,76 @@ void nxclitool_execute_command(int argc, const char *argv[])
 
         status = nxclitool_derive_ecdh(&boot_ctx, key_id, curve_type, file_pubkey_path, file_out_path, file_out_flag);
     }
+    // parser json
+#if defined(SSS_HAVE_HOST_PCWINDOWS) && (SSS_HAVE_HOST_PCWINDOWS)
+    else if (0 == strcmp(argv[1], "el2go-parser")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_el2go_parser();
+            return;
+        }
+
+        if (argc < 2) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_el2go_parser();
+            ret = 1;
+            goto cleanup;
+        }
+
+        if (nxclitool_fetch_parameters(argc,
+                argv,
+                2,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                file_in_path,
+                file_out_path,
+                &file_out_flag,
+                NULL,
+                NULL,
+                NULL)) {
+            LOG_E("Failed to fetch parameters for el2go parser. Check usage below");
+            nxclitool_show_command_help_el2go_parser();
+            goto cleanup;
+        }
+        status = nxclitool_el2go_json_parser(file_in_path, file_out_path, file_out_flag);
+    }
+#endif
+    // parser json
+    else if (0 == strcmp(argv[1], "update-eccpolicy")) {
+        if ((0 == strcmp(argv[argc - 1], "-help"))) {
+            nxclitool_show_command_help_update_eccpolicy();
+            return;
+        }
+
+        if (argc < 4) {
+            LOG_E("Too few arguments. Refer usage below");
+            nxclitool_show_command_help_update_eccpolicy();
+            ret = 1;
+            goto cleanup;
+        }
+
+        ret = nxclitool_check_connection_and_get_ctx(&conn_ctx);
+        if (ret) {
+            LOG_E("Not connected. Connect to SA first");
+            nxclitool_show_usage();
+            goto cleanup;
+        }
+
+        // Session open
+        status = nxclitool_do_session_open(&boot_ctx, &conn_ctx, conn_ctx.auth.authType);
+        ENSURE_OR_GO_CLEANUP(status == kStatus_SSS_Success);
+        status = nxclitool_update_eccpolicy(argc, argv, &boot_ctx);
+    }
+
     // Invalid Command
     else {
         LOG_E("Invalid command. Refer usage below");

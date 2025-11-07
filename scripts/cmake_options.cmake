@@ -1,4 +1,4 @@
-# .. Copyright 2022-2024 NXP
+# .. Copyright 2022-2025 NXP
 # ..
 # .. SPDX-License-Identifier: BSD-3-Clause
 # ..
@@ -209,6 +209,10 @@ ELSEIF(SSS_HAVE_HOST_FRDMMCXA153)
     SET(SSS_HAVE_KSDK ON)
     SET(KSDK_BoardName "frdmmcxa153")
     SET(KSDK_CPUName "CPU_MCXA153VLH")
+ELSEIF(SSS_HAVE_HOST_FRDMMCXA156)
+    SET(SSS_HAVE_KSDK ON)
+    SET(KSDK_BoardName "frdmmcxa156")
+    SET(KSDK_CPUName "CPU_MCXA156VLL")
 ELSEIF(SSS_HAVE_HOST_FRDMMCXN947)
     SET(SSS_HAVE_KSDK ON)
     SET(KSDK_BoardName "frdmmcxn947")

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -65,7 +65,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     static nx_connect_ctx_t nx_open_ctx  = {0};
     pConnectCtx                          = &nx_open_ctx;
 
-    LOG_I("Successfully opened SIGMA-session");
+    LOG_I("Successfully opened AES-128 session");
 
     //Read PTB2
     U8 resp             = 0;

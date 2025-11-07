@@ -26,7 +26,6 @@ sss_status_t nxclitool_get_uid(
     uint8_t uidBuffer[10] = {0};
     size_t uidLen         = sizeof(uidBuffer);
     FILE *getuid_fh       = NULL;
-    size_t bytes_written  = 0;
 
     ENSURE_OR_GO_CLEANUP(NULL != pCtx)
     pSession = (sss_nx_session_t *)&pCtx->session;
@@ -42,25 +41,36 @@ sss_status_t nxclitool_get_uid(
     LOG_MAU8_I("Card UID", uidBuffer, uidLen);
 #endif
     if (out_file_flag) {
-        getuid_fh = fopen(out_file, "ab");
+        getuid_fh = fopen(out_file, "a");
         if (NULL == getuid_fh) {
-            LOG_W("Unable to open a file to store the reference key");
+            LOG_W("Unable to open a file to store the uid");
             status = kStatus_SSS_Fail;
             goto cleanup;
         }
 
-        bytes_written = fwrite((char *)uidBuffer, sizeof(unsigned char), uidLen, getuid_fh);
-        if (bytes_written != uidLen) {
-            LOG_E("Failed to write the uid to file!!");
+        // Write UID in format: 0x<hex>; (e.g., 0x0465711BF72390;)
+        if (0 > fprintf(getuid_fh, "0x")) {
+            LOG_E("Failed to write opening quote in file handle!");
             if (0 != fclose(getuid_fh)) {
                 LOG_E("Failed to close the file handle!");
             }
             status = kStatus_SSS_Fail;
             goto cleanup;
         }
-        bytes_written = fwrite("\r\n", 1, 2, getuid_fh);
-        if (bytes_written != 2) {
-            LOG_E("Failed to write the end of line to file!!");
+
+        for (size_t i = 0; i < uidLen; i++) {
+            if (0 > fprintf(getuid_fh, "%02X", uidBuffer[i])) {
+                LOG_E("Failed to write uid in file handle!");
+                if (0 != fclose(getuid_fh)) {
+                    LOG_E("Failed to close the file handle!");
+                }
+                status = kStatus_SSS_Fail;
+                goto cleanup;
+            }
+        }
+
+        if (0 > fprintf(getuid_fh, ";")) {
+            LOG_E("Failed to write closing quote and comma in file handle!");
             if (0 != fclose(getuid_fh)) {
                 LOG_E("Failed to close the file handle!");
             }
@@ -70,6 +80,7 @@ sss_status_t nxclitool_get_uid(
 
         if (0 != fclose(getuid_fh)) {
             LOG_E("Failed to close the file handle!");
+            status = kStatus_SSS_Fail;
         }
     }
     else {

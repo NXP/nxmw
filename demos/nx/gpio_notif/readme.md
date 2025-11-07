@@ -52,7 +52,7 @@ It uses the following APIs and data types:
 If everything is successful, the output will be similar to:
 ```
 sss   :INFO :Session Open Succeed
-App   :INFO :Successfully opened SIGMA-session
+App   :INFO :Successfully opened AES-128 session
 App   :INFO :Read GPIONotif: High
 Opening COM Port '\\.\COM10'
 

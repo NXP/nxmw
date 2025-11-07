@@ -10,11 +10,12 @@ Embedded platforms supported:
  `LPCXpresso55s69`
  `frdmmcxn947`
  `frdmmcxa153`
+ `frdmmcxa156`
 
 The overall architecture looks like this:
 
 <p align="left">
-    <img src="../../../doc/img/vcom/vcom_architecture.jpeg" width="1000" height="500">
+    <img src="../../../doc/img/vcom/vcom_architecture.jpeg" width="800" height="500">
 </p>
 
 ## Building the Demo

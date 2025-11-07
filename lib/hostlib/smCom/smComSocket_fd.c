@@ -4,7 +4,7 @@
  * @version 1.0
  * @par License
  *
- * Copyright 2016, 2022-2024 NXP
+ * Copyright 2016, 2022-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * @par Description
@@ -823,4 +823,61 @@ U32 smComSocket_GPIOReadFD(int fd, U8 gpioPIN, U8 *pRx, U32 *pRxLen)
     rv = true;
 exit:
     return rv;
+}
+
+U32 smComSocket_ColdResetFD(int fd)
+{
+    long int readWriteLen = 0;
+    U8 Cmd[4]             = {MTY_COLD_RESET, MYT_DEFAULT_NAD, 0, 0};
+    U32 totalReceived     = 0;
+    U8 lengthReceived     = 0;
+    U32 expectedLength    = 0;
+    U32 retval            = 1;
+
+    memset(response, 0x00, MAX_BUF_SIZE);
+    memset(sockapdu, 0x00, MAX_BUF_SIZE);
+
+    readWriteLen = WRITE_SEND(fd, Cmd, sizeof(Cmd));
+    if (readWriteLen < 0) {
+        LOG_W("Client: " WRITE_SEND_STR "() failed: error %li", readWriteLen);
+        return SMCOM_SND_FAILED;
+    }
+
+    expectedLength = REMOTE_JC_SHELL_HEADER_LEN; // remote JC shell header length
+
+    while (totalReceived < expectedLength) {
+        readWriteLen = READ_RECV(fd, (char *)&pRsp[totalReceived], MAX_BUF_SIZE);
+
+        if (readWriteLen <= 0) {
+            LOG_W("Client: " READ_RECV_STR "() failed: error %li", readWriteLen);
+            close(fd);
+            return SMCOM_SND_FAILED;
+        }
+        else {
+            totalReceived += readWriteLen;
+        }
+        if ((totalReceived >= REMOTE_JC_SHELL_HEADER_LEN) && (lengthReceived == 0)) {
+            ENSURE_OR_GO_EXIT(expectedLength <= (UINT32_MAX - ((pRsp[2] << 8) | (pRsp[3]))));
+            expectedLength += ((pRsp[2] << 8) | (pRsp[3]));
+            lengthReceived = 1;
+        }
+    }
+
+#ifdef LOG_FULL_CMD_RSP
+    LOG_MAU8_D("Rsp:Hdr", pRsp, REMOTE_JC_SHELL_HEADER_LEN);
+#endif
+
+    if (pRsp[0] != MTY_COLD_RESET) {
+        return SMCOM_SND_FAILED;
+    }
+
+    if (totalReceived < REMOTE_JC_SHELL_HEADER_LEN) {
+        LOG_E("Received response is missing the header itself!");
+        goto exit;
+    }
+
+    retval = (pRsp[readWriteLen - 1] << 8) | (pRsp[readWriteLen - 2]);
+
+exit:
+    return retval;
 }

@@ -123,7 +123,7 @@ static usb_cdc_acm_info_t s_usbCdcAcmInfo;
 #if defined(CPU_MIMXRT1062DVL6A) || defined(CPU_MIMXRT1062DVL6B)
 USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) static uint8_t s_currRecvBuf[DATA_BUFF_SIZE];
 //USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) static uint8_t s_currSendBuf[DATA_BUFF_SIZE];
-#elif defined(CPU_MCXA153VLH)
+#elif defined(CPU_MCXA153VLH) || defined(CPU_MCXA156VLL)
 USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) static uint8_t s_currRecvBuf[DATA_BUFF_SIZE];
 #else
 USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE) static uint8_t s_currRecvBuf[2048]; //+ A71CH I2C
@@ -293,7 +293,7 @@ void USB_DeviceClockInit(void)
     USB_EhciPhyInit(CONTROLLER_ID, BOARD_XTAL0_CLK_HZ, &phyConfig);
 #endif
 
-#elif defined(CPU_MCXA153VLH)
+#elif defined(CPU_MCXA153VLH) || defined(CPU_MCXA156VLL)
 
 #if defined(USB_DEVICE_CONFIG_KHCI) && (USB_DEVICE_CONFIG_KHCI > 0U)
     RESET_PeripheralReset(kUSB0_RST_SHIFT_RSTn);

@@ -860,6 +860,7 @@ static sss_status_t nx_calculate_kdf(nx_auth_sigma_ctx_t *pAuthCtx,
         kdfInputData[1] = index;
 
         // Calculate Session key with MAC one go
+        ENSURE_OR_GO_EXIT(kdfOutputDataLen > (size_t)(16 * (index - 1)));
         pOutSignature = kdfOutputData + 16 * (index - 1);
 
         // Init MAC Context

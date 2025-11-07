@@ -44,6 +44,7 @@
 #define MCU_GPIO_PIN_IO1 0x01
 #define MCU_GPIO_PIN_IO2 0x02
 
+#define COLD_RESET 0x09
 //- A71CH I2C
 
 U16 vcomPackageApduResponse(

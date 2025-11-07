@@ -10,8 +10,17 @@ Refer [**Dual Interface Example**](./ex_dual_interfaces.c)
   or Raspberry Pi.
 - Nx middleware stack.
 - NTAG configuration tool (e.g. RFIDDiscover) is available on NFC
-  host.
-
+  host **Refer application note** AN14513 NTAG X DNA - Dual Interface.
+- The NFC Pause feature with Cmd.ManageGPIO Using nx_tool_setconfig configures GPIO2 for output and GPIO High speed mode and Initial state low.
+- nx_tool_setconfig (built for VCOM)
+  ```
+  ./nx_tool_setconfig -gpio2mode output -gpio2config 0x00 -gpio2padctrlD gpio_high_speed_2 -gpioMgmtCM plain -gpioReadCM plain -gpioMgmtAC 0xE -gpioReadAC 0xE COM6
+  ```
+- The NFC Pause feature with Cmd.ISOReadBinary/Cmd.ReadData Using nx_tool_setconfig configures GPIO2 for output with nfc pause file and GPIO High speed mode, Initial state low, NFCPause fileNumber, NFCPauseOffset and NFCPauseLength.
+- nx_tool_setconfig (built for VCOM)
+  ```
+  ./nx_tool_setconfig -gpio2mode out_nfcpausefile -gpio2config 0x00 -gpio2padctrlD gpio_high_speed_2 -gpioMgmtCM plain -gpioReadCM plain -gpioMgmtAC 0xE -gpioReadAC 0xE -nfcpausefileno 0x02 -nfcpauseoffset 0x020000 -nfcpauselength 0x0F0000 COM6
+  ```
 ## About the Example
 
 The NFC Pause feature allows to transfer control from an NFC Host to an
@@ -25,22 +34,68 @@ When NFC Pause is triggered, NTAGECC shall halt processing on the NFC
 interface until the Cmd.ManageGPIO is received on the I2C interface to
 release the NFC Pause.
 
-NTAG configuration tool (e.g. RFIDDiscover) on NFC host is used to
-trigger NFC pause and this example will release NFC pause.
+Steps for NFC Operation using Cmd.ManageGPIO
 
-1. Initialize MCU GPIO as input pin. On FRDM-MCXN947, it is PTB3.
-2. Read current GPIO status as initial GPIO status.
-3. Read GPIO status at 1s interval and wait until status changes.
-4. NFC host(RFIDDiscover) selects NTAGECC application from NFC interface.
-5. NFC host(RFIDDiscover) setups symmetric authentication with Secure Authenticator.
-6. NFC host(RFIDDiscover) configures GPIO2 for output or output with NFCPause file. If it is latter then NFC Pause file should also be configured. NFC pause file is supposed to be file 2 (can be changed by modifying EX_DUAL_INTERFACE_NFC_PAUSE_FILE_NO in ex_dual_interfaces.c).
-7. NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause or Cmd.ReadData.
-8. ex_dual_interfaces will detect GPIO status change.
-9. ex_dual_interfaces will write to NFCPause file.
-10. ex_dual_interfaces will call Cmd.ManageGPIO with NFC Pause Release.
-11. NFC host(RFIDDiscover) gets response for Cmd.ManageGPIO or Cmd.ReadData.
-12. NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause or Cmd.ReadData.
-13. ex_dual_interfaces will close session.
+  - ex_dual_interfaces will initialize MCU GPIO as input pin. On FRDM-MCXN947, it is PTB3.
+  - ex_dual_interfaces will read current GPIO status as initial GPIO status.
+  - ex_dual_interfaces will read GPIO status at 1s interval and wait until status changes.
+  - NFC host(RFIDDiscover) selects NTAGECC application from NFC interface.
+      1. Press "RF Reset", to turn RF field OFF and ON again
+      2. Press "Activate Idle" to perform ISO1444-3 activation
+      3. Press "RATS + PPS" to perform ISO1444-4 activation
+      4. Choose "Select" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      5. Choose "Select by DF name" (enter NDEF Application's DF name, if not predefined yet)
+      6. Press "Select". At this point, NDEF Application is selected.
+  - NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause.
+      1. Choose "Manage GPIO" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      2. Select "GPIO2" radio button
+      3. Select "NFC Action"
+      4. Choose "Toggle"
+      5. Press "Manage GPIO"
+  - ex_dual_interfaces will detect GPIO status change.
+  - ex_dual_interfaces will write to NFCPause file.
+  - ex_dual_interfaces will call Cmd.ManageGPIO with NFC Pause Release.
+  - NFC host(RFIDDiscover) gets response for Cmd.ManageGPIO.
+  - NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause.
+      1. Choose "Manage GPIO" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      2. Select "GPIO2" radio button
+      3. UnSelect "No NFC Action"
+      4. Choose "Toggle"
+      5. Press "Manage GPIO"
+  - ex_dual_interfaces will close session.
+
+
+Steps for NFC Operation using Cmd.ISOReadBinary/Cmd.ReadData
+
+  - ex_dual_interfaces will initialize MCU GPIO as input pin. On FRDM-MCXN947, it is PTB3.
+  - ex_dual_interfaces will read current GPIO status as initial GPIO status.
+  - ex_dual_interfaces will read GPIO status at 1s interval and wait until status changes.
+  - NFC host(RFIDDiscover) selects NTAGECC application from NFC interface.
+      1. Press "RF Reset", to turn RF field OFF and ON again
+      2. Press "Activate Idle" to perform ISO1444-3 activation
+      3. Press "RATS + PPS" to perform ISO1444-4 activation
+      4. Choose "Select" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      5. Choose "Select by DF name" (enter NDEF Application's DF name, if not predefined yet)
+      6. Press "Select". At this point, NDEF Application is selected.
+  - These steps are not needed if NDEF file will be read by Cmd.ReadData
+      1. Choose "Select" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      2. Choose "Select EF under Current DF"
+      3. Press "Select". At this point, NDEF File (0xE104) is selected.
+  - NFC host(RFIDDiscover) calls Cmd.ISOReadBinary with NFC Pause.
+      1. Choose "Read Update Binary" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      2. Enter desired length to be read
+      3. Press "Read Binary".
+  - ex_dual_interfaces will detect GPIO status change.
+  - ex_dual_interfaces will write to NFCPause file.
+  - ex_dual_interfaces will call Cmd.ManageGPIO with NFC Pause Release.
+  - NFC host(RFIDDiscover) gets response for Cmd.ManageGPIO.
+  - NFC host(RFIDDiscover) calls Cmd.ManageGPIO with NFC Pause.
+      1. Choose "Manage GPIO" sub-menu under NTAG → NTAG X DNA → ISO 7816-4 Support
+      2. Select "GPIO2" radio button
+      3. UnSelect "No NFC Action"
+      4. Choose "Toggle"
+      5. Press "Manage GPIO"
+  - ex_dual_interfaces will close session.
 
 It uses the following APIs and data types:
 

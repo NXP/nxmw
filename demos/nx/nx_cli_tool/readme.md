@@ -22,27 +22,29 @@ cryptographic operations / personalization of SA.
 
 It supports following commands:
 
-| Command        | Description                                                             |
-| ---------------| ------------------------------------------------------------------------|
-| connect        | Connect to SA                                                           |
-| disconnect     | Disconnect from SA                                                      |
-| get-uid        | Get UID from SA                                                         |
-| genkey         | Generates ECC Key in SA and stores the public key to a file             |
-| get-ref-key    | Generates a reference key                                               |
-| rand           | Generate random numbers from SA                                         |
-| setkey         | Set a private key inside SA                                             |
-| certrepo-*     | Certificate repository commands                                         |
-| create-bin     | Creates a standard data file inside SA                                  |
-| setbin         | Set data to a standard data file inside SA                              |
-| getbin         | Get data from standard data file in SA                                  |
-| list-fileid    | Fetches the list of file IDs inside SA                                  |
-| list-eckey     | Fetches the list and properties of EC keys inside SA                    |
-| set-i2c_mgnt   | Set I2C configuration                                                   |
-| set-cert_mgnt  | Set certificate configuration                                           |
-| dgst-sha256    | Generate SHA-256 message digest from SA                                 |
-| dgst-sign      | Sign the message digest using SA                                        |
-| dgst-verify    | Verify the signature using SA                                           |
-| derive-ecdh    | Derive an ECDH key from SA                                              |
+| Command           | Description                                                             |
+| ------------------| ------------------------------------------------------------------------|
+| connect           | Connect to SA                                                           |
+| disconnect        | Disconnect from SA                                                      |
+| get-uid           | Get UID from SA                                                         |
+| genkey            | Generates ECC Key in SA and stores the public key to a file             |
+| get-ref-key       | Generates a reference key                                               |
+| rand              | Generate random numbers from SA                                         |
+| setkey            | Set a private key inside SA                                             |
+| certrepo-*        | Certificate repository commands                                         |
+| create-bin        | Creates a standard data file inside SA                                  |
+| setbin            | Set data to a standard data file inside SA                              |
+| getbin            | Get data from standard data file in SA                                  |
+| list-fileid       | Fetches the list of file IDs inside SA                                  |
+| list-eckey        | Fetches the list and properties of EC keys inside SA                    |
+| set-i2c_mgnt      | Set I2C configuration                                                   |
+| set-cert_mgnt     | Set certificate configuration                                           |
+| dgst-sha256       | Generate SHA-256 message digest from SA                                 |
+| dgst-sign         | Sign the message digest using SA                                        |
+| dgst-verify       | Verify the signature using SA                                           |
+| derive-ecdh       | Derive an ECDH key from SA                                              |
+| el2go-parser      | Parse leaf certificate from JSON file based on deviceID                 |
+| update-eccpolicy  | Update ecc key meta data                                                |
 
 Refer individual command sections for more details.
 
@@ -139,7 +141,7 @@ nxclitool get-uid [OPTIONS]
 **Example**
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
-./nxclitool get-uid -out uid.txt
+./nxclitool get-uid -out uid.csv
 ./nxclitool disconnect
 ```
 
@@ -423,9 +425,12 @@ commands can be used to manage a certificate repository in the SA.
     -   `prime256v1`
     -   `na`
 
--   **-in**: Path to the input certificate/key. Required with
-    **certrepo-load-cert**, **certrepo-load-mapping** and
-    **certrepo-load-key**
+-   **-in**: Path to the input certificate/key/folder path. Required with
+    **certrepo-load-mapping** and **certrepo-load-key**
+    **certrepo-load-cert**
+>**Note:**
+    For certrepo-load-cert -in as a folder or a .der/.pem file. For folders, it reads the device UID to locate the certificate;
+    for files, it loads the certificate directly.
 
 -   **-keyid**: Key ID for setting Root CA Key. Required with
     **certrepo-load-key**
@@ -594,16 +599,16 @@ nxclitool setbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
->**Note:** 
+>**Note:**
 If **-offset** option is not specified, default value used is 0 (zero).
 
 
->**Note:** 
+>**Note:**
 If **-offset** option is specified, CLI tool will read data from input file from the start
     and store it in standard data file inside SA at the offset value specified.
 
 
->**Note:** 
+>**Note:**
 If **-bytes** option is not specified, default value used is the size of file in bytes.
 
 
@@ -632,16 +637,16 @@ nxclitool getbin [OPTIONS]
 ./nxclitool disconnect
 ```
 
->**Note:** 
+>**Note:**
 If **-offset** option is not specified, default value used is 0 (zero).
 
 
->**Note:** 
+>**Note:**
 If **-offset** option is specified, CLI tool will read data from standard data file
     in the SA from the offset specified and store it in the output file.
 
 
->**Note:** 
+>**Note:**
 If **-bytes** option is not specified, default value used is the number of bytes from
     offset value to EOF of standard data file
 
@@ -771,7 +776,7 @@ nxclitool set-cert_mgnt [OPTIONS]
 
 ## Message-Digest with SA using NX CLI TooL
 
-Generates a message digest or hash using the SA takes input data and produces a cryptographic hash using the selected algorithm SHA-256 
+Generates a message digest or hash using the SA takes input data and produces a cryptographic hash using the selected algorithm SHA-256
 
 **Command Format**
 ```
@@ -810,7 +815,7 @@ nxclitool dgst-sign [OPTIONS]
 
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
-./nxclitool dgst-sign -keyid <KEY_ID> -in <DIGEST_FILE_PATH> -out <SIGNATURE_FILE_PATH> 
+./nxclitool dgst-sign -keyid <KEY_ID> -in <DIGEST_FILE_PATH> -out <SIGNATURE_FILE_PATH>
 ./nxclitool disconnect
 ```
 
@@ -863,5 +868,78 @@ nxclitool derive-ecdh [OPTIONS]
 ```
 ./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
 ./nxclitool derive-ecdh -keyid <KEY_ID> -curve <CURVE> --peerkey <PEER_PUB_KEY> -out <SHARED_SECRET_KEY>
+./nxclitool disconnect
+```
+
+## El2go parser using NX CLI TooL
+
+EL2GO parser takes a JSON file as input, extracts templateId, deviceId, and the application certificate, converts the PEM certificate to DER using OpenSSL, and saves it in the template_id_der_files directory with the deviceId as the filename
+
+**Command Format**
+```
+nxclitool el2go-parser [OPTIONS]
+```
+
+**Options**
+
+-   **-in**: Path to the input JSON file containing certificate data.
+-   **-out**: path to the folder where the Application Certificate DER file should be saved.
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool el2go-parser -in <X509_CERT_JOB_JSON_FILE_PATH> -out <X509_APP_CERT_FOLDER_PATH>
+./nxclitool disconnect
+```
+## Update ECC Key Policy Using NX CLI TooL
+
+Update ECC key policy using the specified keyID and keypolicy.
+
+**Command Format**
+```
+nxclitool update-eccpolicy [OPTIONS]
+```
+
+**Options**
+
+-   **-keyid**: Ecc Private key ID. Accepted Range: **0x00 to 0x04**
+-   **-keypolicy**: ECC key policy bitmask. Enable/Disable ECC key feature using a hexadecimal.
+    - `Bit 2 → SIGMA-I → 0x04`
+    - `Bit 3 → ECC DH → 0x08`
+    - `Bit 4 → ECC Signature → 0x10`
+    - `Bit 5 → Secure Dynamic Messaging → 0x20`
+    - `Bit 8 → Card-Unilateral Auth → 0x100`
+    - `Bit 15 → Freeze KeyUsageCtrLimit → 0x8000`
+Note:
+    ECC DH and ECC Sign cannot be enabled simultaneously. Choose one based on your use case.
+    To enable SIGMA-I and ECC Sign:
+    Accepted values:
+        Combined: 0x04 | 0x10 = `0x0014`.
+
+-   **-wcomm**: Write communication modes.
+    Accepted values:
+    -   `full`
+    -   `mac`
+    -   `na`
+    -   `plain`
+
+-   **-waccess**: Write Access Rights respectively,
+    required to write to the repository. Accepted values:
+    -   `0x00 to 0x0C` Auth required
+    -   `0x0D` Free over I2C
+    -   `0x0E` Free Access
+    -   `0x0F` No Access
+
+-   **-kuclimit**: key usage limit of the targeted key.
+    required to write to the kuclimit. Accepted values:
+    -   `0x00000000` key usage ctr limit disabled
+    -   `0x00000001` to `0xFFFFFFFF` key usage ctr limit enabled with the given value (LSB first).
+
+**Example**
+
+```
+./nxclitool connect -smcom t1oi2c -port "/dev/i2c-1" -auth symmetric -sctunn ntag_aes128_ev2 -keyid 0x00
+./nxclitool update-eccpolicy -keyid <KEY_ID> -keypolicy <KEY_POLICY> -wcomm full -waccess 0x00 -kuclimit <KEY_USAGE_CTR_LIMIT>
 ./nxclitool disconnect
 ```

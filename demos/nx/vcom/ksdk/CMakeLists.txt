@@ -27,6 +27,14 @@ IF(SSS_HAVE_HOST_FRDMMCXA153)
     )
 ENDIF()
 
+IF(SSS_HAVE_HOST_FRDMMCXA156)
+    FILE(
+        GLOB
+        frdmmcxa156_files
+        ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/device/usb_device_khci.c
+    )
+ENDIF()
+
 IF(SSS_HAVE_HOST_FRDMMCXN947)
     FILE(
         GLOB
@@ -53,6 +61,7 @@ ADD_EXECUTABLE(
     ${KSDK_STARTUP_FILE}
     ${${PROJECT_NAME}_files}
     ${frdmmcxa153_files}
+    ${frdmmcxa156_files}
     ${frdmmcxn947_files}
     ${lpcxpresso55s_files}
 )
@@ -95,6 +104,23 @@ IF(SSS_HAVE_HOST_FRDMMCXA153)
             ${NXMW_TOP_DIR}/boards/platform
             ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_manager/usb_cdc_adapter
             ${NXMW_TOP_DIR}/boards/frdmmcxa153/usb_vcom
+
+    )
+ENDIF()
+
+IF(SSS_HAVE_HOST_FRDMMCXA156)
+    TARGET_INCLUDE_DIRECTORIES(
+        ${PROJECT_NAME}
+        PRIVATE
+            .
+            ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/device
+            ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/device/class
+            ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/include
+            ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/osa
+            ${NXMW_TOP_DIR}/../mcuxsdk/middleware/usb/phy
+            ${NXMW_TOP_DIR}/boards/platform
+            ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_manager/usb_cdc_adapter
+            ${NXMW_TOP_DIR}/boards/frdmmcxa156/usb_vcom
 
     )
 ENDIF()

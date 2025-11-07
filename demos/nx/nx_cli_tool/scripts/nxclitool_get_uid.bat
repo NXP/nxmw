@@ -40,7 +40,7 @@ set REPO_ID=0x01
 
 :: Change output file path
 IF EXIST output (echo "output path exists") else (mkdir output)
-set OUT_FILE_PATH=output\uid.txt
+set OUT_FILE_PATH=output\uid.csv
 
 :: ######################################## GET UID SCRIPT BEGINS HERE ########################################
 

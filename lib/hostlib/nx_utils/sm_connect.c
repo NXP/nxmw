@@ -441,3 +441,14 @@ U16 nx_file_select(void *conn_ctx, const U8 *appletName, U16 appletNameLen)
 cleanup:
     return rv;
 }
+
+U16 SM_I2CColdReset(void *conn_ctx)
+{
+    U16 sw = ERR_COMM_ERROR;
+#if (defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0))
+    sw = smComT1oI2C_ColdReset(conn_ctx);
+#elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+    sw = smComVCom_ColdReset(conn_ctx);
+#endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
+    return sw;
+}

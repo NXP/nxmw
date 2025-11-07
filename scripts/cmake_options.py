@@ -1,4 +1,4 @@
-# Copyright 2022-2024 NXP
+# Copyright 2022-2025 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -66,6 +66,7 @@ LIST_HOST = [
     ("lpcxpresso55s", "Embedded LPCXpresso55s", True),
     ("Raspbian", "Embedded Linux on RaspBerry PI", True),
     ("frdmmcxa153", "Embedded frdmmcxa153", True),
+    ("frdmmcxa156", "Embedded frdmmcxa156", True),
     ("frdmmcxn947", "Embedded frdmmcxn947", True),
 ]
 

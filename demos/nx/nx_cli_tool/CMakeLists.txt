@@ -1,6 +1,9 @@
 
 # Copyright 2024-2025 NXP
 # SPDX-License-Identifier: BSD-3-Clause
+IF(SSS_HAVE_HOST_PCWINDOWS)
+    SET(CJSON_LIB_DIR "${NXMW_TOP_DIR}/ext/cJSON")
+ENDIF()
 
 PROJECT(nxclitool)
 
@@ -9,7 +12,13 @@ FILE(
     ${PROJECT_NAME}_files
     *.c
     *.h
+IF(SSS_HAVE_HOST_PCWINDOWS)
+    ${CJSON_LIB_DIR}/cJSON.C
+    ${CJSON_LIB_DIR}/cJSON.h
+ENDIF()
 )
+
+INCLUDE_DIRECTORIES(${CJSON_LIB_DIR})
 
 ADD_EXECUTABLE(
     ${PROJECT_NAME}

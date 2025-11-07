@@ -1,12 +1,13 @@
 /*
 *
-* Copyright 2022-2024 NXP
+* Copyright 2022-2025 NXP
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 #include "ex_sss_boot.h"
 #include "fsl_sss_nx_apis.h"
 #include "smCom.h"
@@ -95,12 +96,16 @@ static sss_status_t nx_set_configure(
             goto exit;
         }
     }
-
     // Set GPIO configuration
-    gpioCfgMask = SET_CONFIG_CMD_FLAG_GPIO1_MODE | SET_CONFIG_CMD_FLAG_GPIO2_MODE | SET_CONFIG_CMD_FLAG_GPIO1_NOTIF |
-                  SET_CONFIG_CMD_FLAG_GPIO2_NOTIF | SET_CONFIG_CMD_FLAG_GPIO_MGMT_COMM_MODE |
-                  SET_CONFIG_CMD_FLAG_GPIO_MGMT_AC | SET_CONFIG_CMD_FLAG_GPIO_READ_COMM_MODE |
-                  SET_CONFIG_CMD_FLAG_GPIO_READ_AC;
+    gpioCfgMask =
+        SET_CONFIG_CMD_FLAG_GPIO1_MODE | SET_CONFIG_CMD_FLAG_GPIO2_MODE | SET_CONFIG_CMD_FLAG_GPIO2CONFIG |
+        SET_CONFIG_CMD_FLAG_GPIO1_NOTIF | SET_CONFIG_CMD_FLAG_GPIO2_NOTIF | SET_CONFIG_CMD_FLAG_GPIO_MGMT_COMM_MODE |
+        SET_CONFIG_CMD_FLAG_GPIO_MGMT_AC | SET_CONFIG_CMD_FLAG_GPIO_READ_COMM_MODE | SET_CONFIG_CMD_FLAG_GPIO_READ_AC |
+        SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLA | SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLB | SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLC |
+        SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLD | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLA | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLB |
+        SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLC | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLD |
+        SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_FILENO | SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_OFFSET |
+        SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH;
     if (setConfigFlag & gpioCfgMask) {
         // Get current GPIO configuration and set to output mode.
         sm_status = nx_GetConfig_GPIOMgmt(&((sss_nx_session_t *)pSession)->s_ctx, &orggpioConfig);
@@ -134,6 +139,19 @@ static sss_status_t nx_set_configure(
                 gpioConfig.gpio2OutputCfg = Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1;
             }
         }
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2CONFIG) {
+            if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_MODE) {
+                gpioConfig.gpio2Mode = cmdParam->gpio2Mode;
+                if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_Output ||
+                    gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_NfcPausefileOut) {
+                    gpioConfig.gpio2OutputInitStateHigh = (cmdParam->gpio2Config & 1) ? true : false;
+                }
+                else if (gpioConfig.gpio2Mode == Nx_GPIOMgmtCfg_GPIOMode_DownstreamPowerOut) {
+                    gpioConfig.gpio2PowerOutBackpowerEnabled = (cmdParam->gpio2Config & 1) ? true : false;
+                    gpioConfig.gpio2PowerOutI2CEnabled       = ((cmdParam->gpio2Config >> 1) & 1) ? true : false;
+                }
+            }
+        }
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_NOTIF) {
             gpioConfig.gpio1OutputNotif = cmdParam->gpio1Notif;
             gpioConfig.gpio2OutputNotif = cmdParam->gpio2Notif;
@@ -150,6 +168,86 @@ static sss_status_t nx_set_configure(
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO_READ_AC) {
             gpioConfig.acRead |= (cmdParam->gpioReadAC & NX_CONF_AC_MASK);
         }
+
+        // gpio1padctrlA
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLA) {
+            gpioConfig.gpio1DebounceFilterValue =
+                (orggpioConfig.gpio1DebounceFilterValue & 0xFF) | ((cmdParam->gpio1padctrlA & 0x03) << 8);
+        }
+
+        // gpio1padctrlB
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLB) {
+            gpioConfig.gpio1DebounceFilterValue =
+                (orggpioConfig.gpio1DebounceFilterValue & 0x300) | (cmdParam->gpio1padctrlB & 0xFF);
+        }
+
+        // gpio1padctrlC
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLC) {
+            if (cmdParam->gpio1padctrlC_debounceSet) {
+                gpioConfig.gpio1DebounceFilterEnabled = ((cmdParam->gpio1padctrlC >> 2) & 0x01);
+            }
+            if (cmdParam->gpio1padctrlC_inputFilterSet) {
+                gpioConfig.gpio1InputFilterSelection = (Nx_GPIOPadCfg_InputFilter_t)(cmdParam->gpio1padctrlC & 0x03);
+            }
+        }
+
+        // gpio1padctrlD
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLD) {
+            if (cmdParam->gpio1padctrlD_inputCfgSet) {
+                gpioConfig.gpio1InputCfg = (Nx_GPIOPadCfg_InputCfg_t)((cmdParam->gpio1padctrlD >> 5) & 0x07);
+            }
+            if (cmdParam->gpio1padctrlD_outputCfgSet) {
+                gpioConfig.gpio1OutputCfg = (Nx_GPIOPadCfg_OutputCfg_t)((cmdParam->gpio1padctrlD >> 1) & 0x0F);
+            }
+            if (cmdParam->gpio1padctrlD_supplySet) {
+                gpioConfig.gpio1Supply1v1n1v2 = (cmdParam->gpio1padctrlD & 0x01);
+            }
+        }
+
+        // gpio2padctrlA
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLA) {
+            gpioConfig.gpio2DebounceFilterValue =
+                (orggpioConfig.gpio2DebounceFilterValue & 0xFF) | ((cmdParam->gpio2padctrlA & 0x03) << 8);
+        }
+
+        // gpio2padctrlB
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLB) {
+            gpioConfig.gpio2DebounceFilterValue =
+                (orggpioConfig.gpio2DebounceFilterValue & 0x300) | (cmdParam->gpio2padctrlB & 0xFF);
+        }
+
+        // gpio2padctrlC
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLC) {
+            if (cmdParam->gpio2padctrlC_debounceSet) {
+                gpioConfig.gpio2DebounceFilterEnabled = ((cmdParam->gpio2padctrlC >> 2) & 0x01);
+            }
+            if (cmdParam->gpio2padctrlC_inputFilterSet) {
+                gpioConfig.gpio2InputFilterSelection = (Nx_GPIOPadCfg_InputFilter_t)(cmdParam->gpio2padctrlC & 0x03);
+            }
+        }
+
+        // gpio2padctrlD
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLD) {
+            if (cmdParam->gpio2padctrlD_inputCfgSet) {
+                gpioConfig.gpio2InputCfg = (Nx_GPIOPadCfg_InputCfg_t)((cmdParam->gpio2padctrlD >> 5) & 0x07);
+            }
+            if (cmdParam->gpio2padctrlD_outputCfgSet) {
+                gpioConfig.gpio2OutputCfg = (Nx_GPIOPadCfg_OutputCfg_t)((cmdParam->gpio2padctrlD >> 1) & 0x0F);
+            }
+            if (cmdParam->gpio2padctrlD_supplySet) {
+                gpioConfig.gpio2Supply1v1n1v2 = (cmdParam->gpio2padctrlD & 0x01);
+            }
+        }
+
+        // Update only if user provided
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_FILENO)
+            gpioConfig.gpio2OutputNFCPauseFileNo = cmdParam->gpio2OutputNFCPauseFileNo;
+
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_OFFSET)
+            gpioConfig.gpio2OutputNFCPauseOffset = cmdParam->gpio2OutputNFCPauseOffset;
+
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH)
+            gpioConfig.gpio2OutputNFCPauseLength = cmdParam->gpio2OutputNFCPauseLength;
 
         sm_status = nx_SetConfig_GPIOMgmt(&((sss_nx_session_t *)pSession)->s_ctx, gpioConfig);
         if (sm_status != SM_OK) {
@@ -207,6 +305,9 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     int index;
     tool_setconfig_cmd_param_t cmdParam = {0};
     long accessCondition                = 0;
+    long gpioConfigCandidate            = 0;
+    uint8_t value                       = 0;
+    uint8_t consumed                    = 0;
 
     if ((argc >= 4) && (argc % 2 == 0)) { // cmd [-x param] ... [-x param] [COM]
         index = 1;
@@ -251,6 +352,10 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
                 }
                 else if (strcmp(argv[index + 1], "output") == 0) {
                     cmdParam.gpio2Mode = Nx_GPIOMgmtCfg_GPIOMode_Output;
+                    parameter_error    = 0;
+                }
+                else if (strcmp(argv[index + 1], "out_nfcpausefile") == 0) {
+                    cmdParam.gpio2Mode = Nx_GPIOMgmtCfg_GPIOMode_NfcPausefileOut;
                     parameter_error    = 0;
                 }
                 else {
@@ -464,6 +569,371 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
                 }
                 index += 2;
             }
+            // gpio2config
+            else if (strcmp(argv[index], "-gpio2config") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0x03)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO2CONFIG;
+                    cmdParam.gpio2Config = (uint8_t)gpioConfigCandidate;
+                    parameter_error      = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
+            // gpio1padctrlA
+            else if (strcmp(argv[index], "-gpio1padctrlA") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0x03)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLA;
+                    cmdParam.gpio1padctrlA = (uint8_t)gpioConfigCandidate;
+                    parameter_error        = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+
+                index += 2;
+            }
+
+            // gpio1padctrlB
+            else if (strcmp(argv[index], "-gpio1padctrlB") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0xFF)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLB;
+                    cmdParam.gpio1padctrlB = (uint8_t)gpioConfigCandidate;
+                    parameter_error        = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+
+                index += 2;
+            }
+
+            // gpio1padctrlC
+            else if (strcmp(argv[index], "-gpio1padctrlC") == 0) {
+                value            = 0;
+                consumed         = 1;
+                bool debounceSet = false, inputFilterSet = false;
+
+                for (int i = index + 1; i < argc && argv[i][0] != '-'; i++) {
+                    if (strcmp(argv[i], "debounce_enable") == 0) {
+                        value |= (1 << 2);
+                        debounceSet = true;
+                    }
+                    else if (strcmp(argv[i], "debounce_disable") == 0) {
+                        value |= (0 << 2);
+                        debounceSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_unfiltered_50ns") == 0) {
+                        value |= 0x00;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_unfiltered_10ns") == 0) {
+                        value |= 0x01;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_zif_50ns") == 0) {
+                        value |= 0x02;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_zif_10ns") == 0) {
+                        value |= 0x03;
+                        inputFilterSet = true;
+                    }
+                    if ((UINT8_MAX - 1) < consumed) {
+                        goto exit;
+                    }
+                    consumed++;
+                }
+
+                cmdParam.gpio1padctrlC                = value;
+                cmdParam.gpio1padctrlC_debounceSet    = debounceSet;
+                cmdParam.gpio1padctrlC_inputFilterSet = inputFilterSet;
+                setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLC;
+                index += consumed;
+            }
+
+            // gpio1padctrlD
+            else if (strcmp(argv[index], "-gpio1padctrlD") == 0) {
+                value            = 0;
+                consumed         = 1;
+                bool inputCfgSet = false, outputCfgSet = false, supplySet = false;
+
+                for (int i = index + 1; i < argc && argv[i][0] != '-'; i++) {
+                    if (strcmp(argv[i], "input_plain_pullup") == 0) {
+                        value |= (0x00 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain_repeater") == 0) {
+                        value |= (0x01 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain") == 0) {
+                        value |= (0x02 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain_pulldown") == 0) {
+                        value |= (0x03 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pullup") == 0) {
+                        value |= (0x04 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pulldown") == 0) {
+                        value |= (0x05 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_high_z") == 0) {
+                        value |= (0x06 << 5);
+                        inputCfgSet = true;
+                    }
+
+                    else if (strcmp(argv[i], "gpio_low_speed_1") == 0) {
+                        value |= (0x04 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_low_speed_2") == 0) {
+                        value |= (0x05 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_high_speed_1") == 0) {
+                        value |= (0x06 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_high_speed_2") == 0) {
+                        value |= (0x07 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "output_disabled") == 0) {
+                        value |= (0x08 << 1);
+                        outputCfgSet = true;
+                    }
+
+                    else if (strcmp(argv[i], "supply_1v8") == 0) {
+                        value |= 0x00;
+                        supplySet = true;
+                    }
+                    else if (strcmp(argv[i], "supply_1v1") == 0) {
+                        value |= 0x01;
+                        supplySet = true;
+                    }
+                    if ((UINT8_MAX - 1) < consumed) {
+                        goto exit;
+                    }
+                    consumed++;
+                }
+
+                cmdParam.gpio1padctrlD              = value;
+                cmdParam.gpio1padctrlD_inputCfgSet  = inputCfgSet;
+                cmdParam.gpio1padctrlD_outputCfgSet = outputCfgSet;
+                cmdParam.gpio1padctrlD_supplySet    = supplySet;
+                setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLD;
+                index += consumed;
+            }
+            // gpio2padctrlA
+            else if (strcmp(argv[index], "-gpio2padctrlA") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0x03)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLA;
+                    cmdParam.gpio2padctrlA = (uint8_t)gpioConfigCandidate;
+                    parameter_error        = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
+
+            // gpio2padctrlB
+            else if (strcmp(argv[index], "-gpio2padctrlB") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0xFF)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLB;
+                    cmdParam.gpio2padctrlB = (uint8_t)gpioConfigCandidate;
+                    parameter_error        = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+
+                index += 2;
+            }
+
+            // gpio2padctrlC
+            else if (strcmp(argv[index], "-gpio2padctrlC") == 0) {
+                value            = 0;
+                consumed         = 1;
+                bool debounceSet = false, inputFilterSet = false;
+
+                for (int i = index + 1; i < argc && argv[i][0] != '-'; i++) {
+                    if (strcmp(argv[i], "debounce_enable") == 0) {
+                        value |= (1 << 2);
+                        debounceSet = true;
+                    }
+                    else if (strcmp(argv[i], "debounce_disable") == 0) {
+                        value |= (0 << 2);
+                        debounceSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_unfiltered_50ns") == 0) {
+                        value |= 0x00;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_unfiltered_10ns") == 0) {
+                        value |= 0x01;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_zif_50ns") == 0) {
+                        value |= 0x02;
+                        inputFilterSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_zif_10ns") == 0) {
+                        value |= 0x03;
+                        inputFilterSet = true;
+                    }
+                    if ((UINT8_MAX - 1) < consumed) {
+                        goto exit;
+                    }
+                    consumed++;
+                }
+
+                cmdParam.gpio2padctrlC                = value;
+                cmdParam.gpio2padctrlC_debounceSet    = debounceSet;
+                cmdParam.gpio2padctrlC_inputFilterSet = inputFilterSet;
+                setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLC;
+                index += consumed;
+            }
+
+            // gpio2padctrlD
+            else if (strcmp(argv[index], "-gpio2padctrlD") == 0) {
+                value            = 0;
+                consumed         = 1;
+                bool inputCfgSet = false, outputCfgSet = false, supplySet = false;
+
+                for (int i = index + 1; i < argc && argv[i][0] != '-'; i++) {
+                    if (strcmp(argv[i], "input_plain_pullup") == 0) {
+                        value |= (0x00 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain_repeater") == 0) {
+                        value |= (0x01 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain") == 0) {
+                        value |= (0x02 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_plain_pulldown") == 0) {
+                        value |= (0x03 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pullup") == 0) {
+                        value |= (0x04 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pulldown") == 0) {
+                        value |= (0x05 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_high_z") == 0) {
+                        value |= (0x06 << 5);
+                        inputCfgSet = true;
+                    }
+
+                    else if (strcmp(argv[i], "gpio_low_speed_1") == 0) {
+                        value |= (0x04 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_low_speed_2") == 0) {
+                        value |= (0x05 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_high_speed_1") == 0) {
+                        value |= (0x06 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "gpio_high_speed_2") == 0) {
+                        value |= (0x07 << 1);
+                        outputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "output_disabled") == 0) {
+                        value |= (0x08 << 1);
+                        outputCfgSet = true;
+                    }
+
+                    else if (strcmp(argv[i], "supply_1v8") == 0) {
+                        value |= 0x00;
+                        supplySet = true;
+                    }
+                    else if (strcmp(argv[i], "supply_1v1") == 0) {
+                        value |= 0x01;
+                        supplySet = true;
+                    }
+                    if ((UINT8_MAX - 1) < consumed) {
+                        goto exit;
+                    }
+                    consumed++;
+                }
+
+                cmdParam.gpio2padctrlD              = value;
+                cmdParam.gpio2padctrlD_inputCfgSet  = inputCfgSet;
+                cmdParam.gpio2padctrlD_outputCfgSet = outputCfgSet;
+                cmdParam.gpio2padctrlD_supplySet    = supplySet;
+                setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLD;
+                index += consumed;
+            }
+            // NFCPauseFileNo
+            else if (strcmp(argv[index], "-nfcpausefileno") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0x1F)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_FILENO; // NFC Pause is tied to GPIO2 mode
+                    cmdParam.gpio2OutputNFCPauseFileNo = (uint8_t)gpioConfigCandidate;
+                    parameter_error                    = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
+
+            // NFCPauseOffset
+            else if (strcmp(argv[index], "-nfcpauseoffset") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0xFFFFFF)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_OFFSET;
+                    cmdParam.gpio2OutputNFCPauseOffset = (uint32_t)gpioConfigCandidate;
+                    parameter_error                    = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
+
+            // NFCPauseLength
+            else if (strcmp(argv[index], "-nfcpauselength") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0xFFFFFF)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH;
+                    cmdParam.gpio2OutputNFCPauseLength = (uint32_t)gpioConfigCandidate;
+                    parameter_error                    = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
             else {
                 parameter_error = 1;
                 break;
@@ -478,13 +948,46 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         LOG_I("\nUSAGE:\n");
         LOG_I("  %s [-gpio1mode {disabled|input|output|tag|powerout}]", gex_sss_argv[0]);
         LOG_I(
-            "     [-gpio2mode {disabled|input|output}] [-gpio1Notif {disabled|auth|nfc}] [-gpio2Notif "
+            "     [-gpio2mode {disabled|input|output|out_nfcpausefile}] [-gpio1Notif {disabled|auth|nfc}] [-gpio2Notif "
             "{disabled|auth|nfc}][-gpioMgmtCM "
             "{plain|mac|full}]");
         LOG_I("     [-gpioReadCM {plain|mac|full}] [-gpioMgmtAC {0x0-0xF}] [-gpioReadAC {0x0-0xF}]");
         LOG_I("     [-cryptoCM {plain|mac|full}] [-cryptoAC {0x0-0xF}]");
         LOG_I("     [-keypairCM {plain|mac|full}] [-keypairAC {0x0-0xF}]");
-        LOG_I("     [-caRootKeyCM {plain|mac|full}] [-caRootKeyAC {0x0-0xF}] <port_name>\n");
+        LOG_I("     [-caRootKeyCM {plain|mac|full}] [-caRootKeyAC {0x0-0xF}]");
+        LOG_I(
+            "     [-gpio2config {gpio2mode is output or outputwithnfcpausefile 0x00-0x01| gpio2mode power down stream "
+            "0x00-0x03}]");
+        LOG_I("     [-gpio1padctrlA <0x00-0x03>] [-gpio1padctrlB <0x00-0xFF>]");
+        LOG_I(
+            "     [-gpio1padctrlC "
+            "{debounce_enable|debounce_disable|input_unfiltered_50ns|input_unfiltered_10ns|input_zif_50ns|input_zif_"
+            "10ns}]");
+        LOG_I(
+            "     [-gpio1padctrlD "
+            "{input_plain_pullup|input_plain_repeater|input_plain|input_plain_pulldown|input_weak_pullup|input_weak_"
+            "pulldown|input_high_z|");
+        LOG_I(
+            "                      "
+            "gpio_low_speed_1|gpio_low_speed_2|gpio_high_speed_1|gpio_high_speed_2|output_disabled|supply_1v8|supply_"
+            "1v1}]");
+        LOG_I("     [-gpio2padctrlA <0x00-0x03>] [-gpio2padctrlB <0x00-0xFF>]");
+        LOG_I(
+            "     [-gpio2padctrlC "
+            "{debounce_enable|debounce_disable|input_unfiltered_50ns|input_unfiltered_10ns|input_zif_50ns|input_zif_"
+            "10ns}]");
+        LOG_I(
+            "     [-gpio2padctrlD "
+            "{input_plain_pullup|input_plain_repeater|input_plain|input_plain_pulldown|input_weak_pullup|input_weak_"
+            "pulldown|input_high_z|");
+        LOG_I(
+            "                      "
+            "gpio_low_speed_1|gpio_low_speed_2|gpio_high_speed_1|gpio_high_speed_2|output_disabled|supply_1v8|supply_"
+            "1v1}]");
+
+        LOG_I(
+            "     [-nfcpausefileno <0x00-0x1F>] [-nfcpauseoffset <0x000000-0xFFFFFF>] [-nfcpauselength "
+            "<0x000000-0xFFFFFF>] <port_name>\n");
 
         LOG_I("  Example: %s -gpio1mode output \"NXP Semiconductors P71 T=0, T=1 Driver 0\"\n", gex_sss_argv[0]);
         goto exit;

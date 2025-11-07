@@ -25,6 +25,7 @@ extern "C" {
 #define MYT_DEFAULT_NAD 0x00
 #define MTY_LOCK 0x30
 #define MTY_UNLOCK 0x31
+#define MTY_COLD_RESET 0x09
 
 U16 smComSocket_Close(void);
 U16 smComSocket_Open(void **conn_ctx, U8 *pIpAddrString, U16 portNo, U8 *pCip, U16 *cipLen);
@@ -47,6 +48,7 @@ U32 smComSocket_GPIOSetFD(int fd, U8 gpioPIN);
 U32 smComSocket_GPIOClearFD(int fd, U8 gpioPIN);
 U32 smComSocket_GPIOToggleFD(int fd, U8 gpioPIN);
 U32 smComSocket_GPIOReadFD(int fd, U8 gpioPIN, U8 *pRx, U32 *pRxLen);
+U32 smComSocket_ColdResetFD(int fd);
 #ifdef __cplusplus
 }
 #endif

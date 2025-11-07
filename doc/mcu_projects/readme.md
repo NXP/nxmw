@@ -102,3 +102,33 @@ Term) indicating the status of execution.
 <p align=center>
 <img src="../../doc/img/output/TeraTerm_Log.jpeg" alt="drawing" width="600" />
 </p>
+
+## Improving Sigma-I Performance on MCXA156 Boards
+
+- For better Sigma-I performance on boards without RAM constraints (e.g., MCXA156), enable compiler optimization (-O3) and update mbedTLS settings as shown below. This can reduce Sigma-I execution time from ~10s to ~2.1s.
+
+- Update this define values in file \lib\sss\port\ksdk\ksdk_mcxa_mbedtls_config.h
+
+```
+  /* Optimize for performance requires more RAM usage. */
+  /* More info: https://tls.mbed.org/kb/how-to/reduce-mbedtls-memory-and-storage-footprint */
+  #define MBEDTLS_ECP_FIXED_POINT_OPTIM 1 /* To reduce peak memory usage */
+  #define MBEDTLS_AES_ROM_TABLES
+  #define MBEDTLS_SSL_MAX_CONTENT_LEN (1024 * 16) /* SSL frame buffer. */
+  #define MBEDTLS_MPI_WINDOW_SIZE 6
+  #define MBEDTLS_ECP_WINDOW_SIZE 6
+  #define MBEDTLS_MPI_MAX_SIZE 1024 /* Maximum number of bytes for usable MPIs. */  //GS
+  #define MBEDTLS_ECP_MAX_BITS 521 /* Maximum bit size of groups */`
+```
+
+- Update Optimizations Level -O3
+
+<p align=center>
+<img src="../img/mcux_projects/mcux_proj_mcxa156_optimization_settings.jpeg" alt="drawing" width="600" />
+</p>
+
+- Update Stack and Heap size to 0x8000
+
+<p align=center>
+<img src="../img/mcux_projects/mcux_proj_mcxa156_optimization_stack_heap.jpeg" alt="drawing" width="600" />
+</p>

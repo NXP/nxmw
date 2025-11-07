@@ -1,5 +1,20 @@
 # Changelog
 
+## \[v02.07.00\]
+- Added FRDM-MCXA156 platform support for select examples.
+	- Added standalone MCUXpresso project - nxmw\mcux_project\mcxa156\ex_ecc.
+	- Added VCOM support.
+- NX CLI tool enhancements
+	- Added new command el2go-parser for Windows OS. For details Refer - [**NX CLI Tool**](demos/nx/nx_cli_tool/readme.md)
+	- Updated `certrepo-load-cert` command to take input argument either as a folder or a .der/.pem file. For folders, it reads the device UID to locate the certificate, and for files - it loads the certificate directly.
+	- Added new command `update-eccpolicy` to update the policies of ECC key in SA.
+	- Updated `get-uid` command to write UID to a file as a hex value (separated by semicolon).
+	- Added convert_deviceid_json.py python script to convert deviceId from decimal to hex in el2go JSON files.
+- Extended `nx_tool_setconfig` example to configure gpio management.
+- Extended T=1oI2C cold reset API support with VCOM interface.
+- Updated document for dual interface example.
+- Fixes for static analysis findings.
+
 ## \[v02.06.00\]
 - CMSIS Driver support for MCXN947 and MCXA153 platforms added.
 - Restructured MCU GPIO APIs - Platform specific gpio apis are now defined in boards files.
