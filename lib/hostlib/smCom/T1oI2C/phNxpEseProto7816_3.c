@@ -273,6 +273,21 @@ static bool_t phNxpEseProto7816_SendSFrame(void *conn_ctx, sFrameInfo_t sFrameDa
         pcb_byte |= PH_PROTO_7816_S_BLOCK_REQ; /* PCB */
         pcb_byte |= PH_PROTO_7816_S_COLD_RST;
         break;
+    case IFSC_REQ:
+        frame_len = (PH_PROTO_7816_HEADER_LEN + sframeData.data_len + PH_PROTO_7816_CRC_LEN);
+        p_framebuff[PH_PROPTO_7816_LEN_UPPER_OFFSET] = 0;
+        p_framebuff[PH_PROPTO_7816_LEN_LOWER_OFFSET] = sframeData.data_len;
+        if (sframeData.data_len == 2) {
+            p_framebuff[PH_PROPTO_7816_INF_BYTE_OFFSET]     = sframeData.data[0];
+            p_framebuff[PH_PROPTO_7816_INF_BYTE_OFFSET + 1] = sframeData.data[1];
+        }
+        else {
+            p_framebuff[PH_PROPTO_7816_INF_BYTE_OFFSET] = sframeData.data[0];
+        }
+
+        pcb_byte |= PH_PROTO_7816_S_BLOCK_REQ; /* PCB */
+        pcb_byte |= PH_PROPTO_7816_S_IFS_REQ;
+        break;
 #endif
     default:
         LOG_E(" %s :Invalid S-block", __FUNCTION__);
@@ -977,7 +992,8 @@ static bool_t phNxpEseProto7816_ProcessResponse(void *conn_ctx)
     else {
         LOG_E("%s phNxpEseProto7816_GetRawFrame failed starting recovery", __FUNCTION__);
         if ((SFRAME == phNxpEseProto7816_3_Var.phNxpEseLastTx_Cntx.FrameType) &&
-            ((WTX_RSP == pLastTx_SframeInfo->sFrameType) || (RESYNCH_RSP == pLastTx_SframeInfo->sFrameType))) {
+            ((WTX_RSP == pLastTx_SframeInfo->sFrameType) || (RESYNCH_RSP == pLastTx_SframeInfo->sFrameType) ||
+                (IFSC_RES == pLastTx_SframeInfo->sFrameType) || (COLD_RESET_RES == pLastTx_SframeInfo->sFrameType))) {
             if (phNxpEseProto7816_3_Var.rnack_retry_counter < phNxpEseProto7816_3_Var.rnack_retry_limit) {
                 phNxpEse_clearReadBuffer(conn_ctx);
                 phNxpEseProto7816_3_Var.phNxpEseRx_Cntx.lastRcvdFrameType     = INVALID;
@@ -1051,6 +1067,8 @@ static bool_t TransceiveProcess(void *conn_ctx)
     bool_t status = FALSE;
     sFrameInfo_t sFrameInfo;
     sFrameInfo.sFrameType = INVALID_REQ_RES;
+    sFrameInfo.data       = NULL;
+    sFrameInfo.data_len   = 0;
 
     while (phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState != IDLE_STATE) {
         LOG_D(
@@ -1093,6 +1111,10 @@ static bool_t TransceiveProcess(void *conn_ctx)
         case SEND_S_COLD_RST:
             sFrameInfo.sFrameType = COLD_RESET_REQ;
             status                = phNxpEseProto7816_SendSFrame(conn_ctx, sFrameInfo);
+            break;
+        case SEND_S_IFSC: //Uros
+            sFrameInfo.sFrameType = IFSC_REQ;
+            status = phNxpEseProto7816_SendSFrame(conn_ctx, phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.SframeInfo);
             break;
 #else
 #error T1oI2C_GP1_0 must be defined.
@@ -1295,6 +1317,11 @@ bool_t phNxpEseProto7816_Open(void *conn_ctx, phNxpEseProto7816InitParam_t initP
         status = phNxpEseProto7816_RSync(conn_ctx);
     }
     AtrRsp->len = (uint32_t)pRx_EseCntx->responseBytesRcvd;
+#if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+    if (status == TRUE) {
+        status = phNxpEseProto7816_SetIfscSize(conn_ctx, IFSC_SIZE_SEND);
+    }
+#endif
     return status;
 }
 
@@ -1391,7 +1418,8 @@ bool_t phNxpEseProto7816_ColdReset(void *conn_ctx)
     pNextTx_SframeInfo->sFrameType                                = COLD_RESET_REQ;
     phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState = SEND_S_COLD_RST;
     pRx_EseCntx->pRsp                                             = NULL;
-    status                                                        = TransceiveProcess(conn_ctx);
+    phNxpEse_clearReadBuffer(conn_ctx);
+    status = TransceiveProcess(conn_ctx);
     if (FALSE == status) {
         /* reset all the structures */
         LOG_E("%s TransceiveProcess failed  ", __FUNCTION__);
@@ -1399,7 +1427,7 @@ bool_t phNxpEseProto7816_ColdReset(void *conn_ctx)
     phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_IDLE;
     return status;
 }
-#endif
+
 /******************************************************************************
  * Function         phNxpEseProto7816_SetIfscSize
  *
@@ -1410,12 +1438,50 @@ bool_t phNxpEseProto7816_ColdReset(void *conn_ctx)
  * Returns          Always return TRUE (1).
  *
  ******************************************************************************/
-bool_t phNxpEseProto7816_SetIfscSize(uint16_t IFSC_Size)
+bool_t phNxpEseProto7816_SetIfscSize(void *conn_ctx, uint16_t IFSC_Size)
 {
-    iFrameInfo_t *pNextTx_IframeInfo = &phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.IframeInfo;
-    pNextTx_IframeInfo->maxDataLen   = IFSC_Size;
-    return TRUE;
+    bool_t status                    = FALSE;
+    sFrameInfo_t *pNextTx_SframeInfo = &phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.SframeInfo;
+    phNxpEseRx_Cntx_t *pRx_EseCntx   = &phNxpEseProto7816_3_Var.phNxpEseRx_Cntx;
+
+    uint8_t ifscBuf[3]  = {0};
+    uint8_t ifscSizeLen = 0;
+
+    // Encode IFSC value
+    if (IFSC_Size >= 0x01 && IFSC_Size <= 0xFE) {
+        ifscBuf[ifscSizeLen++] = (uint8_t)IFSC_Size; // 1-byte encoding
+    }
+    else if (IFSC_Size >= 0x00FF && IFSC_Size <= 0x0FF9) {
+        ifscBuf[ifscSizeLen++] = (uint8_t)((IFSC_Size >> 8) & 0xFF); // MSB
+        ifscBuf[ifscSizeLen++] = (uint8_t)(IFSC_Size & 0xFF);        // LSB
+    }
+    else {
+        LOG_E("Invalid IFSC_Size");
+        return status;
+    }
+
+    if (ifscSizeLen != 1 && ifscSizeLen != 2) {
+        LOG_E("Invalid IFSC_Size, it should be either 1byte or 2byte");
+        return status;
+    }
+
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState        = PH_NXP_ESE_PROTO_7816_TRANSCEIVE;
+    phNxpEseProto7816_3_Var.phNxpEseNextTx_Cntx.FrameType         = SFRAME;
+    pNextTx_SframeInfo->sFrameType                                = IFSC_REQ;
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_nextTransceiveState = SEND_S_IFSC;
+    pNextTx_SframeInfo->data                                      = &ifscBuf[0];
+    pNextTx_SframeInfo->data_len                                  = ifscSizeLen;
+    pRx_EseCntx->pRsp                                             = NULL;
+    status                                                        = TransceiveProcess(conn_ctx);
+    if (FALSE == status) {
+        /* reset all the structures */
+        LOG_E("%s TransceiveProcess failed  ", __FUNCTION__);
+    }
+    phNxpEseProto7816_3_Var.phNxpEseProto7816_CurrentState = PH_NXP_ESE_PROTO_7816_IDLE;
+
+    return status;
 }
+#endif
 
 /******************************************************************************
  * Function         phNxpEseProto7816_Store

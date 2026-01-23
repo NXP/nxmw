@@ -107,7 +107,7 @@ Term) indicating the status of execution.
 
 - For better Sigma-I performance on boards without RAM constraints (e.g., MCXA156), enable compiler optimization (-O3) and update mbedTLS settings as shown below. This can reduce Sigma-I execution time from ~10s to ~2.1s.
 
-- Update this define values in file \lib\sss\port\ksdk\ksdk_mcxa_mbedtls_config.h
+- Update this define values in file \lib\sss\port\ksdk\ksdk_mcxa156_mbedtls_config.h
 
 ```
   /* Optimize for performance requires more RAM usage. */
@@ -127,7 +127,7 @@ Term) indicating the status of execution.
 <img src="../img/mcux_projects/mcux_proj_mcxa156_optimization_settings.jpeg" alt="drawing" width="600" />
 </p>
 
-- Update Stack and Heap size to 0x8000
+- Update Stack size to 0x5000 and Heap size to 0x5000
 
 <p align=center>
 <img src="../img/mcux_projects/mcux_proj_mcxa156_optimization_stack_heap.jpeg" alt="drawing" width="600" />

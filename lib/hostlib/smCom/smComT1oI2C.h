@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018-2020, 2025 NXP
+ * Copyright 2018-2020, 2025-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -80,6 +80,20 @@ U16 smComT1oI2C_Resume(void **conn_ctx, const char *pConnString);
 * @return
 */
 U16 smComT1oI2C_ColdReset(void *conn_ctx);
+
+/**
+* @param addr  update slave address
+* @return
+*/
+
+U16 smComT1oI2C_UpdateSlaveAddr(void *conn_ctx, U8 addr);
+
+/**
+* @param addr  get slave address
+* @return
+*/
+
+U16 smComT1oI2C_GetSlaveAddr(void *conn_ctx, U8 *addr);
 
 #if defined(__cplusplus)
 }

@@ -44,6 +44,8 @@ IF(SSS_HAVE_KSDK)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${NXMW_TOP_DIR}/lib/sss/port/ksdk)
     IF(SSS_HAVE_HOST_FRDMMCXA153)
         TARGET_COMPILE_DEFINITIONS(${PROJECT_NAME} PUBLIC MBEDTLS_CONFIG_FILE=\"sss_mcxa_mbedtls_3x_config.h\")
+    ELSEIF(SSS_HAVE_HOST_FRDMMCXA156)
+        TARGET_COMPILE_DEFINITIONS(${PROJECT_NAME} PUBLIC MBEDTLS_CONFIG_FILE=\"sss_mcxa156_mbedtls_3x_config.h\")
     ELSEIF(SSS_HAVE_MBEDTLS_ALT_SSS AND (SSS_HAVE_HOST_FRDMMCXN947 OR SSS_HAVE_HOST_LPCXPRESSO55S))
         TARGET_COMPILE_DEFINITIONS(${PROJECT_NAME} PUBLIC MBEDTLS_CONFIG_FILE=\"sss_ksdk_mbedtls_3x_alt_config.h\")
     ELSE()
@@ -120,6 +122,7 @@ IF(
         PRIVATE -Wno-error=format
         PRIVATE -Wno-error=unused-const-variable
         PRIVATE -Wno-unused-const-variable
+        PRIVATE -Wno-stringop-overflow
     )
 ENDIF()
 
@@ -158,6 +161,7 @@ IF(
         PRIVATE -Wno-unused-function
         PRIVATE -Wno-error=pointer-sign
         PRIVATE -Wno-error=format
+        PRIVATE -Wno-stringop-overflow
     )
 
     SET(GCC_VERSION_WITH_UNUSED_CONST 6.3.0)

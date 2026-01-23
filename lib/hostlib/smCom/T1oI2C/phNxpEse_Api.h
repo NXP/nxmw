@@ -46,7 +46,6 @@ ESESTATUS phNxpEse_deInit(void *conn_ctx);
 ESESTATUS phNxpEse_close(void *conn_ctx);
 ESESTATUS phNxpEse_reset(void *conn_ctx);
 ESESTATUS phNxpEse_chipReset(void *conn_ctx);
-ESESTATUS phNxpEse_setIfsc(uint16_t IFSC_Size);
 ESESTATUS phNxpEse_EndOfApdu(void *conn_ctx);
 void *phNxpEse_memset(void *buff, int val, size_t len);
 void *phNxpEse_memcpy(void *dest, const void *src, size_t len);
@@ -56,5 +55,7 @@ ESESTATUS phNxpEse_getAtr(void *conn_ctx, phNxpEse_data *pRsp);
 ESESTATUS phNxpEse_getCip(void *conn_ctx, phNxpEse_data *pRsp);
 ESESTATUS phNxpEse_ReleaseReq(void *conn_ctx);
 ESESTATUS phNxpEse_deepPwrDown(void *conn_ctx);
+ESESTATUS phNxpEse_updateSlaveAddr(uint8_t addr);
+ESESTATUS phNxpEse_getSlaveAddr(uint8_t *addr);
 /** @} */
 #endif /* _PHNXPESE_API_H_ */

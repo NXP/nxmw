@@ -4,7 +4,7 @@
  * @version 1.0
  * @par License
  *
- * Copyright 2017,2020 NXP
+ * Copyright 2017,2020,2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * @par Description
@@ -34,6 +34,8 @@ U32 smComVCom_GPIOClear(void *conn_ctx, U8 gpioPIN);
 U32 smComVCom_GPIOToggle(void *conn_ctx, U8 gpioPIN);
 U32 smComVCom_GPIORead(void *conn_ctx, U8 gpioPIN, U8 *pRx, U32 *pRxLen);
 U32 smComVCom_ColdReset(void *conn_ctx);
+U32 smComVCom_UpdateSlaveAddr(void *conn_ctx, U8 addr);
+U32 smComVCom_GetSlaveAddr(void *conn_ctx, U8 *addr);
 
 #ifdef __cplusplus
 }

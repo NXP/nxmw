@@ -1,4 +1,4 @@
-/* Copyright 2018, 2020, 2022-2025 NXP
+/* Copyright 2018, 2020, 2022-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "sm_types.h"
@@ -32,6 +32,8 @@
 #define MTY_GPIO_PORT_TOGGLE 0x07
 #define MTY_GPIO_PIN_READ 0x08
 #define MTY_COLD_RESET 0x09
+#define MTY_UPDATE_SLAVE_ADDR 0x0B
+#define MTY_GET_SLAVE_ADDR 0x0C
 #define NAD 0x00
 
 static U8 Header[2] = {0x01, 0x00};
@@ -1006,6 +1008,184 @@ U32 smComVCom_ColdReset(void *conn_ctx)
 
     LOG_MAU8_D("<H", pRsp, REMOTE_JC_SHELL_HEADER_LEN);
     LOG_MAU8_D("<Rx", pRsp + REMOTE_JC_SHELL_HEADER_LEN, totalReceived - REMOTE_JC_SHELL_HEADER_LEN);
+    status = (pRsp[expectedLength - 1] << 8) | (pRsp[expectedLength - 2]);
+
+exit:
+    return status;
+}
+
+U32 smComVCom_UpdateSlaveAddr(void *conn_ctx, U8 addr)
+{
+    U16 status         = 0;
+    U8 Cmd[4]          = {MTY_UPDATE_SLAVE_ADDR, NAD, 0, 0};
+    DWORD WrittenLen   = 0;
+    U32 totalReceived  = 0;
+    U8 lengthReceived  = 0;
+    U32 expectedLength = 0;
+
+    memset(response, 0x00, MAX_BUF_SIZE);
+    memset(sockapdu, 0x00, MAX_BUF_SIZE);
+    memcpy(pCmd, Cmd, 2);
+    pCmd[4]        = addr;
+    uint16_t txLen = sizeof(addr);
+    pCmd[2]        = (txLen & 0xFF00) >> 8;
+    pCmd[3]        = txLen & 0xFF;
+    txLen += 4;
+    LOG_I("TX Len %x", txLen);
+    LOG_MAU8_D("H>", pCmd, 4);
+    LOG_MAU8_D("Tx>", pCmd + 4, txLen - 4);
+    HANDLE pComHandle = (conn_ctx == NULL) ? gpComHandle : (HANDLE)conn_ctx;
+    status            = WriteFile(pComHandle, pCmd, txLen, &WrittenLen, NULL);
+    if ((status == false) || (WrittenLen != txLen)) {
+        if (fprintf(stderr, "Client: send() failed: error %i.\n", WrittenLen) < 0) {
+            LOG_E("Error in logging error to stderr");
+        }
+        goto exit;
+    }
+    else {
+    }
+
+    expectedLength = REMOTE_JC_SHELL_HEADER_LEN; // remote JC shell header length
+
+    while (totalReceived < expectedLength) {
+        U32 maxCommLength  = 0;
+        DWORD numBytesRead = 0;
+        if (lengthReceived == 0) {
+            maxCommLength = REMOTE_JC_SHELL_HEADER_LEN - totalReceived;
+        }
+        else {
+            maxCommLength = expectedLength - totalReceived;
+        }
+
+        if (maxCommLength > (MAX_BUF_SIZE - totalReceived)) {
+            status = 0;
+            goto exit;
+        }
+        status = (ReadFile(pComHandle, (char *)&pRsp[totalReceived], maxCommLength, &numBytesRead, NULL) != 0) ? true :
+                                                                                                                 false;
+        if (numBytesRead > INT32_MAX) {
+            goto exit;
+        }
+        if (status == 0) {
+            if (fprintf(stderr, "Client: recv() failed: error %i.\n", numBytesRead) < 0) {
+                LOG_D("Error in logging error to stderr");
+            }
+            goto exit;
+        }
+        else {
+            totalReceived += numBytesRead;
+        }
+        if ((totalReceived >= REMOTE_JC_SHELL_HEADER_LEN) && (lengthReceived == 0)) {
+            if (expectedLength > (UINT32_MAX - ((pRsp[2] << 8) | (pRsp[3])))) {
+                status = 0;
+                goto exit;
+            }
+            expectedLength += ((pRsp[2] << 8) | (pRsp[3]));
+            lengthReceived = 1;
+        }
+    }
+
+    if ((pRsp[0] != MTY_UPDATE_SLAVE_ADDR)) {
+        goto exit;
+    }
+
+    if (totalReceived < REMOTE_JC_SHELL_HEADER_LEN) {
+        LOG_E("Received response is missing the header itself!");
+        goto exit;
+    }
+
+    LOG_MAU8_D("<H", pRsp, REMOTE_JC_SHELL_HEADER_LEN);
+    LOG_MAU8_D("<Rx", pRsp + REMOTE_JC_SHELL_HEADER_LEN, totalReceived - REMOTE_JC_SHELL_HEADER_LEN);
+    status = (pRsp[expectedLength - 1] << 8) | (pRsp[expectedLength - 2]);
+
+exit:
+    return status;
+}
+
+U32 smComVCom_GetSlaveAddr(void *conn_ctx, U8 *pRx)
+{
+    U16 status         = 0;
+    U8 Cmd[4]          = {MTY_GET_SLAVE_ADDR, NAD, 0, 0};
+    DWORD WrittenLen   = 0;
+    U32 totalReceived  = 0;
+    U8 lengthReceived  = 0;
+    U32 expectedLength = 0;
+    uint16_t txLen     = 0;
+
+    memset(response, 0x00, MAX_BUF_SIZE);
+    memset(sockapdu, 0x00, MAX_BUF_SIZE);
+    memcpy(pCmd, Cmd, 2);
+    pCmd[0] = MTY_GET_SLAVE_ADDR;
+    pCmd[2] = (txLen & 0xFF00) >> 8;
+    pCmd[3] = txLen & 0xFF;
+    txLen += 4;
+
+    LOG_MAU8_D("H>", pCmd, 4);
+    LOG_MAU8_D("Tx>", pCmd + 4, txLen - 4);
+    HANDLE pComHandle = (conn_ctx == NULL) ? gpComHandle : (HANDLE)conn_ctx;
+    status            = WriteFile(pComHandle, pCmd, txLen, &WrittenLen, NULL);
+    if ((status == false) || (WrittenLen != txLen)) {
+        if (fprintf(stderr, "Client: send() failed: error %i.\n", WrittenLen) < 0) {
+            LOG_E("Error in logging error to stderr");
+        }
+        goto exit;
+    }
+    else {
+    }
+
+    expectedLength = REMOTE_JC_SHELL_HEADER_LEN; // remote JC shell header length
+
+    while (totalReceived < expectedLength) {
+        U32 maxCommLength  = 0;
+        DWORD numBytesRead = 0;
+        if (lengthReceived == 0) {
+            maxCommLength = REMOTE_JC_SHELL_HEADER_LEN - totalReceived;
+        }
+        else {
+            maxCommLength = expectedLength - totalReceived;
+        }
+
+        if (maxCommLength > (MAX_BUF_SIZE - totalReceived)) {
+            status = 0;
+            goto exit;
+        }
+        status = (ReadFile(pComHandle, (char *)&pRsp[totalReceived], maxCommLength, &numBytesRead, NULL) != 0) ? true :
+                                                                                                                 false;
+        if (numBytesRead > INT32_MAX) {
+            goto exit;
+        }
+        if (status == 0) {
+            if (fprintf(stderr, "Client: recv() failed: error %i.\n", numBytesRead) < 0) {
+                LOG_D("Error in logging error to stderr");
+            }
+            goto exit;
+        }
+        else {
+            totalReceived += numBytesRead;
+        }
+        if ((totalReceived >= REMOTE_JC_SHELL_HEADER_LEN) && (lengthReceived == 0)) {
+            if (expectedLength > (UINT32_MAX - ((pRsp[2] << 8) | (pRsp[3])))) {
+                status = 0;
+                goto exit;
+            }
+            expectedLength += ((pRsp[2] << 8) | (pRsp[3]));
+            lengthReceived = 1;
+        }
+    }
+
+    if ((pRsp[0] != MTY_GET_SLAVE_ADDR)) {
+        goto exit;
+    }
+
+    if (totalReceived < REMOTE_JC_SHELL_HEADER_LEN) {
+        LOG_E("Received response is missing the header itself!");
+        goto exit;
+    }
+
+    LOG_MAU8_D("<H", pRsp, 4);
+    LOG_MAU8_D("<Rx", pRsp + 4, totalReceived - 4);
+
+    pRx[0]    = pRsp[REMOTE_JC_SHELL_HEADER_LEN];
     status = (pRsp[expectedLength - 1] << 8) | (pRsp[expectedLength - 2]);
 
 exit:

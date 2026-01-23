@@ -1,6 +1,6 @@
 # Getting started for MCUs Using Cmake Build
 
-The NX middleware examples / demos can be cross compiled for MCXN947 / MCXA153 / LPC55S69 on Windows.
+The NX middleware examples / demos can be cross compiled for MCXN947 / MCXA153 / MCXA156 / LPC55S69 on Windows.
 
 ```
 NOTE: MCXN947 is used as an Host MCU example in the following documentation.
@@ -8,19 +8,19 @@ NOTE: MCXN947 is used as an Host MCU example in the following documentation.
 
 ## Prerequisite
 
-- MCUXpresso IDE 24.12 (<https://www.nxp.com/support/:MCUXpresso-IDE>)
+- MCUXpresso IDE 25.6.136 (<https://www.nxp.com/support/:MCUXpresso-IDE>)
   installed. (Update the installed path in file nxmw/scripts/env_setup.bat)
-- SDKs installed for supported MCUs (V24.12.00 for MCXN947/LPC55S69/MCXA153) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
+- SDKs installed for supported MCUs (V25.09.00 for MCXN947/LPC55S69/MCXA153/MCXA156) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
 - Python installed (version 3.10 or above). Please follow the guideline at [Python Download](https://wiki.python.org/moin/BeginnersGuide/Download).
 - West installed (version 1.2.0 or above). Please follow [west setup](https://docs.zephyrproject.org/latest/develop/west/install.html) to install west
 - CMake installed (version 3.30.0 or above). Preferably at C:/opt/cmake/bin/cmake.exe
-- Connect MCXN947/MCXA153/LPC55S69 using the debug link port to Windows
+- Connect MCXN947/MCXA153/MCXA156/LPC55S69 using the debug link port to Windows
 
 <p align=left>
 <img src="../img/MCXN_USB.jpeg" alt="drawing" width="400" />
 </p>
 
-- Secure authenticator connected to MCXN947/MCXA153/LPC55S69 (Refer: [**MCU Pin Diagram**](../../boards/README.md))
+- Secure authenticator connected to MCXN947/MCXA153/MCXA156/LPC55S69 (Refer: [**MCU Pin Diagram**](../../boards/README.md))
 
 - The overall set up will look as shown below.
 
@@ -41,7 +41,7 @@ cd workspace
 west update
 ```
 
->**Note:** The complete setup takes 10-15 minutes to finish. If network error occured, you will see a message update failed for project. Try `west update` again.
+>**Note:** The complete setup takes 10-15 minutes to finish. If network error occurred, you will see a message update failed for project. Try `west update` again.
 
 - Once downloaded you should have the NX middleware and all the required SDK files.
 
@@ -68,7 +68,9 @@ python create_cmake_projects.py
 
 Build files are generated at `nxmw_build/`
 
-- Use the build environment `nxmw_build/nxmw-eclipse_arm` to cross compile for MCXN947/MCXA153/LPC55S69 :
+- Use the build environment `nxmw_build/nxmw-eclipse_arm` to cross compile for MCXN947/MCXA153/MCXA156/LPC55S69 :
+
+- FreeRTOS support is not added for MCXA156
 
 ```console
 cd nxmw_build/nxmw-eclipse_arm
@@ -111,7 +113,7 @@ make
 
 ## Setting up MCUXPresso IDE
 
-1.  Download MCUXpresso 24.12 from:
+1.  Download MCUXpresso 25.6.136 from:
     <https://www.nxp.com/support/developer-resources/software-development-tools/mcuxpresso-software-and-tools/mcuxpresso-integrated-development-environment-ide:MCUXpresso-IDE>
 2.  For additional help please refer to:
     <https://www.nxp.com/webapp/Download?colCode=MCUXPRESSO-UG>
@@ -132,7 +134,7 @@ make
 
 - Click on browse and select the .axf or .bin file to be flashed and click on program to flash the file.
 
->**Note:** If .bin file is selected, specify the address (0x00 for MCXN947/MCXA153/LPC55S69).
+>**Note:** If .bin file is selected, specify the address (0x00 for MCXN947/MCXA153/MCXA156/LPC55S69).
 
 
 <p align=left>

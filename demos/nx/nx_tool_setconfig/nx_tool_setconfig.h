@@ -1,4 +1,4 @@
-/* Copyright 2022-2023,2025 NXP
+/* Copyright 2022-2023,2026 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -38,11 +38,13 @@
 #define SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_OFFSET (1 << 23)
 #define SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH (1 << 24)
 #define SET_CONFIG_CMD_FLAG_GPIO2CONFIG (1 << 25)
+#define SET_CONFIG_CMD_FLAG_GPIO1CONFIG (1 << 26)
 
 typedef struct _tool_setconfig_cmd_param_t
 {
     Nx_GPIOMgmtCfg_GPIOMode_t gpio1Mode;
     Nx_GPIOMgmtCfg_GPIOMode_t gpio2Mode;
+    uint8_t gpio1Config;
     uint8_t gpio2Config;
     Nx_GPIOMgmtCfg_GPIONotif_t gpio1Notif;
     Nx_GPIOMgmtCfg_GPIONotif_t gpio2Notif;

@@ -231,7 +231,6 @@ unsigned int axI2CRead(void *conn_ctx, unsigned char bus, unsigned char addr, un
 #endif
 
     masterXfer.slaveAddress = addr >> 1; // the address of the A70CM
-    //masterXfer.slaveAddress = addr;
     masterXfer.direction      = kLPI2C_Read;
     masterXfer.subaddress     = 0;
     masterXfer.subaddressSize = 0;

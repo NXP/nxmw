@@ -53,8 +53,6 @@ IF(SSS_HAVE_RTOS_FREERTOS)
         ${NXMW_TOP_DIR}/../mcuxsdk/rtos/freertos/freertos-drivers/flexcomm/usart/fsl_usart_freertos.c
         ${NXMW_TOP_DIR}/../mcuxsdk/rtos/freertos/freertos-drivers/flexcomm/i2c/fsl_i2c_freertos.c
         ${NXMW_TOP_DIR}/../mcuxsdk/components/osa/fsl_os_abstraction_free_rtos.c
-        ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_mwm/serial_mwm.c
-        ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_mwm/serial_mwm_usart.c
     )
 ELSE()
     LIST(
@@ -88,7 +86,6 @@ TARGET_INCLUDE_DIRECTORIES(
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/debug_console
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_manager
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/lists
-    PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_mwm
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/devices/LPC/LPC5500/LPC55S69
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/devices/LPC/LPC5500/LPC55S69/drivers
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/devices/LPC/LPC5500/periph

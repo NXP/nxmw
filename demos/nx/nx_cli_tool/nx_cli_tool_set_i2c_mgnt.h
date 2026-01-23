@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 NXP
+ * Copyright 2025-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
 **/
 
@@ -10,6 +10,7 @@ void nxclitool_show_command_help_i2c_mgnt()
     printf("\t\t  i2csupport\n");
     printf("\t\t  i2caddr\n");
     printf("\t\t  protocoloptions\n");
+    printf("\t\t  Note:New i2c address becomes active only after a power cycle. Device responds to old address until then\n");
     printf("\n");
 }
 

@@ -756,7 +756,7 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
 		<sdkName>SDK_2.x_FRDM-MCXA153</sdkName>
-		<sdkVersion>24.12.00</sdkVersion>
+		<sdkVersion>25.9.000</sdkVersion>
 		<boardId>frdmmcxa153</boardId>
 		<package>MCXA153VLH</package>
 		<core>cm33_nodsp</core>

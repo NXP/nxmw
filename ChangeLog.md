@@ -1,5 +1,15 @@
 # Changelog
 
+## \[v02.08.00\]
+- MCU SDK Integration updated to MCU SDK version v25.09.00
+	- MbedTLS (part of MCU SDK) is updated to v3.6.3.
+	- mbedTLS ALT and PSA ALT files are updated to support mbedTLS v3.6.3.
+- Pre built OpenSSL binaries and libraries for Windows updated to v3.5.4.
+- API added to support changing of the T=1oI2C frame size (IFSC) using the phNxpEseProto7816_SetIfscSize API.
+- New APIs ((phNxpEse_updateSlaveAddr and phNxpEse_getSlaveAddr)) are added in T=1oI2C added to get and set the slave address.
+	- The functionality is also exposed through the SM_UpdateSlaveAddr() and SM_GetSlaveAddr() APIs.
+- Fixes for static analysis findings.
+
 ## \[v02.07.00\]
 - Added FRDM-MCXA156 platform support for select examples.
 	- Added standalone MCUXpresso project - nxmw\mcux_project\mcxa156\ex_ecc.

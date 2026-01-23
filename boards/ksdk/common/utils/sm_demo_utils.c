@@ -44,12 +44,7 @@
 
 //#include "aws_clientcredential.h"
 
-#if defined(LPC_WIFI)
-#   include "iot_wifi.h"
-#   include "wifi_config.h"
-#   include "serial_mwm.h"
-
-#elif defined(LPC_ENET)
+#if defined(LPC_ENET)
 #include "lwip/opt.h"
 #include "lwip/tcpip.h"
 #include "lwip/dhcp.h"
@@ -180,50 +175,7 @@ static status_t MDIO_Read(uint8_t phyAddr, uint8_t regAddr, uint16_t *pData)
 /*Init the board network */
 void BOARD_InitNetwork_MAC(const unsigned char buffer[18])
 {
-#if defined(LPC_WIFI)
-
-    WIFINetworkParams_t pxNetworkParams;
-
-    if (strlen(clientcredentialWIFI_SSID) > sizeof(pxNetworkParams.ucSSID)) {
-        LOG_E("Insufficient memory for clientcredentialWIFI_SSID");
-        while (1) {
-            vTaskDelay(pdMS_TO_TICKS(1));
-        }
-    }
-    memcpy(pxNetworkParams.ucSSID, clientcredentialWIFI_SSID, strlen(clientcredentialWIFI_SSID));
-    pxNetworkParams.ucSSIDLength = strlen(clientcredentialWIFI_SSID);
-
-    if (strlen(clientcredentialWIFI_PASSWORD) > sizeof(pxNetworkParams.xPassword.xWPA.cPassphrase)) {
-        LOG_E("Insufficient memory for clientcredentialWIFI_PASSWORD");
-        while (1) {
-            vTaskDelay(pdMS_TO_TICKS(1));
-        }
-    }
-    memcpy(pxNetworkParams.xPassword.xWPA.cPassphrase, clientcredentialWIFI_PASSWORD, strlen(clientcredentialWIFI_PASSWORD));
-    pxNetworkParams.xPassword.xWPA.ucLength = strlen(clientcredentialWIFI_PASSWORD);
-
-    pxNetworkParams.xSecurity = clientcredentialWIFI_SECURITY;
-
-    WIFIReturnCode_t result;
-    LOG_I("Turning WIFI ON");
-    result = network_wifi_init();
-    if (result != eWiFiSuccess) {
-        LOG_E("network_wifi_init failed");
-        while (1) {
-            vTaskDelay(pdMS_TO_TICKS(1));
-        }
-    }
-
-    LOG_I("Connecting to network:%s", clientcredentialWIFI_SSID);
-    result = network_wifi_connect_ap();
-    if (result != eWiFiSuccess) {
-        LOG_E("network_wifi_connect_ap failed");
-        while (1) {
-            vTaskDelay(pdMS_TO_TICKS(1));
-        }
-    }
-
-#elif defined(LPC_ENET)
+#if defined(LPC_ENET)
 #if FSL_FEATURE_SOC_ENET_COUNT > 0 || FSL_FEATURE_SOC_LPC_ENET_COUNT > 0 || FSL_FEATURE_SOC_MCX_ENET_COUNT > 0
 
 ethernetif_config_t fsl_enet_config0 = {.phyHandle   = &phyHandle,
@@ -270,110 +222,4 @@ ethernetif_config_t fsl_enet_config0 = {.phyHandle   = &phyHandle,
 #endif /* FSL_FEATURE_SOC_ENET_COUNT > 0 */
 #endif
 }
-
-#if defined(LPC_WIFI)
-
-static void get_mwm_security(WIFISecurity_t security, char *security_ch)
-{
-    switch (security) {
-    case eWiFiSecurityOpen:
-        security_ch[0] = '0';
-        break;
-    case eWiFiSecurityWEP:
-        security_ch[0] = '1';
-        break;
-    case eWiFiSecurityWPA:
-        security_ch[0] = '3';
-        break;
-    case eWiFiSecurityWPA2:
-        security_ch[0] = '4';
-        break;
-    case eWiFiSecurityWPA3:
-        security_ch[0] = '9';
-        break;
-    default:
-        LOG_W("Security mode not supported by the module, security set to eWiFiSecurityWPA2");
-        security_ch[0] = '4';
-        break;
-    }
-}
-
-WIFIReturnCode_t network_wifi_init(void)
-{
-    int ret;
-    ret = mwm_init();
-    if (ret < 0) {
-        LOG_E("Failed in initializing the Wi-Fi.\r\n");
-        return eWiFiFailure;
-    }
-
-    return eWiFiSuccess;
-}
-
-WIFIReturnCode_t network_wifi_connect_ap(void)
-{
-    int ret;
-    while (1) {
-        /* get wlan status */
-        ret = mwm_wlan_status();
-        if (ret < 0) {
-            LOG_E("Failed to get WLAN status:%d\r\n", ret);
-            return eWiFiFailure;
-        }
-        else if (ret == MWM_INITIALIZED) {
-            ret = mwm_set_param(MWM_MOD_WLAN, MWM_WLAN_SSID, clientcredentialWIFI_SSID);
-            if (ret != 0) {
-                LOG_E("Error in setting ssid:%d\r\n", ret);
-                return eWiFiFailure;
-            }
-            char security[2] = {0};
-            get_mwm_security(clientcredentialWIFI_SECURITY, &security[0]);
-            ret = mwm_set_param(MWM_MOD_WLAN, "security", &security[0]);
-            if (ret != 0) {
-                LOG_E("Error in setting security:%d\r\n", ret);
-                return eWiFiFailure;
-            }
-
-            ret = mwm_set_param(MWM_MOD_WLAN, MWM_WLAN_PASSPHRASE, clientcredentialWIFI_PASSWORD);
-            if (ret != 0) {
-                LOG_E("Error in setting passphrase:%d\r\n", ret);
-                return eWiFiFailure;
-            }
-            /* start wlan */
-            ret = mwm_wlan_start();
-            if (ret != 0) {
-                LOG_E("Error in starting wlan:%d\r\n", ret);
-                return eWiFiFailure;
-            }
-        }
-        else if (ret == MWM_CONNECTED) {
-            char ssid[33]    = {0};
-            char ip_addr[16] = {0};
-            ret              = mwm_wlan_info(ssid, ip_addr);
-            LOG_I("Wi-Fi is connected to: %s, IP Address: %s\r\n", ssid, ip_addr);
-            break;
-        }
-        else if (ret == MWM_CONNECTING) {
-            LOG_I("Wi-Fi is connecting...\r\n");
-            vTaskDelay(pdMS_TO_TICKS(4000));
-        }
-        else if (ret == MWM_AUTH_FAILED) {
-            LOG_E("Connection failed: Wi-Fi authentication failed.\r\n");
-            return eWiFiFailure;
-        }
-        else if (ret == MWM_NETWORK_NOT_FOUND) {
-            LOG_E("Connection failed: WLAN not found.\r\n");
-            return eWiFiFailure;
-        }
-        else {
-            LOG_E("\r\nError in getting the state from Wi-Fi chip.\r\n");
-            return eWiFiFailure;
-        }
-    }
-
-    return eWiFiSuccess;
-}
-
-#endif //LPC_WIFI
-
 #endif /* USE_RTOS */

@@ -2,13 +2,13 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-11-05T15:43:23Z",
+    "created": "2026-01-14T07:35:26Z",
     "creators": [
       "Organization: NXP"
     ],
-    "licenseListVersion": "3.20"
+    "licenseListVersion": "3.26"
   },
-  "name": "nxmw-02.07.00",
+  "name": "nxmw-02.08.00",
   "dataLicense": "CC0-1.0",
   "hasExtractedLicensingInfos": [
     {
@@ -17,59 +17,8 @@
       "name": "OASIS Standards License"
     }
   ],
-  "documentNamespace": "https://nxp.com/spdx/3551994a-551e-42b0-9ca8-606b7bbe4736",
+  "documentNamespace": "https://nxp.com/spdx/aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
   "packages": [
-    {
-      "SPDXID": "SPDXRef-package-25021060-d52a-45a5-8e4a-3407a0aaef8c",
-      "name": "OpenSSL",
-      "versionInfo": "3.2.0",
-      "licenseConcluded": "Apache-2.0",
-      "licenseDeclared": "Apache-2.0",
-      "homepage": "https://www.openssl.org",
-      "downloadLocation": "NOASSERTION",
-      "originator": "Organization: openssl",
-      "supplier": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/openssl/openssl@openssl-3.2.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "f558c926-0d14-41f6-9a50-28bb41142115",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:ruby-lang:openssl:3.2.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:openssl_project:openssl:3.2.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:openssl:openssl:3.2.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false
-    },
-    {
-      "SPDXID": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
-      "name": "nxmw",
-      "versionInfo": "02.07.00",
-      "licenseConcluded": "(BSD-3-Clause)",
-      "licenseDeclared": "(BSD-3-Clause)",
-      "downloadLocation": "NOASSERTION",
-      "originator": "Organization: NXP",
-      "supplier": "NOASSERTION",
-      "externalRefs": [],
-      "filesAnalyzed": false
-    },
     {
       "SPDXID": "SPDXRef-package-40c21407-9f05-4aa5-a2e6-779d71944265",
       "name": "FreeRTOS/corePKCS11",
@@ -81,14 +30,14 @@
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/FreeRTOS/corePKCS11@v3.5.0",
-          "referenceType": "purl"
-        },
-        {
           "referenceCategory": "OTHER",
           "referenceLocator": "b1b24f95-3377-4acd-b024-3a420cdb9919",
           "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/FreeRTOS/corePKCS11@v3.5.0",
+          "referenceType": "purl"
         }
       ],
       "filesAnalyzed": false
@@ -101,14 +50,9 @@
       "licenseDeclared": "MIT",
       "homepage": "https://github.com/aws/amazon-freertos",
       "downloadLocation": "NOASSERTION",
-      "originator": "Organization: Amazon FreeRTOS",
+      "originator": "Organization: aws",
       "supplier": "NOASSERTION",
       "externalRefs": [
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:amazon:freertos:1.4.9:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
         {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:o:amazon:freertos:1.4.9:*:*:*:*:*:*:*",
@@ -121,8 +65,23 @@
         },
         {
           "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:amazon:freertos:1.4.9:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:aws:amazon-freertos:1.4.9:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/aws/amazon-freertos@v1.4.9",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "ec5b3a6e-846b-4c1c-8857-94c4fbcb9766",
+          "referenceType": "BlackDuck-ComponentOrigin"
         }
       ],
       "filesAnalyzed": false
@@ -138,13 +97,96 @@
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/nxp-mcuxpresso/mcux-sdk@MCUX_2.16.000",
+          "referenceType": "purl"
+        },
+        {
           "referenceCategory": "OTHER",
           "referenceLocator": "76f7861f-555e-4129-b436-56d9991cb657",
           "referenceType": "BlackDuck-ComponentOrigin"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-83cbd343-73dd-44dc-8655-adc88fb3ccc6",
+      "name": "mbed TLS",
+      "versionInfo": "v3.6.3",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "homepage": "https://www.trustedfirmware.org/",
+      "downloadLocation": "https://github.com/Mbed-TLS/mbedtls/releases/tag/v3.6.3",
+      "originator": "Organization: mbed-tls",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedcrypto16:3.6.3:1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/nxp-mcuxpresso/mcux-sdk@MCUX_2.16.000",
+          "referenceLocator": "pkg:github/Mbed-TLS/mbedtls@v3.6.3",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "e84da43e-5bfd-45d7-a7e6-c6b3034a7faa",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls21:3.6.3:1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-dev:3.6.3:1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:arm:mbed_tls:3.6.3:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-doc:3.6.3:1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-8420f039-09f7-4a30-9cda-59128844008f",
+      "name": "OpenSSL",
+      "versionInfo": "3.5.4",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "homepage": "https://www.openssl.org",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: openssl",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:openssl:openssl:3.5.4:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "3c4e906e-e53e-4be8-b5f7-ee5a3cc73ab1",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:openssl_project:openssl:3.5.4:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/openssl/openssl@openssl-3.5.4",
           "referenceType": "purl"
         }
       ],
@@ -158,17 +200,12 @@
       "licenseDeclared": "(SSLeay-standalone AND OpenSSL)",
       "homepage": "https://www.openssl.org",
       "downloadLocation": "NOASSERTION",
-      "originator": "Organization: OpenSSL",
+      "originator": "Organization: openssl",
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:alpine_package:openssl:1.1.1l:r5:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:alpine_package:openssl:1.1.1l:r0:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:alpine_package:openssl1.1-compat:1.1.1l:r4:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
@@ -182,58 +219,24 @@
           "referenceType": "cpe23Type"
         },
         {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:alpine_package:openssl1.1-compat:1.1.1l:r4:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false
-    },
-    {
-      "SPDXID": "SPDXRef-package-98667c41-9a0f-448d-aa7a-2e61f5854050",
-      "name": "mbed TLS",
-      "versionInfo": "3.6.0",
-      "licenseConcluded": "Apache-2.0",
-      "licenseDeclared": "Apache-2.0",
-      "homepage": "https://www.trustedfirmware.org/",
-      "downloadLocation": "https://github.com/Mbed-TLS/mbedtls/releases/tag/v3.6.0",
-      "originator": "Organization: mbed-tls",
-      "supplier": "NOASSERTION",
-      "externalRefs": [
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/openssl/openssl@OpenSSL_1_1_1l",
+          "referenceType": "purl"
+        },
         {
           "referenceCategory": "OTHER",
-          "referenceLocator": "b0bd9985-4311-438f-9a55-8306e35222e5",
+          "referenceLocator": "11536746-dd20-4a15-90de-56889d13ce55",
           "referenceType": "BlackDuck-ComponentOrigin"
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:debian_package:libmbedcrypto16:3.6.0:2:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:alpine_package:openssl:1.1.1l:r5:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm:mbed_tls:3.6.0:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:alpine_package:openssl:1.1.1l:r0:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:debian_package:libmbedcrypto16:3.6.0:3:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm_ltd:mbedtls_formerly_polarssl:3.6.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:debian_package:libmbedcrypto16:3.6.0:1:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/Mbed-TLS/mbedtls@v3.6.0",
-          "referenceType": "purl"
         }
       ],
       "filesAnalyzed": false
@@ -245,20 +248,9 @@
       "licenseConcluded": "MIT",
       "licenseDeclared": "LicenseRef-e121ad44-e488-4a93-8203-589ba273e857",
       "downloadLocation": "NOASSERTION",
-      "originator": "Organization: oasis-tcs",
+      "originator": "Organization: oasis-tcs/pkcs11",
       "supplier": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "207a767a-31b8-4736-a57b-b4cc98384a18",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        },
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/oasis-tcs/pkcs11@2-40-errata-1",
-          "referenceType": "purl"
-        }
-      ],
+      "externalRefs": [],
       "filesAnalyzed": false
     },
     {
@@ -269,25 +261,32 @@
       "licenseDeclared": "MIT",
       "homepage": "https://github.com/DaveGamble/cJSON",
       "downloadLocation": "NOASSERTION",
-      "originator": "Organization: davegamble",
+      "originator": "Organization: cJSON",
       "supplier": "NOASSERTION",
       "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/DaveGamble/cJSON@v1.7.19",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "13bdbf8b-0556-439e-9b76-e3c1250182c2",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        },
         {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:cjson_project:cjson:1.7.19:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:davegamble:cjson:1.7.19:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
         }
       ],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
+      "name": "nxmw",
+      "versionInfo": "02.08.00",
+      "licenseConcluded": "(BSD-3-Clause)",
+      "licenseDeclared": "(BSD-3-Clause)",
+      "downloadLocation": "https://github.com/NXP/nxmw",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
       "filesAnalyzed": false
     },
     {
@@ -314,29 +313,6 @@
       "filesAnalyzed": false
     },
     {
-      "SPDXID": "SPDXRef-package-de867e90-6ad7-4792-807e-3967c5362fc0",
-      "name": "FreeRTOS iot-reference",
-      "versionInfo": "v202203.00",
-      "licenseConcluded": "MIT",
-      "licenseDeclared": "MIT",
-      "downloadLocation": "NOASSERTION",
-      "originator": "Organization: freertos",
-      "supplier": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:github/FreeRTOS/iot-reference-nxp-rt1060@v202203.00",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "a4afa5c6-ff4c-4c86-83ad-73efade92f96",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        }
-      ],
-      "filesAnalyzed": false
-    },
-    {
       "SPDXID": "SPDXRef-package-e5a03635-081f-4f7a-96aa-24c7e8fbd12a",
       "name": "mbed TLS",
       "versionInfo": "2.28.8",
@@ -348,13 +324,8 @@
       "supplier": "NOASSERTION",
       "externalRefs": [
         {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "b616053f-e8fa-4fd4-9653-e82d06cbd2dd",
-          "referenceType": "BlackDuck-ComponentOrigin"
-        },
-        {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm_ltd:mbedtls_formerly_polarssl:2.28.8:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-dev:2.28.8:1:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
@@ -363,24 +334,29 @@
           "referenceType": "cpe23Type"
         },
         {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "b616053f-e8fa-4fd4-9653-e82d06cbd2dd",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        },
+        {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:2.3:a:debian_package:libmbedcrypto7t64:2.28.8:1:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-doc:2.28.8:1:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-dev:2.28.8:1:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceLocator": "pkg:github/Mbed-TLS/mbedtls@mbedtls-2.28.8",
           "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:arm_ltd:mbedtls_formerly_polarssl:2.28.8:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:debian_package:libmbedtls-doc:2.28.8:1:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
         }
       ],
       "filesAnalyzed": false
@@ -388,62 +364,62 @@
   ],
   "relationships": [
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
-      "relationshipType": "DYNAMIC_LINK",
-      "relatedSpdxElement": "SPDXRef-package-25021060-d52a-45a5-8e4a-3407a0aaef8c"
-    },
-    {
-      "spdxElementId": "SPDXRef-DOCUMENT",
-      "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736"
-    },
-    {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-40c21407-9f05-4aa5-a2e6-779d71944265"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-5e2232ee-d527-4443-adc4-7e92f137e3ca"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-5f7d1554-d815-482d-8943-957dd73c8a82"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-83cbd343-73dd-44dc-8655-adc88fb3ccc6"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-8420f039-09f7-4a30-9cda-59128844008f"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
+      "relationshipType": "DYNAMIC_LINK",
+      "relatedSpdxElement": "SPDXRef-package-8420f039-09f7-4a30-9cda-59128844008f"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "DYNAMIC_LINK",
       "relatedSpdxElement": "SPDXRef-package-96f00a5f-9582-434f-8178-fe2e688e1501"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
-      "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-98667c41-9a0f-448d-aa7a-2e61f5854050"
-    },
-    {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-a72f87ac-8e82-448a-9300-139a8ff8dc1b"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-a7d9f775-150c-4a9b-97ee-de1c30e09fb4"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-cff2889f-e009-4af3-83bc-193d10346110"
     },
     {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
-      "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-de867e90-6ad7-4792-807e-3967c5362fc0"
-    },
-    {
-      "spdxElementId": "SPDXRef-package-3551994a-551e-42b0-9ca8-606b7bbe4736",
+      "spdxElementId": "SPDXRef-package-aa8dd8e8-a0cb-4b85-8395-2cda5f88fc0c",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-e5a03635-081f-4f7a-96aa-24c7e8fbd12a"
     }

@@ -83,6 +83,11 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
     }
 
     localLen = ((size_t)cmd[i++]) << 8;
+
+    if (localLen > (SIZE_MAX - (size_t)cmd[i])) {
+        LOG_E("overflow error");
+        return status;
+    }
     localLen += ((size_t)cmd[i++]);
 
     if ((cmdLen < localLen) || ((cmdLen - localLen < i) || (localLen > *cmdHeaderLen))) {
@@ -99,6 +104,11 @@ smStatus_t amBreakDownAPDU(uint8_t *cmd,
         return status;
     }
     localLen = ((size_t)cmd[i++]) << 8;
+
+    if (localLen > (SIZE_MAX - (size_t)cmd[i])) {
+        LOG_E("overflow error");
+        return status;
+    }
     localLen += ((size_t)cmd[i++]);
 
     if ((*cmdDataLen > NX_MAX_BUF_SIZE_CMD) || (localLen > *cmdDataLen)) {

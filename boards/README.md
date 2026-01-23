@@ -33,7 +33,7 @@ To build the Secure Authenticator MW using CMake build for supported MCUs, Refer
 </p>
 
 
-### MCXA153 Pin Diagram
+### MCXA153/MCXA156 Pin Diagram
 <p align=left>
 <img src="../doc/img/mcux_projects/MCXA_pin.jpg" alt="drawing" width="600"/>
 </p>

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2024,2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -414,34 +414,6 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         default:
             break;
         }
-        switch (gpioConfig.gpio1InputCfg) {
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullUp:
-            LOG_I("  GPIO 1 Plain input with weak pull-up");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_Repeater:
-            LOG_I("  GPIO 1 Plain input with repeater (bus keeper)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput:
-            LOG_I("  GPIO 1 Plain input");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullDown:
-            LOG_I("  GPIO 1 Plain input with weak pull-down");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WeakPullUp:
-            LOG_I("  GPIO 1 Weak pull-up");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WPDN:
-            LOG_I("  GPIO 1 Weak pull-down (DISABLE_WPDN)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_HighImpedance:
-            LOG_I("  GPIO 1 High impedance (analog I/O)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WPD:
-            LOG_I("  GPIO 1 Weak pull-down (DISABLE_WPD)");
-            break;
-        default:
-            break;
-        }
         break;
     case Nx_GPIOMgmtCfg_GPIOMode_Output:
         LOG_I(" GPIO 1 Mode: Output");
@@ -450,34 +422,6 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         }
         else {
             LOG_I("  GPIO 1 Initial state after power cycle: Low");
-        }
-        switch (gpioConfig.gpio1OutputCfg) {
-        case Nx_GPIOPadCfg_OutputCfg_I2C_SF_FP_Tx_HS_Tx:
-            LOG_I("  GPIO 1 Output config: I2C S/F and FP transmit mode");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_HS_Tx:
-            LOG_I("  GPIO 1 Output config: I2C HS transmit mode (only SCLK)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_TX_SFFP:
-            LOG_I("  GPIO 1 Output config: I2C_T X_SF F P");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_TX_HS_SCLK:
-            LOG_I("  GPIO 1 Output config: I2C_T X_HS_SCLK");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1:
-            LOG_I("  GPIO 1 Output config:  GPIO Low speed mode (GPIO_LOW_SPEED_1)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_2:
-            LOG_I("  GPIO 1 Output config: GPIO Low speed mode (GPIO_LOW_SPEED_2)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1:
-            LOG_I("  GPIO 1 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_1)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_2:
-            LOG_I("  GPIO 1 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_2)");
-            break;
-        default:
-            break;
         }
         switch (gpioConfig.gpio1OutputNotif) {
         case Nx_GPIOMgmtCfg_GPIONotif_Disabled:
@@ -632,12 +576,68 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     default:
         break;
     }
+    switch (gpioConfig.gpio1InputCfg) {
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullUp:
+        LOG_I("  GPIO 1 Plain input with weak pull-up");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_Repeater:
+        LOG_I("  GPIO 1 Plain input with repeater (bus keeper)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput:
+        LOG_I("  GPIO 1 Plain input");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullDown:
+        LOG_I("  GPIO 1 Plain input with weak pull-down");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WeakPullUp:
+        LOG_I("  GPIO 1 Weak pull-up");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WPDN:
+        LOG_I("  GPIO 1 Weak pull-down (DISABLE_WPDN)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_HighImpedance:
+        LOG_I("  GPIO 1 High impedance (analog I/O)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WPD:
+        LOG_I("  GPIO 1 Weak pull-down (DISABLE_WPD)");
+        break;
+    default:
+        break;
+    }
 
+    switch (gpioConfig.gpio1OutputCfg) {
+    case Nx_GPIOPadCfg_OutputCfg_I2C_SF_FP_Tx_HS_Tx:
+        LOG_I("  GPIO 1 Output config: I2C_SF_FP transmit mode");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_HS_Tx:
+        LOG_I("  GPIO 1 Output config: I2C_HS transmit mode (only SCLK)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_TX_SFFP:
+        LOG_I("  GPIO 1 Output config: I2C_TX_SFFP");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_TX_HS_SCLK:
+        LOG_I("  GPIO 1 Output config: I2C_TX_HS_SCLK");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1:
+        LOG_I("  GPIO 1 Output config:  GPIO Low speed mode (GPIO_LOW_SPEED_1)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_2:
+        LOG_I("  GPIO 1 Output config: GPIO Low speed mode (GPIO_LOW_SPEED_2)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1:
+        LOG_I("  GPIO 1 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_1)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_2:
+        LOG_I("  GPIO 1 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_2)");
+        break;
+    default:
+        break;
+    }
     if (gpioConfig.gpio1Supply1v1n1v2) {
-        LOG_I("  GPIO 1 supply selection: 1V8 signaling in I2C mode");
+        LOG_I("  GPIO 1 supply selection: 1V1 and 1V2 signaling in I2c mode");
     }
     else {
-        LOG_I("  GPIO 1 supply selection: 1V1 and 1V2 signaling in I2c mode");
+        LOG_I("  GPIO 1 supply selection: 1V8 signaling in I2C mode");
     }
 
     switch (gpioConfig.gpio2Mode) {
@@ -669,34 +669,6 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         default:
             break;
         }
-        switch (gpioConfig.gpio2InputCfg) {
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullUp:
-            LOG_I("  GPIO 2 Plain input with weak pull-up");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_Repeater:
-            LOG_I("  GPIO 2 Plain input with repeater (bus keeper)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput:
-            LOG_I("  GPIO 2 Plain input");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullDown:
-            LOG_I("  GPIO 2 Plain input with weak pull-down");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WeakPullUp:
-            LOG_I("  GPIO 2 Weak pull-up");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WPDN:
-            LOG_I("  GPIO 2 Weak pull-down (DISABLE_WPDN)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_HighImpedance:
-            LOG_I("  GPIO 2 High impedance (analog I/O)");
-            break;
-        case Nx_GPIOPadCfg_InputCfg_WPD:
-            LOG_I("  GPIO 2 Weak pull-down (DISABLE_WPD)");
-            break;
-        default:
-            break;
-        }
         break;
     case Nx_GPIOMgmtCfg_GPIOMode_Output:
         LOG_I(" GPIO 2 Mode: Output");
@@ -706,34 +678,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         else {
             LOG_I("  GPIO 2 Initial state after power cycle: Low");
         }
-        switch (gpioConfig.gpio2OutputCfg) {
-        case Nx_GPIOPadCfg_OutputCfg_I2C_SF_FP_Tx_HS_Tx:
-            LOG_I("  GPIO 2 Output config: I2C S/F and FP transmit mode");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_HS_Tx:
-            LOG_I("  GPIO 2 Output config: I2C HS transmit mode (only SCLK)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_TX_SFFP:
-            LOG_I("  GPIO 2 Output config: I2C_T X_SF F P");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_I2C_TX_HS_SCLK:
-            LOG_I("  GPIO 2 Output config: I2C_T X_HS_SCLK");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1:
-            LOG_I("  GPIO 2 Output config:  GPIO Low speed mode (GPIO_LOW_SPEED_1)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_2:
-            LOG_I("  GPIO 2 Output config: GPIO Low speed mode (GPIO_LOW_SPEED_2)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1:
-            LOG_I("  GPIO 2 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_1)");
-            break;
-        case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_2:
-            LOG_I("  GPIO 2 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_2)");
-            break;
-        default:
-            break;
-        }
+
         switch (gpioConfig.gpio2OutputNotif) {
         case Nx_GPIOMgmtCfg_GPIONotif_Disabled:
             LOG_I(" GPIO 2 notification on authentication: Disabled");
@@ -755,12 +700,68 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     default:
         break;
     }
+    switch (gpioConfig.gpio2InputCfg) {
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullUp:
+        LOG_I("  GPIO 2 Plain input with weak pull-up");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_Repeater:
+        LOG_I("  GPIO 2 Plain input with repeater (bus keeper)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput:
+        LOG_I("  GPIO 2 Plain input");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullDown:
+        LOG_I("  GPIO 2 Plain input with weak pull-down");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WeakPullUp:
+        LOG_I("  GPIO 2 Weak pull-up");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WPDN:
+        LOG_I("  GPIO 2 Weak pull-down (DISABLE_WPDN)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_HighImpedance:
+        LOG_I("  GPIO 2 High impedance (analog I/O)");
+        break;
+    case Nx_GPIOPadCfg_InputCfg_WPD:
+        LOG_I("  GPIO 2 Weak pull-down (DISABLE_WPD)");
+        break;
+    default:
+        break;
+    }
+    switch (gpioConfig.gpio2OutputCfg) {
+    case Nx_GPIOPadCfg_OutputCfg_I2C_SF_FP_Tx_HS_Tx:
+        LOG_I("  GPIO 2 Output config: I2C_SF_FP transmit mode");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_HS_Tx:
+        LOG_I("  GPIO 2 Output config: I2C_HS transmit mode (only SCLK)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_TX_SFFP:
+        LOG_I("  GPIO 2 Output config: I2C_TX_SFFP");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_I2C_TX_HS_SCLK:
+        LOG_I("  GPIO 2 Output config: I2C_TX_HS_SCLK");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1:
+        LOG_I("  GPIO 2 Output config:  GPIO Low speed mode (GPIO_LOW_SPEED_1)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_2:
+        LOG_I("  GPIO 2 Output config: GPIO Low speed mode (GPIO_LOW_SPEED_2)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1:
+        LOG_I("  GPIO 2 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_1)");
+        break;
+    case Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_2:
+        LOG_I("  GPIO 2 Output config: GPIO High speed mode (GPIO_HIGH_SPEED_2)");
+        break;
+    default:
+        break;
+    }
 
     if (gpioConfig.gpio2Supply1v1n1v2) {
-        LOG_I("  GPIO 2 supply selection: 1V8 signaling in I2C mode");
+        LOG_I("  GPIO 2 supply selection: 1V1 and 1V2 signaling in I2c mode");
     }
     else {
-        LOG_I("  GPIO 2 supply selection: 1V1 and 1V2 signaling in I2c mode");
+        LOG_I("  GPIO 2 supply selection: 1V8 signaling in I2C mode");
     }
 
     switch ((gpioConfig.acManage & NX_CONF_COMM_MODE_MASK) >> NX_COMM_MODE_BIT_SHIFT) {
@@ -776,7 +777,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     default:
         break;
     }
-    LOG_I(" Cmd.ManageGPIO access condition 0x%x", gpioConfig.acManage);
+    LOG_I(" Cmd.ManageGPIO access condition 0x%x", (gpioConfig.acManage & NX_CONF_AC_MASK));
 
     switch ((gpioConfig.acRead & NX_CONF_COMM_MODE_MASK) >> NX_COMM_MODE_BIT_SHIFT) {
     case Nx_CommMode_Plain:
@@ -791,7 +792,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
     default:
         break;
     }
-    LOG_I(" Cmd.ReadGPIO access condition 0x%x", gpioConfig.acRead);
+    LOG_I(" Cmd.ReadGPIO access condition 0x%x", (gpioConfig.acRead & NX_CONF_AC_MASK));
 
     sm_status = nx_GetConfig_EccKeyMgmt(&((sss_nx_session_t *)pSession)->s_ctx, &keyAC, &rootKeyAC);
     ENSURE_OR_GO_CLEANUP(sm_status == SM_OK);

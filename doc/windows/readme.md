@@ -32,7 +32,7 @@ cd workspace
 west update
 ```
 
->**Note:** The complete setup takes 10-15 minutes to download. If network error occured, you will see a message update failed for project. Try `west update` again.
+>**Note:** The complete setup takes 10-15 minutes to download. If network error occurred, you will see a message update failed for project. Try `west update` again.
 
 - Once downloaded you should have the NX middleware and all the required SDK files.
 
@@ -127,6 +127,7 @@ width="800" />
 
 >**Note:** The Sigma Verifier/Prover demo requires to run the Personalization example once first. Refer [**NX Personalization**](../../demos/nx/nx_Personalization/readme.md).
 
+>**Note:** The pre-compiled OpenSSL 3.5.4 binary is built for 64-bit OS.
 
 ## Build / Run Examples
 

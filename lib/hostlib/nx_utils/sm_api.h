@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018-2024 NXP
+ * Copyright 2018-2025 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -74,6 +74,9 @@ U16 SM_I2CConnect(void **conn_ctx, SmCommState_t *commState, U8 *cip, U16 *cipLe
 
 U16 SM_SendAPDU(U8 *cmd, U16 cmdLen, U8 *resp, U16 *respLen);
 U16 SM_I2CColdReset(void *conn_ctx);
+U16 SM_UpdateSlaveAddr(void *conn_ctx, U8 addr);
+U16 SM_GetSlaveAddr(void *conn_ctx, U8 *addr);
+
 #if defined(SMCOM_JRCP_V1_AM)
 U16 SM_LockChannel();
 U16 SM_UnlockChannel();

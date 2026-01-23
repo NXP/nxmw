@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014, 2018-2020, 2023-2024 NXP
+ * Copyright 2010-2014, 2018-2020, 2023-2024,2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -29,6 +29,51 @@
 #include <time.h>
 
 #define MAX_RETRY_CNT 10
+
+static uint8_t i2c_device_address = 0x20 << 1;
+
+static void phPalEse_i2c_getSlaveAddrStr(char *s_addr, size_t s_addrSize)
+{
+    uint8_t addr7 = phPalEse_i2c_getSlaveAddr();
+    int n         = snprintf(s_addr, s_addrSize, "/dev/i2c-1:0x%02X", addr7);
+    if (n < 0 || (size_t)n >= s_addrSize) {
+        s_addr[0] = '\0';
+    }
+}
+
+/*******************************************************************************
+**
+** Function         phPalEse_i2c_updateSlaveAddr
+**
+** Description      Update I2c Slave address
+**
+** param[in]        None
+**
+** Returns          addr I2c device address
+**
+*******************************************************************************/
+void phPalEse_i2c_updateSlaveAddr(uint8_t addr)
+{
+    LOG_D("Select I2C Slave addr. 0x%02X", i2c_device_address);
+    i2c_device_address = addr << 1;
+}
+
+/*******************************************************************************
+**
+** Function         phPalEse_i2c_getSlaveAddr
+**
+** Description      Get I2C Slave address
+**
+** param[in]        addr I2c device address
+**
+** Returns          None
+**
+*******************************************************************************/
+uint8_t phPalEse_i2c_getSlaveAddr()
+{
+    LOG_D("Get I2C Slave addr. 0x%02X", i2c_device_address);
+    return (i2c_device_address >> 1);
+}
 
 /*******************************************************************************
 **
@@ -76,8 +121,11 @@ ESESTATUS phPalEse_i2c_open_and_configure(pphPalEse_Config_t pConfig)
     LOG_D("%s Opening port", __FUNCTION__);
     /* open port */
     /*Disable as interface reset happens on every session open*/
+    char s_addr[32]   = {0};
+    phPalEse_i2c_getSlaveAddrStr(&s_addr[0], sizeof(s_addr));
+
 retry:
-    i2c_ret = axI2CInit(&pDevHandle, (const char *)pConfig->pDevName);
+    i2c_ret = axI2CInit(&pDevHandle, (char *)s_addr);
     if (i2c_ret != I2C_OK) {
         LOG_E("%s Failed retry ", __FUNCTION__);
         if (i2c_ret == I2C_BUSY) {
@@ -119,7 +167,7 @@ int phPalEse_i2c_read(void *pDevHandle, uint8_t *pBuffer, int nNbBytesToRead)
     LOG_D("%s Read Requested %d bytes ", __FUNCTION__, nNbBytesToRead);
     //sm_sleep(ESE_POLL_DELAY_MS);
     while (numRead != nNbBytesToRead) {
-        ret = axI2CRead(pDevHandle, I2C_BUS_0, SMCOM_I2C_ADDRESS, pBuffer, nNbBytesToRead);
+        ret = axI2CRead(pDevHandle, I2C_BUS_0, i2c_device_address, pBuffer, nNbBytesToRead);
         if (ret != I2C_OK) {
             LOG_D("_i2c_read() error : %d ", ret);
             /* if platform returns different error codes, modify the check below.*/
@@ -173,7 +221,7 @@ int phPalEse_i2c_write(void *pDevHandle, uint8_t *pBuffer, int nNbBytesToWrite)
     do {
         /* 1ms delay to give ESE polling delay */
         sm_sleep(ESE_POLL_DELAY_MS);
-        ret = axI2CWrite(pDevHandle, I2C_BUS_0, SMCOM_I2C_ADDRESS, pBuffer, nNbBytesToWrite);
+        ret = axI2CWrite(pDevHandle, I2C_BUS_0, i2c_device_address, pBuffer, nNbBytesToWrite);
         if (ret != I2C_OK) {
             LOG_D("_i2c_write() error : %d ", ret);
             if ((ret == I2C_NACK_ON_ADDRESS || ret == I2C_NACK_ON_DATA || ret == I2C_BUSY) &&

@@ -11,7 +11,7 @@ FILE(
     src_files
     *.c
     ${NXMW_TOP_DIR}/demos/nx/mbedtls_3_x_lwip_client/ssl/ssl_test_lib.c
-    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/src/helpers.c
+    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/src/helpers.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/src/certs.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/test/query_config.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/nxp_iot_agent/net_crypto/mbedtls/net_lwip.c
@@ -55,6 +55,8 @@ TARGET_INCLUDE_DIRECTORIES(
         ${NXMW_TOP_DIR}/demos/nx/mbedtls_3_x_lwip_client/ssl/
         ${NXMW_TOP_DIR}/../mcuxsdk/middleware/lwip/port
         ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/include
+        ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/include/
+        ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/programs/
         ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/test/
         ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/
         ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/ssl/

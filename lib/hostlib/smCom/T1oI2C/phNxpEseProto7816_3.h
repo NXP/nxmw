@@ -99,6 +99,7 @@ typedef enum phNxpEseProto7816_TransceiveStates
     SEND_S_RELEASE,  /*!< 7816-3 protocol transceive state: S-frame RELEASE command to be sent */
     SEND_S_CIP,      /*!< 7816-3 protocol transceive state: S-frame CIP command to be sent */
     SEND_S_COLD_RST, /*!< 7816-3 protocol transceive state: S-frame cold reset command to be sent */
+    SEND_S_IFSC,     /*!< 7816-3 protocol transceive state: S-frame IFSC command to be sent */
 #endif
     SEND_S_WTX_REQ,     /*!< 7816-3 protocol transceive state: S-frame WTX command to be sent */
     SEND_S_WTX_RSP,     /*!< 7816-3 protocol transceive state: S-frame WTX response to be sent */
@@ -133,7 +134,9 @@ typedef struct iFrameInfo
  */
 typedef struct sFrameInfo
 {
-    sFrameTypes_t sFrameType; /*!< S-frame: Type of S-frame cmd/rsp */
+    sFrameTypes_t sFrameType;                                             /*!< S-frame: Type of S-frame cmd/rsp */
+    uint8_t *data; /*!< S-frame: Actual data (Information field (INF)) */ /* For IFSC */
+    uint8_t data_len;
 } sFrameInfo_t;
 
 /*!
@@ -359,6 +362,10 @@ typedef struct phNxpEseProto7816_PCB_bits
  * \brief 7816-3 S-block get CIP cmd mask
  */
 #define PH_PROTO_7816_S_GET_CIP 0x04
+/*!
+ * \brief 7816-3 S-block ifsc offset
+ */
+#define PH_PROPTO_7816_S_IFS_REQ 0x01
 
 /* T=1 protocol Block format for T1oI2C
  ___________________________________________________________________________________________________
@@ -407,12 +414,12 @@ bool_t phNxpEseProto7816_Close(void *conn_ctx);
 bool_t phNxpEseProto7816_Open(void *conn_ctx, phNxpEseProto7816InitParam_t initParam, phNxpEse_data *AtrRsp);
 bool_t phNxpEseProto7816_Transceive(void *conn_ctx, phNxpEse_data *pCmd, phNxpEse_data *pRsp);
 bool_t phNxpEseProto7816_Reset(void);
-bool_t phNxpEseProto7816_SetIfscSize(uint16_t IFSC_Size);
 bool_t phNxpEseProto7816_ResetProtoParams(void);
 bool_t phNxpEseProto7816_Store(phNxpEseProto7816_t *conn_ctx);
 bool_t phNxpEseProto7816_Retrieve(phNxpEseProto7816_t *conn_ctx);
 
 #if defined(T1oI2C_GP1_0) || defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+bool_t phNxpEseProto7816_SetIfscSize(void *conn_ctx, uint16_t IFSC_Size);
 bool_t phNxpEseProto7816_SoftReset(void *conn_ctx);
 bool_t phNxpEseProto7816_GetCip(void *conn_ctx, phNxpEse_data *pRsp);
 bool_t phNxpEseProto7816_ColdReset(void *conn_ctx);

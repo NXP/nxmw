@@ -3,7 +3,7 @@
  * @author NXP Semiconductors
  * @version 1.1
  * @par License
- * Copyright 2016,2017,2020 NXP
+ * Copyright 2016,2017,2020,2025-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * @par Description
@@ -27,6 +27,7 @@ extern "C" {
 #define MTY_UNLOCK 0x31
 #define MTY_COLD_RESET 0x09
 
+
 U16 smComSocket_Close(void);
 U16 smComSocket_Open(void **conn_ctx, U8 *pIpAddrString, U16 portNo, U8 *pCip, U16 *cipLen);
 #if defined(_WIN32) && defined(TGT_A70CU)
@@ -49,6 +50,8 @@ U32 smComSocket_GPIOClearFD(int fd, U8 gpioPIN);
 U32 smComSocket_GPIOToggleFD(int fd, U8 gpioPIN);
 U32 smComSocket_GPIOReadFD(int fd, U8 gpioPIN, U8 *pRx, U32 *pRxLen);
 U32 smComSocket_ColdResetFD(int fd);
+U32 smComSocket_UpdateSlaveAddrFD(int fd, U8 addr);
+U32 smComSocket_GetSlaveAddrFD(int fd, U8 *pRx);
 #ifdef __cplusplus
 }
 #endif

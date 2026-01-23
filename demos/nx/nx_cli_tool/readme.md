@@ -728,6 +728,10 @@ nxclitool set-i2c_mgnt [OPTIONS]
 -   **-i2caddr**: The address used for the I2C target (default 0x20):
 -   **-protocoloptions**: The crypto protocols supported over I2C, refer NTAGECC_RefArch:
 
+Note:
+    The I2C device address can be reconfigured.
+    The device continues responding at the old address until a full power reset is performed.
+
 **Example**
 
 ```

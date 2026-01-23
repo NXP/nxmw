@@ -135,6 +135,16 @@ U32 smComVCom_ColdReset(void *conn_ctx)
     return smComSocket_ColdResetFD(gfileDescriptor);
 }
 
+U32 smComVCom_UpdateSlaveAddr(void *conn_ctx, U8 addr)
+{
+    return smComSocket_UpdateSlaveAddrFD(gfileDescriptor, addr);
+}
+
+U32 smComVCom_GetSlaveAddr(void *conn_ctx, U8 *addr)
+{
+    return smComSocket_GetSlaveAddrFD(gfileDescriptor, addr);
+}
+
 static int smUartSetInterfaceAttrib(int fd, uint32_t speed)
 {
     struct termios SerialPortSettings; /* Create the structure */

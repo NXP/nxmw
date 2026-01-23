@@ -1,6 +1,6 @@
 /*
 *
-* Copyright 2022-2025 NXP
+* Copyright 2022-2026 NXP
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
@@ -105,7 +105,7 @@ static sss_status_t nx_set_configure(
         SET_CONFIG_CMD_FLAG_GPIO1_PADCTRLD | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLA | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLB |
         SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLC | SET_CONFIG_CMD_FLAG_GPIO2_PADCTRLD |
         SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_FILENO | SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_OFFSET |
-        SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH;
+        SET_CONFIG_CMD_FLAG_GPIO_NFCPAUSE_LENGTH | SET_CONFIG_CMD_FLAG_GPIO1CONFIG;
     if (setConfigFlag & gpioCfgMask) {
         // Get current GPIO configuration and set to output mode.
         sm_status = nx_GetConfig_GPIOMgmt(&((sss_nx_session_t *)pSession)->s_ctx, &orggpioConfig);
@@ -120,6 +120,7 @@ static sss_status_t nx_set_configure(
             gpioConfig.gpio1Mode = cmdParam->gpio1Mode;
             if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_Input) {
                 gpioConfig.gpio1InputCfg = Nx_GPIOPadCfg_InputCfg_PlainInput_WeakPullUp;
+                gpioConfig.gpio1OutputCfg = Nx_GPIOPadCfg_OutputCfg_Output_disabled;
             }
             else if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_Output) {
                 gpioConfig.gpio1OutputCfg = Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1;
@@ -139,6 +140,19 @@ static sss_status_t nx_set_configure(
                 gpioConfig.gpio2OutputCfg = Nx_GPIOPadCfg_OutputCfg_GPIO_High_Speed_1;
             }
         }
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1CONFIG) {
+            if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_MODE) {
+                gpioConfig.gpio1Mode = cmdParam->gpio1Mode;
+                if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_Output ||
+                    gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_NfcPausefileOut) {
+                    gpioConfig.gpio1OutputInitStateHigh = (cmdParam->gpio1Config & 1) ? true : false;
+                }
+                else if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_DownstreamPowerOut) {
+                    gpioConfig.gpio1PowerOutBackpowerEnabled = (cmdParam->gpio1Config & 1) ? true : false;
+                    gpioConfig.gpio1PowerOutI2CEnabled       = ((cmdParam->gpio1Config >> 1) & 1) ? true : false;
+                }
+            }
+        }
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2CONFIG) {
             if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_MODE) {
                 gpioConfig.gpio2Mode = cmdParam->gpio2Mode;
@@ -154,6 +168,8 @@ static sss_status_t nx_set_configure(
         }
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO1_NOTIF) {
             gpioConfig.gpio1OutputNotif = cmdParam->gpio1Notif;
+        }
+        if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_NOTIF) {
             gpioConfig.gpio2OutputNotif = cmdParam->gpio2Notif;
         }
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO_MGMT_COMM_MODE) {
@@ -569,6 +585,20 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
                 }
                 index += 2;
             }
+            // gpio1config
+            else if (strcmp(argv[index], "-gpio1config") == 0) {
+                gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
+                if ((gpioConfigCandidate >= 0) && (gpioConfigCandidate <= 0x03)) {
+                    setconfigflag |= SET_CONFIG_CMD_FLAG_GPIO1CONFIG;
+                    cmdParam.gpio1Config = (uint8_t)gpioConfigCandidate;
+                    parameter_error      = 0;
+                }
+                else {
+                    parameter_error = 1;
+                    break;
+                }
+                index += 2;
+            }
             // gpio2config
             else if (strcmp(argv[index], "-gpio2config") == 0) {
                 gpioConfigCandidate = strtoul(argv[index + 1], NULL, 0);
@@ -686,12 +716,16 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
                         value |= (0x04 << 5);
                         inputCfgSet = true;
                     }
-                    else if (strcmp(argv[i], "input_weak_pulldown") == 0) {
+                    else if (strcmp(argv[i], "input_weak_pulldown_disable_wpdn") == 0) {
                         value |= (0x05 << 5);
                         inputCfgSet = true;
                     }
                     else if (strcmp(argv[i], "input_high_z") == 0) {
                         value |= (0x06 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pulldown_disable_wpd") == 0) {
+                        value |= (0x07 << 5);
                         inputCfgSet = true;
                     }
 
@@ -839,12 +873,16 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
                         value |= (0x04 << 5);
                         inputCfgSet = true;
                     }
-                    else if (strcmp(argv[i], "input_weak_pulldown") == 0) {
+                    else if (strcmp(argv[i], "input_weak_pulldown_disable_wpdn") == 0) {
                         value |= (0x05 << 5);
                         inputCfgSet = true;
                     }
                     else if (strcmp(argv[i], "input_high_z") == 0) {
                         value |= (0x06 << 5);
+                        inputCfgSet = true;
+                    }
+                    else if (strcmp(argv[i], "input_weak_pulldown_disable_wpd") == 0) {
+                        value |= (0x07 << 5);
                         inputCfgSet = true;
                     }
 
@@ -956,6 +994,9 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         LOG_I("     [-keypairCM {plain|mac|full}] [-keypairAC {0x0-0xF}]");
         LOG_I("     [-caRootKeyCM {plain|mac|full}] [-caRootKeyAC {0x0-0xF}]");
         LOG_I(
+            "     [-gpio1config {gpio1mode is output or outputwithnfcpausefile 0x00-0x01| gpio1mode power down stream "
+            "0x00-0x03}]");
+        LOG_I(
             "     [-gpio2config {gpio2mode is output or outputwithnfcpausefile 0x00-0x01| gpio2mode power down stream "
             "0x00-0x03}]");
         LOG_I("     [-gpio1padctrlA <0x00-0x03>] [-gpio1padctrlB <0x00-0xFF>]");
@@ -966,7 +1007,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         LOG_I(
             "     [-gpio1padctrlD "
             "{input_plain_pullup|input_plain_repeater|input_plain|input_plain_pulldown|input_weak_pullup|input_weak_"
-            "pulldown|input_high_z|");
+            "pulldown_disable_wpdn|input_high_z|input_weak_pulldown_disable_wpd");
         LOG_I(
             "                      "
             "gpio_low_speed_1|gpio_low_speed_2|gpio_high_speed_1|gpio_high_speed_2|output_disabled|supply_1v8|supply_"
@@ -979,7 +1020,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
         LOG_I(
             "     [-gpio2padctrlD "
             "{input_plain_pullup|input_plain_repeater|input_plain|input_plain_pulldown|input_weak_pullup|input_weak_"
-            "pulldown|input_high_z|");
+            "pulldown_disable_wpdn|input_high_z|input_weak_pulldown_disable_wpd");
         LOG_I(
             "                      "
             "gpio_low_speed_1|gpio_low_speed_2|gpio_high_speed_1|gpio_high_speed_2|output_disabled|supply_1v8|supply_"
@@ -989,7 +1030,7 @@ sss_status_t ex_sss_entry(ex_sss_boot_ctx_t *pCtx)
             "     [-nfcpausefileno <0x00-0x1F>] [-nfcpauseoffset <0x000000-0xFFFFFF>] [-nfcpauselength "
             "<0x000000-0xFFFFFF>] <port_name>\n");
 
-        LOG_I("  Example: %s -gpio1mode output \"NXP Semiconductors P71 T=0, T=1 Driver 0\"\n", gex_sss_argv[0]);
+        LOG_I("  Example: %s -gpio1mode output \"COM5 \"\n", gex_sss_argv[0]);
         goto exit;
     }
 

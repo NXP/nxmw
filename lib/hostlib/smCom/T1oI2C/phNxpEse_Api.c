@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014, 2018-2020, 2023-2025 NXP
+ * Copyright 2012-2014, 2018-2020, 2023-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "phEseTypes.h"
@@ -121,7 +121,7 @@ ESESTATUS phNxpEse_open(void **conn_ctx, phNxpEse_initParams initParams, const c
         goto exit;
     }
 
-    tPalConfig.pDevName = (int8_t *)pConnString; //"/dev/p73"; /*RFU*/
+    tPalConfig.pDevName = (char *)pConnString; //"/dev/p73"; /*RFU*/
     if (pnxpese_ctxt->pDevHandle) {
         tPalConfig.pDevHandle = pnxpese_ctxt->pDevHandle;
     }
@@ -611,23 +611,6 @@ exit:
 }
 
 /******************************************************************************
- * Function         phNxpEse_setIfsc
- *
- * Description      This function sets the IFSC size to 240/254 support JCOP OS Update.
- *
- * param[in]        uint16_t IFSC_Size
- *
- * Returns          Always return ESESTATUS_SUCCESS (0).
- *
- ******************************************************************************/
-ESESTATUS phNxpEse_setIfsc(uint16_t IFSC_Size)
-{
-    /*SET the IFSC size to 240 bytes*/
-    phNxpEseProto7816_SetIfscSize(IFSC_Size);
-    return ESESTATUS_SUCCESS;
-}
-
-/******************************************************************************
  * Function         phNxpEse_memset
  *
  * Description      This function updates destination buffer with val
@@ -760,4 +743,45 @@ ESESTATUS phNxpEse_deepPwrDown(void *conn_ctx)
     return ESESTATUS_SUCCESS;
 }
 
+/******************************************************************************
+ * Function         phNxpEse_updateSlaveAddr
+ *
+ * Description      This function is used to update the I2C address to select a particular SA
+ *
+ * param[out]
+ *
+ * Returns          On Success ESESTATUS_SUCCESS else ESESTATUS_FAILED.
+ *
+ ******************************************************************************/
+ESESTATUS phNxpEse_updateSlaveAddr(uint8_t addr)
+{
+    if (addr >= 0x7F) {
+        LOG_E("%s Set I2C Device Address Failed ", __FUNCTION__);
+        return ESESTATUS_FAILED;
+    }
+    phPalEse_i2c_updateSlaveAddr(addr);
+
+    return ESESTATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * Function         phNxpEse_getSlaveAddr
+ *
+ * Description      This function is used get I2C address of the selected SA
+ *
+ * param[out]
+ *
+ * Returns          On Success ESESTATUS_SUCCESS else ESESTATUS_FAILED.
+ *
+ ******************************************************************************/
+ESESTATUS phNxpEse_getSlaveAddr(uint8_t *addr)
+{
+    if (addr == NULL) {
+        LOG_E("%s Get I2C Device Address Failed ", __FUNCTION__);
+        return ESESTATUS_FAILED;
+    }
+
+    *addr = (uint8_t)phPalEse_i2c_getSlaveAddr();
+    return ESESTATUS_SUCCESS;
+}
 #endif

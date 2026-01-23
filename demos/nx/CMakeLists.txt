@@ -1,5 +1,5 @@
 #
-# Copyright 2022-2025 NXP
+# Copyright 2022-2026 NXP
 # SPDX-License-Identifier: BSD-3-Clause
 #
 #
@@ -17,7 +17,9 @@ IF (NOT (SSS_HAVE_NX_TYPE_NX_PICC OR (SSS_HAVE_HOST_FRDMMCXA153 AND SSS_HAVE_AUT
     ADD_SUBDIRECTORY(hmac)
     ADD_SUBDIRECTORY(symmetric)
     IF (SSS_HAVE_HOSTCRYPTO_ANY)
-        ADD_SUBDIRECTORY(ecdh)
+        IF (NOT (SSS_HAVE_HOST_FRDMMCXA153))
+            ADD_SUBDIRECTORY(ecdh)
+        ENDIF()
         ADD_SUBDIRECTORY(hkdf)
     ENDIF ()
 ENDIF()

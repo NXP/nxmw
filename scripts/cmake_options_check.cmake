@@ -1,4 +1,4 @@
-# Copyright 2023-2025 NXP
+# Copyright 2023-2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -86,5 +86,11 @@ ENDIF()
 IF (SSS_HAVE_AUTH_SYMM_DIVERSIFY_ENABLED AND (NOT SSS_HAVE_AUTH_SYMM_AUTH))
     MESSAGE(FATAL_ERROR
                     "Diversify enabled only with Symmetric Authentication"
+            )
+ENDIF()
+
+IF(SSS_HAVE_HOST_FRDMMCXA156 AND SSS_HAVE_RTOS_FREERTOS)
+    MESSAGE(FATAL_ERROR
+                    "FreeRTOS support is not added for MCXA156 Platform"
             )
 ENDIF()

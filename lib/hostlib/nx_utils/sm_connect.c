@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -449,6 +449,28 @@ U16 SM_I2CColdReset(void *conn_ctx)
     sw = smComT1oI2C_ColdReset(conn_ctx);
 #elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
     sw = smComVCom_ColdReset(conn_ctx);
+#endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
+    return sw;
+}
+
+U16 SM_UpdateSlaveAddr(void *conn_ctx, U8 addr)
+{
+    U16 sw = ERR_COMM_ERROR;
+#if (defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0))
+    sw = smComT1oI2C_UpdateSlaveAddr(conn_ctx, addr);
+#elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+    sw = smComVCom_UpdateSlaveAddr(NULL, addr);
+#endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
+    return sw;
+}
+
+U16 SM_GetSlaveAddr(void *conn_ctx, U8 *addr)
+{
+    U16 sw = ERR_COMM_ERROR;
+#if (defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0))
+    sw = smComT1oI2C_GetSlaveAddr(conn_ctx, addr);
+#elif defined(SSS_HAVE_SMCOM_VCOM) && (SSS_HAVE_SMCOM_VCOM)
+    sw = smComVCom_GetSlaveAddr(NULL, addr);
 #endif // SSS_HAVE_SMCOM_T1OI2C_GP1_0
     return sw;
 }

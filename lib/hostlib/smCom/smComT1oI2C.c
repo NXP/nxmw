@@ -184,7 +184,7 @@ exit:
 
 U16 smComT1oI2C_ComReset(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_SUCCESS;
+    ESESTATUS status = ESESTATUS_FAILED;
     U16 ret          = SMCOM_COM_FAILED;
     status           = phNxpEse_deInit(conn_ctx);
     if (status != ESESTATUS_SUCCESS) {
@@ -198,11 +198,39 @@ exit:
 
 U16 smComT1oI2C_ColdReset(void *conn_ctx)
 {
-    ESESTATUS status = ESESTATUS_SUCCESS;
+    ESESTATUS status = ESESTATUS_FAILED;
     U16 ret          = SMCOM_COM_FAILED;
     status           = phNxpEse_reset(conn_ctx);
     if (status != ESESTATUS_SUCCESS) {
         LOG_E("Failed to Cold Reset ");
+        goto exit;
+    }
+    ret = SMCOM_OK;
+exit:
+    return ret;
+}
+
+U16 smComT1oI2C_UpdateSlaveAddr(void *conn_ctx, U8 addr)
+{
+    ESESTATUS status = ESESTATUS_FAILED;
+    U16 ret          = SMCOM_COM_FAILED;
+    status           = phNxpEse_updateSlaveAddr(addr);
+    if (status != ESESTATUS_SUCCESS) {
+        LOG_E("Failed to set i2c device addr");
+        goto exit;
+    }
+    ret = SMCOM_OK;
+exit:
+    return ret;
+}
+
+U16 smComT1oI2C_GetSlaveAddr(void *conn_ctx, U8 *addr)
+{
+    ESESTATUS status = ESESTATUS_FAILED;
+    U16 ret          = SMCOM_COM_FAILED;
+    status           = phNxpEse_getSlaveAddr(addr);
+    if (status != ESESTATUS_SUCCESS) {
+        LOG_E("Failed to get i2c device addr");
         goto exit;
     }
     ret = SMCOM_OK;

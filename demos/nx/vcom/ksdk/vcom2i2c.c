@@ -1,4 +1,4 @@
-/* Copyright 2018, 2020, 2022-2025 NXP
+/* Copyright 2018, 2020, 2022-2026 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -310,7 +310,7 @@ void state_vcom_read_write(
                     }
                     break;
                 case COLD_RESET: {
-                    LOG_I("Cold reset");
+                    LOG_I("Cold reset ........ ");
 
 #if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
                     sw = smComT1oI2C_ColdReset(NULL);
@@ -319,6 +319,52 @@ void state_vcom_read_write(
                         targetBufferLen = sizeof(targetBuffer);
                         statusValue     = vcomPackageApduResponse(
                             COLD_RESET, 0x00, (U8 *)&sw, sizeof(sw), targetBuffer, &targetBufferLen);
+                        if (statusValue == RJCT_OK) {
+                            memcpy(selectResponseData, targetBuffer, targetBufferLen);
+                            selectResponseDataLen = targetBufferLen;
+                            g_sendresp_vcom       = 1;
+                        }
+                        else {
+                            LOG_X16_E(statusValue);
+                        }
+                    }
+                } break;
+                case UPDATE_SLAVE_ADDR: {
+                    LOG_I("Select Slave Addr ........ ");
+
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+                    uint8_t addr = s_RecvBuff[4];
+                    sw           = smComT1oI2C_UpdateSlaveAddr(NULL, addr);
+#endif
+                    if (sw == SW_OK) {
+                        targetBufferLen = sizeof(targetBuffer);
+                        statusValue     = vcomPackageApduResponse(
+                            UPDATE_SLAVE_ADDR, 0x00, (U8 *)&sw, sizeof(sw), targetBuffer, &targetBufferLen);
+                        if (statusValue == RJCT_OK) {
+                            memcpy(selectResponseData, targetBuffer, targetBufferLen);
+                            selectResponseDataLen = targetBufferLen;
+                            g_sendresp_vcom       = 1;
+                        }
+                        else {
+                            LOG_X16_E(statusValue);
+                        }
+                    }
+                } break;
+                case GET_SLAVE_ADDR: {
+                    LOG_I("Get Slave Addr ........ ");
+
+#if defined(SSS_HAVE_SMCOM_T1OI2C_GP1_0) && (SSS_HAVE_SMCOM_T1OI2C_GP1_0)
+                    uint8_t addr = 0x00;
+                    sw           = smComT1oI2C_GetSlaveAddr(NULL, &addr);
+                    U8 slaveAddrRsp[3];
+                    slaveAddrRsp[0] = addr;
+                    slaveAddrRsp[1] = (sw & 0xFF);
+                    slaveAddrRsp[2] = (sw & 0xFF00) >> 8;
+#endif
+                    if (sw == SW_OK) {
+                        targetBufferLen = sizeof(targetBuffer);
+                        statusValue     = vcomPackageApduResponse(
+                            GET_SLAVE_ADDR, 0x00, slaveAddrRsp, sizeof(slaveAddrRsp), targetBuffer, &targetBufferLen);
                         if (statusValue == RJCT_OK) {
                             memcpy(selectResponseData, targetBuffer, targetBufferLen);
                             selectResponseDataLen = targetBufferLen;

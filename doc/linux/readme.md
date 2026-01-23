@@ -4,7 +4,7 @@ Run the following commands to build and run examples on Linux / Raspberry Pi 4
 
 ## Prerequisites
 
-- Linux should be running on the Raspberry Pi 4 development board (tested with Raspbian Buster (4.19.75-v7l+))
+- Linux should be running on the Raspberry Pi 4 development board (tested with Raspbian Trixie (Version 13))
 
 - Connect NX Secure Authenticator to I2C Linux of Linux machine (Example - consider Raspberry-Pi) as shown below,
 
@@ -62,6 +62,8 @@ cd nxmw_build/raspbian_native_nx_t1oi2c
 ccmake .
 ```
 Refer [**CMake Options**](../config/readme.md) for more details
+
+>**Note:** OpenSSL is tested with version 3.5.4 on Raspberry Pi 64-bit OS.
 
 Single demo (target) can be built using the following command:
 ```

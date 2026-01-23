@@ -70,7 +70,7 @@
  */
 typedef struct phPalEse_Config
 {
-    int8_t *pDevName;
+    char *pDevName;
     /*!< Port name connected to ESE
       *
       * Platform specific canonical device name to which ESE is connected.
@@ -92,6 +92,8 @@ typedef struct phPalEse_Config
     /*!< Device handle output */
 } phPalEse_Config_t, *pphPalEse_Config_t; /* pointer to phPalEse_Config_t */
 
+void phPalEse_i2c_updateSlaveAddr(uint8_t addr);
+uint8_t phPalEse_i2c_getSlaveAddr();
 void phPalEse_i2c_close(void *pDevHandle);
 ESESTATUS phPalEse_i2c_open_and_configure(pphPalEse_Config_t pConfig);
 int phPalEse_i2c_read(void *pDevHandle, uint8_t *pBuffer, int nNbBytesToRead);

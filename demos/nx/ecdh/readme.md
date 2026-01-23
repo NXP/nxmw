@@ -103,7 +103,7 @@ App   :INFO :Encrypted data with ECDH derive key:
 App   :INFO :ex_sss_ecdh Example Success !!!...
 App   :INFO :
 
-App   :INFO :ECDH with static keypair. Store shared secrect to internal buffer.
+App   :INFO :ECDH with static keypair. Store shared secret to internal buffer.
 App   :INFO :ECDH own Keypair 4
 App   :INFO :ECDH peer public Key (Len=91)
       30 59 30 13    06 07 2A 86    48 CE 3D 02    01 06 08 2A
@@ -156,7 +156,7 @@ App   :INFO :Encrypted data with ECDH derive key:
 App   :INFO :ex_sss_ecdh Example Success !!!...
 App   :INFO :
 
-App   :INFO :ECDH with ephemeral keypair. Store shared secrect to internal buffer.
+App   :INFO :ECDH with ephemeral keypair. Store shared secret to internal buffer.
 sss   :WARN :Keyid's 254 and 255 are used for ephemeral keys.
 sss   :WARN :Key is already present at these locations. No new key is created
 App   :INFO :ECDH own Keypair 254

@@ -1,4 +1,4 @@
-/* Copyright 2018, 2022-2024 NXP
+/* Copyright 2018, 2022-2025 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -45,6 +45,9 @@
 #define MCU_GPIO_PIN_IO2 0x02
 
 #define COLD_RESET 0x09
+#define UPDATE_SLAVE_ADDR 0x0B
+#define GET_SLAVE_ADDR 0x0C
+
 //- A71CH I2C
 
 U16 vcomPackageApduResponse(

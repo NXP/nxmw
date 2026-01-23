@@ -110,13 +110,13 @@ seTunnel:INFO :Tx leaf cert request
 seTunnel:INFO :Rx device certificate
 seTunnel:INFO :Received hash match received leaf certificate.
 seTunnel:INFO :Verify received ECC signature passed.
-seTunnel:INFO :Verfiy X.509 certificate with root/cached CA certificate failed
+seTunnel:INFO :Verify X.509 certificate with root/cached CA certificate failed
 seTunnel:INFO :Tx P1 cert request
 seTunnel:INFO :Rx device certificate
-seTunnel:INFO :Verfiy X.509 certificate with root/cached CA certificate failed
+seTunnel:INFO :Verify X.509 certificate with root/cached CA certificate failed
 seTunnel:INFO :Tx P2 cert request
 seTunnel:INFO :Rx device certificate
-seTunnel:INFO :Verfiy X.509 certificate with certificate(C=NL, ST=Eindhoven, L=Eindhoven, O=NXP, CN=NXP Auth RootCAvE201) Passed
+seTunnel:INFO :Verify X.509 certificate with certificate(C=NL, ST=Eindhoven, L=Eindhoven, O=NXP, CN=NXP Auth RootCAvE201) Passed
 App   :INFO :Read file from C:\nxp\configuration\cert_depth3_PKCS7_rev1\cert_cache\device_ca_cert_0.hex
 seTunnel:INFO :Read file from C:\nxp\configuration\cert_depth3_PKCS7_rev1\\cert_and_key\brainpool\host_leaf_certificate.der
 seTunnel:INFO :Tx Leaf cert reply

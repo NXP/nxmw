@@ -25,13 +25,10 @@ typedef mbedtls_psa_external_random_context_t mbedtls_psa_random_context_t;
 #include "mbedtls/entropy.h"
 
 /* Choose a DRBG based on configuration and availability */
-#if defined(MBEDTLS_PSA_HMAC_DRBG_MD_TYPE)
-
-#include "mbedtls/hmac_drbg.h"
-
-#elif defined(MBEDTLS_CTR_DRBG_C)
+#if defined(MBEDTLS_CTR_DRBG_C)
 
 #include "mbedtls/ctr_drbg.h"
+#undef MBEDTLS_PSA_HMAC_DRBG_MD_TYPE
 
 #elif defined(MBEDTLS_HMAC_DRBG_C)
 
@@ -53,17 +50,11 @@ typedef mbedtls_psa_external_random_context_t mbedtls_psa_random_context_t;
 #error "No hash algorithm available for HMAC_DBRG."
 #endif
 
-#else /* !MBEDTLS_PSA_HMAC_DRBG_MD_TYPE && !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C*/
+#else /* !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C*/
 
 #error "No DRBG module available for the psa_crypto module."
 
-#endif /* !MBEDTLS_PSA_HMAC_DRBG_MD_TYPE && !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C*/
-
-#if defined(MBEDTLS_CTR_DRBG_C)
-#include "mbedtls/ctr_drbg.h"
-#elif defined(MBEDTLS_HMAC_DRBG_C)
-#include "mbedtls/hmac_drbg.h"
-#endif /* !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C */
+#endif /* !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C*/
 
 /* The maximum number of bytes that mbedtls_psa_get_random() is expected to return. */
 #if defined(MBEDTLS_CTR_DRBG_C)
@@ -73,15 +64,14 @@ typedef mbedtls_psa_external_random_context_t mbedtls_psa_random_context_t;
 #endif
 
 #if defined(MBEDTLS_CTR_DRBG_C)
-typedef mbedtls_ctr_drbg_context mbedtls_psa_drbg_context_t;
+typedef mbedtls_ctr_drbg_context            mbedtls_psa_drbg_context_t;
 #elif defined(MBEDTLS_HMAC_DRBG_C)
-typedef mbedtls_hmac_drbg_context mbedtls_psa_drbg_context_t;
+typedef mbedtls_hmac_drbg_context           mbedtls_psa_drbg_context_t;
 #endif /* !MBEDTLS_CTR_DRBG_C && !MBEDTLS_HMAC_DRBG_C */
 
-typedef struct
-{
-    void (*entropy_init)(mbedtls_entropy_context *ctx);
-    void (*entropy_free)(mbedtls_entropy_context *ctx);
+typedef struct {
+    void (* entropy_init)(mbedtls_entropy_context *ctx);
+    void (* entropy_free)(mbedtls_entropy_context *ctx);
     mbedtls_entropy_context entropy;
     mbedtls_psa_drbg_context_t drbg;
 } mbedtls_psa_random_context_t;
@@ -123,8 +113,9 @@ static inline void mbedtls_psa_drbg_free(mbedtls_psa_drbg_context_t *p_rng)
  * \return              \c 0 on success.
  * \return              An Mbed TLS error code (\c MBEDTLS_ERR_xxx) on failure.
  */
-static inline int mbedtls_psa_drbg_seed(
-    mbedtls_psa_drbg_context_t *drbg_ctx, mbedtls_entropy_context *entropy, const unsigned char *custom, size_t len)
+static inline int mbedtls_psa_drbg_seed(mbedtls_psa_drbg_context_t *drbg_ctx,
+                                        mbedtls_entropy_context *entropy,
+                                        const unsigned char *custom, size_t len)
 {
 #if defined(MBEDTLS_CTR_DRBG_C)
     return mbedtls_ctr_drbg_seed(drbg_ctx, mbedtls_entropy_func_3_X, entropy, custom, len);

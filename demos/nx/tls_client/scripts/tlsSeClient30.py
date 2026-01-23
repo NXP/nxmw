@@ -1,5 +1,5 @@
 #
-# Copyright 2023 NXP
+# Copyright 2023,2026 NXP
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
@@ -78,6 +78,9 @@ if __name__ == '__main__':
         TLS_OPTION="tls1_2"
 
     groups = f"-groups {key_type}"
-    cmd=f"{openssl} s_client -connect {ip_addr}:8080 -{TLS_OPTION} -CAfile {rootca_cer} -cert {client_cer} -key nxp:{client_key_ref} {groups} {sel_cipher} -debug -msg -propquery \"?provider=nxp_prov,?nxp_prov.signature=yes\""
+    if sys.platform.startswith("win"):
+        cmd=f"{openssl} s_client -connect {ip_addr}:8080 --provider default --provider {openssl_provider} -{TLS_OPTION} -CAfile {rootca_cer} -cert {client_cer} -key nxp:{client_key_ref} {groups} {sel_cipher} -debug -msg -propquery \"?provider=nxp_prov,?nxp_prov.signature=yes\""
+    else:
+        cmd=f"{openssl} s_client -connect {ip_addr}:8080 -{TLS_OPTION} -CAfile {rootca_cer} -cert {client_cer} -key nxp:{client_key_ref} {groups} {sel_cipher} -debug -msg -propquery \"?provider=nxp_prov,?nxp_prov.signature=yes\""
     log.info(cmd)
     p = subprocess.check_call(cmd, shell=True)

@@ -40,7 +40,7 @@ width="600" />
 
 ## About the Example
 
-This is project is demostrates host coprocessor mutual authentication between two 2 secure authenticators.
+This project demonstrates host coprocessor mutual authentication between two 2 secure authenticators.
 The secure messaging and response processing which is required for secure tunneling is offloaded to the coprocessor SA.
 In order to achieve this,
 - Host sends the command to coprocessor SA by Cmd.ProcessSM_Apply.

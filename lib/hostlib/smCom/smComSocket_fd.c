@@ -4,7 +4,7 @@
  * @version 1.0
  * @par License
  *
- * Copyright 2016, 2022-2025 NXP
+ * Copyright 2016, 2022-2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * @par Description
@@ -55,6 +55,9 @@
 #define MTY_GPIO_PORT_CLEAR 0x06
 #define MTY_GPIO_PORT_TOGGLE 0x07
 #define MTY_GPIO_PIN_READ 0x08
+#define MTY_COLD_RESET 0x09
+#define MTY_UPDATE_SLAVE_ADDR 0x0B
+#define MTY_GET_SLAVE_ADDR 0x0C
 
 static U8 Header[2] = {0x01, 0x00};
 static U8 sockapdu[MAX_BUF_SIZE];
@@ -832,7 +835,7 @@ U32 smComSocket_ColdResetFD(int fd)
     U32 totalReceived     = 0;
     U8 lengthReceived     = 0;
     U32 expectedLength    = 0;
-    U32 retval            = 1;
+    U32 retval            = SMCOM_COM_FAILED;
 
     memset(response, 0x00, MAX_BUF_SIZE);
     memset(sockapdu, 0x00, MAX_BUF_SIZE);
@@ -876,6 +879,158 @@ U32 smComSocket_ColdResetFD(int fd)
         goto exit;
     }
 
+    retval = (pRsp[readWriteLen - 1] << 8) | (pRsp[readWriteLen - 2]);
+
+exit:
+    return retval;
+}
+
+U32 smComSocket_UpdateSlaveAddrFD(int fd, U8 addr)
+{
+    long int readWriteLen = 0;
+    U32 totalReceived     = 0;
+    U8 lengthReceived     = 0;
+    U32 expectedLength    = 0;
+    U32 retval            = SMCOM_COM_FAILED;
+    uint16_t txLen    = sizeof(addr);
+
+    memset(response, 0x00, MAX_BUF_SIZE);
+    memset(sockapdu, 0x00, MAX_BUF_SIZE);
+
+    memcpy(pCmd, Header, 2);
+    pCmd[0] = MTY_UPDATE_SLAVE_ADDR;
+    pCmd[2] = (txLen & 0xFF00) >> 8;
+    pCmd[3] = (txLen & 0x00FF);
+    pCmd[4] = addr;
+    txLen += 4; /* header + len */
+
+#ifdef LOG_FULL_CMD_RSP
+    LOG_MAU8_D("Cmd:Hdr", pCmd, REMOTE_JC_SHELL_HEADER_LEN);
+#endif
+
+    LOG_MAU8_D("Cmd", pCmd + REMOTE_JC_SHELL_HEADER_LEN, txLen - REMOTE_JC_SHELL_HEADER_LEN);
+
+    readWriteLen = WRITE_SEND(fd, (const char *)pCmd, txLen);
+    if (readWriteLen < 0) {
+        LOG_W("Client: " WRITE_SEND_STR "() failed: error %li", readWriteLen);
+        return SMCOM_SND_FAILED;
+    }
+    else {
+#ifdef DBG_LOG_SOCK
+        LOG_D("Client: " WRITE_SEND_STR "() is OK.\r\n");
+#endif
+    }
+
+    expectedLength = REMOTE_JC_SHELL_HEADER_LEN; // remote JC shell header length
+
+    while (totalReceived < expectedLength) {
+        readWriteLen = READ_RECV(fd, (char *)&pRsp[totalReceived], MAX_BUF_SIZE);
+
+        if (readWriteLen <= 0) {
+            LOG_W("Client: " READ_RECV_STR "() failed: error %li", readWriteLen);
+            close(fd);
+            return SMCOM_SND_FAILED;
+        }
+        else {
+            totalReceived += readWriteLen;
+        }
+        if ((totalReceived >= REMOTE_JC_SHELL_HEADER_LEN) && (lengthReceived == 0)) {
+            ENSURE_OR_GO_EXIT(expectedLength <= (UINT32_MAX - ((pRsp[2] << 8) | (pRsp[3]))));
+            expectedLength += ((pRsp[2] << 8) | (pRsp[3]));
+            lengthReceived = 1;
+        }
+    }
+
+#ifdef LOG_FULL_CMD_RSP
+    LOG_MAU8_D("Rsp:Hdr", pRsp, REMOTE_JC_SHELL_HEADER_LEN);
+#endif
+
+    if (pRsp[0] != MTY_UPDATE_SLAVE_ADDR) {
+        goto exit;
+    }
+
+    if (totalReceived < REMOTE_JC_SHELL_HEADER_LEN) {
+        LOG_E("Received response is missing the header itself!");
+        goto exit;
+    }
+
+    retval = (pRsp[readWriteLen - 1] << 8) | (pRsp[readWriteLen - 2]);
+
+exit:
+    return retval;
+}
+
+U32 smComSocket_GetSlaveAddrFD(int fd, U8 *pRx)
+{
+    long int readWriteLen = 0;
+    U32 totalReceived     = 0;
+    U8 lengthReceived     = 0;
+    U32 expectedLength    = 0;
+    U32 retval            = SMCOM_COM_FAILED;
+    uint16_t txLen = 0;
+
+    ENSURE_OR_GO_EXIT(pRx != NULL);
+
+    memset(response, 0x00, MAX_BUF_SIZE);
+    memset(sockapdu, 0x00, MAX_BUF_SIZE);
+
+    memcpy(pCmd, Header, 2);
+    pCmd[0] = MTY_GET_SLAVE_ADDR;
+    pCmd[2] = (txLen & 0xFF00) >> 8;
+    pCmd[3] = (txLen & 0x00FF);
+    txLen += 4; /* header + len */
+
+#ifdef LOG_FULL_CMD_RSP
+    LOG_MAU8_D("Cmd:Hdr", pCmd, REMOTE_JC_SHELL_HEADER_LEN);
+#endif
+
+    LOG_MAU8_D("Cmd", pCmd + REMOTE_JC_SHELL_HEADER_LEN, txLen - REMOTE_JC_SHELL_HEADER_LEN);
+
+    readWriteLen = WRITE_SEND(fd, (const char *)pCmd, txLen);
+    if (readWriteLen < 0) {
+        LOG_W("Client: " WRITE_SEND_STR "() failed: error %li", readWriteLen);
+        return SMCOM_SND_FAILED;
+    }
+    else {
+#ifdef DBG_LOG_SOCK
+        LOG_D("Client: " WRITE_SEND_STR "() is OK.\r\n");
+#endif
+    }
+
+    expectedLength = REMOTE_JC_SHELL_HEADER_LEN; // remote JC shell header length
+
+    while (totalReceived < expectedLength) {
+        readWriteLen = READ_RECV(fd, (char *)&pRsp[totalReceived], MAX_BUF_SIZE);
+
+        if (readWriteLen <= 0) {
+            LOG_W("Client: " READ_RECV_STR "() failed: error %li", readWriteLen);
+            close(fd);
+            return SMCOM_SND_FAILED;
+        }
+        else {
+            totalReceived += readWriteLen;
+        }
+        if ((totalReceived >= REMOTE_JC_SHELL_HEADER_LEN) && (lengthReceived == 0)) {
+            ENSURE_OR_GO_EXIT(expectedLength <= (UINT32_MAX - ((pRsp[2] << 8) | (pRsp[3]))));
+            expectedLength += ((pRsp[2] << 8) | (pRsp[3]));
+            lengthReceived = 1;
+        }
+    }
+
+    if (pRsp[0] != MTY_GET_SLAVE_ADDR) {
+        goto exit;
+    }
+
+    if (totalReceived < REMOTE_JC_SHELL_HEADER_LEN) {
+        LOG_E("Received response is missing the header itself!");
+        goto exit;
+    }
+
+#ifdef LOG_FULL_CMD_RSP
+    LOG_MAU8_D("Rsp:Hdr", pRsp, REMOTE_JC_SHELL_HEADER_LEN);
+#endif
+
+    pRx[0] = pRsp[REMOTE_JC_SHELL_HEADER_LEN];
     retval = (pRsp[readWriteLen - 1] << 8) | (pRsp[readWriteLen - 2]);
 
 exit:

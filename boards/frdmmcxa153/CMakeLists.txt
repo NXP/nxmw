@@ -99,7 +99,6 @@ TARGET_INCLUDE_DIRECTORIES(
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/osa
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/lists
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/phy
-    PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_mwm
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/uart
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/debug_console
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_manager

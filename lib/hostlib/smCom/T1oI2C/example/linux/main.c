@@ -33,6 +33,7 @@ int main()
     uint32_t freememsize  = 0;
 
     ESESTATUS status               = ESESTATUS_FAILED;
+    ESESTATUS retstatus            = ESESTATUS_FAILED;
     phNxpEse_initParams initParams = {0};
     initParams.initMode            = ESE_MODE_NORMAL;
 
@@ -96,12 +97,12 @@ int main()
 exit:
 
     /* Session close Commands */
-    status = phNxpEse_close(conn_ctx);
-    if (status != ESESTATUS_SUCCESS) {
+    retstatus = phNxpEse_close(conn_ctx);
+    if (retstatus != ESESTATUS_SUCCESS) {
         PRINTF("phNxpEse_close Failed\n\r");
     }
 
-    if (status == ESESTATUS_SUCCESS) {
+    if (status == ESESTATUS_SUCCESS && retstatus == ESESTATUS_SUCCESS) {
         PRINTF("ex_t1oi2c Example Success !!!...\n\r");
     }
     else {

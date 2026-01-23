@@ -159,7 +159,7 @@ TARGET_INCLUDE_DIRECTORIES(
     ${PROJECT_NAME}
     PUBLIC ../../mcuxsdk/rtos/freertos/corepkcs11/source/include
     PUBLIC ../../mcuxsdk/components/aws_iot/logging
-    PUBLIC ../../mcuxsdk/rtos/freertos/freertos-kernel/template/ARM_CM4F
+    PUBLIC ../../mcuxsdk/rtos/freertos/freertos-kernel/template/ARM_CM3_4_priority_bits
     PUBLIC ../../mcuxsdk/middleware/pkcs11
     PUBLIC ../../mcuxsdk/rtos/freertos/corejson/source/include
     PUBLIC ../../mcuxsdk/rtos/freertos/coremqtt/source/include
@@ -169,7 +169,6 @@ TARGET_INCLUDE_DIRECTORIES(
     PUBLIC ../../mcuxsdk/examples/aws_examples/common/
     PUBLIC ../../mcuxsdk/components/aws_iot/using_mbedtls_pkcs11
     PUBLIC ../../mcuxsdk/components/aws_iot/using_mbedtls_wifi_serial
-    PUBLIC ../../mcuxsdk/components/serial_mwm
     PUBLIC ../../mcuxsdk/components/gpio
 )
 

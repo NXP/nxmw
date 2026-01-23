@@ -133,6 +133,7 @@ IF(
         PRIVATE -Wno-format
         PRIVATE -Wno-error=unused-const-variable
         PRIVATE -Wno-unused-const-variable
+        PRIVATE -Wno-stringop-overflow
     )
 ENDIF()
 
@@ -172,6 +173,7 @@ IF(
         PRIVATE -Wno-error=pointer-sign
         PRIVATE -Wno-error=format
         PRIVATE -Wno-format
+        PRIVATE -Wno-stringop-overflow
     )
 
     SET(GCC_VERSION_WITH_UNUSED_CONST 6.3.0)

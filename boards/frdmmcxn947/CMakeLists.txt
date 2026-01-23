@@ -113,7 +113,6 @@ TARGET_INCLUDE_DIRECTORIES(
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/phy
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/phy/device/phyksz8081
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/phy/mdio/enet
-    PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/serial_mwm
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/phy/device/phylan8741
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/uart
     PUBLIC ${NXMW_TOP_DIR}/../mcuxsdk/components/gpio

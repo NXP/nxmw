@@ -14,9 +14,9 @@ the following functionality can be made available over the OpenSSL provider here
   - CSR
 - Random generator
 
-The OpenSSL provider is compatible with OpenSSL versions 3.0.x
+The OpenSSL provider is compatible with OpenSSL versions 3.5.4
 
-OpenSSL provider is tested on i.MX (imx8mqevk, with yocto), Raspberry Pi (Raspberry Pi 4 Model B, Ubuntu 22.04.2 LTS)
+OpenSSL provider is tested on Raspberry Pi 4 (Raspbian Trixie (Version 13))
 
 
 ## Getting Started on Raspberry Pi
@@ -25,7 +25,6 @@ OpenSSL provider is tested on i.MX (imx8mqevk, with yocto), Raspberry Pi (Raspbe
 
 - Raspberry pi
 - cmake installed: ``sudo apt-get install cmake``
-- OpenSSL 3.0.x installed
 - SA connected to Raspberry Pi on i2c port
 
 
@@ -42,6 +41,8 @@ sudo make all
 sudo make install
 sudo ldconfig /usr/local/lib
 ```
+
+>**Note:** Build OpenSSL provider as a static library. Use the CMake option `-DWithSharedLIB=OFF`.
 
 Above commands will build the OpenSSL provider and NX CLI tool (used for provisioning the SA) and copy it in ``plugin/openssl_provider/bin`` and ``binaries/tmp`` folders respectively.
 
@@ -70,15 +71,15 @@ Supported curves
   - prime256v1 (secp256r1)
   - brainpoolP256r1
 
->**Note:** 
+>**Note:**
 The key will be generated with default policy i.e. only sign enabled.
 
 
->**Note:** 
+>**Note:**
 Key generation on secure authenticator using nxp provider can be done only by loading nxp provider with highest priority.
 
 
->**Note:** 
+>**Note:**
 Rest of the commands in this section which require an EC key will assume that a key is present at key ID 0x02 and "nx_prime256v1_ref.pem" is the corresponding reference key.
 
 
@@ -110,7 +111,7 @@ openssl ec -in output/nx_prime256v1_ref.pem -pubout -out output/pubkey.pem
 openssl pkeyutl -verify --provider default -inkey output/pubkey.pem -pubin -rawin -in input_data/input_data.txt -sigfile output/signature.bin -digest sha256
 
 ```
->**Note:** 
+>**Note:**
 Here verify operation is performed by host and not the SA as SA does not have public key required for this operation stored inside.
 
 

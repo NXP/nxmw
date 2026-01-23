@@ -10,15 +10,17 @@ ADD_EXECUTABLE(
     ${PROJECT_NAME}
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/ssl/ssl_client2.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/src/certs.c
-    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/src/helpers.c
+    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/src/helpers.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/test/query_config.c
     ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/programs/ssl/ssl_test_lib.c
-    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/src/psa_crypto_helpers.c
+    ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/src/psa_crypto_helpers.c
 )
 
 TARGET_INCLUDE_DIRECTORIES(
     ${PROJECT_NAME}
     PRIVATE ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/tests/include
+    PRIVATE ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/include/
+    PRIVATE ${NXMW_TOP_DIR}/../mcuxsdk/middleware/mbedtls3x/framework/tests/programs/
 )
 
 IF(SSS_HAVE_KSDK)

@@ -81,7 +81,7 @@ compiling the OpenSSL provider for Nx connected over I2C.
 cd nxmw/scripts
 python create_cmake_projects.py
 cd ../../nxmw_build/raspbian_native_nx_t1oi2c
-cmake -DNXMW_Auth=None -DNXMW_OpenSSL:STRING=3_0 -DNXMW_Secure_Tunneling=None -DNXMW_SMCOM=JRCP_V1_AM .
+cmake -DNXMW_Auth=None -DWithSharedLIB=OFF -DNXMW_OpenSSL:STRING=3_0 -DNXMW_Secure_Tunneling=None -DNXMW_SMCOM=JRCP_V1_AM .
 cmake --build .
 make install
 ldconfig /usr/local/lib
