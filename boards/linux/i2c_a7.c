@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2024,2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -24,10 +24,6 @@
 #include <errno.h>
 #include <time.h>
 
-/* Set NX_ENABLE_LEVEL_SHIFTER macro to 1
- * to enable level shifter
- */
-#define NX_ENABLE_LEVEL_SHIFTER 0
 
 #include "nxLog_msg.h"
 
@@ -35,140 +31,6 @@ static char *default_axSmDevice_name = "/dev/i2c-1";
 static int default_axSmDevice_addr   = 0x20; // 7-bit address
 
 #define DEV_NAME_BUFFER_SIZE 64
-
-#if NX_ENABLE_LEVEL_SHIFTER
-i2c_error_t i2c_level_shifter()
-{
-    int axSmDevice = 0;
-    U32 dev_addr   = 0x20;
-    unsigned long funcs;
-    int nrWritten    = -1;
-    uint8_t txBuf[8] = {0};
-    int txBufLen     = 0;
-
-    // edit i2c bus level_shifter if different address
-    static char *default_level_shifter_device = "/dev/i2c-11";
-
-    // i2c file descriptor for second channel (DAC and IO expander).
-    if ((axSmDevice = open(default_level_shifter_device, O_RDWR)) < 0) {
-        LOG_E("failed to open i2c bus:%s\n", default_level_shifter_device);
-        return I2C_FAILED;
-    }
-
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
-        LOG_E("I2C driver failed setting address\n");
-        close(axSmDevice);
-        return I2C_FAILED;
-    }
-
-    // clear PEC flag
-    if (ioctl(axSmDevice, I2C_PEC, 0) < 0) {
-        LOG_E("I2C driver: PEC flag clear failed\n");
-        close(axSmDevice);
-        return I2C_FAILED;
-    }
-
-    // Query functional capacity of I2C driver
-    if (ioctl(axSmDevice, I2C_FUNCS, &funcs) < 0) {
-        LOG_E("Cannot get i2c adapter functionality\n");
-        close(axSmDevice);
-        return I2C_FAILED;
-    }
-
-    // outPort IC2
-    txBuf[0]  = 0x01;
-    txBuf[1]  = 0x10;
-    txBufLen  = 2;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    //Config Port Register IC2
-    txBuf[0]  = 0x03;
-    txBuf[1]  = 0x88;
-    txBufLen  = 2;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    dev_addr = 0x21;
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
-        LOG_E("I2C driver failed setting address\n");
-        close(axSmDevice);
-        return I2C_FAILED;
-    }
-
-    //set up port direction
-    txBuf[0]  = 0x01;
-    txBuf[1]  = 0x7C;
-    txBufLen  = 2;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    //sets up I2C+IO1+IO2 to 1k Pullup,
-    txBuf[0]  = 0x03;
-    txBuf[1]  = 0x03;
-    txBufLen  = 2;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    dev_addr = 0x61;
-    if (ioctl(axSmDevice, I2C_SLAVE, dev_addr) < 0) {
-        LOG_E("I2C driver failed setting address\n");
-        close(axSmDevice);
-        return I2C_FAILED;
-    }
-
-    // 1.7V LevelShifter clamp
-    txBuf[0]  = 0x00;
-    txBuf[1]  = 0x0B;
-    txBuf[2]  = 0x33;
-    txBufLen  = 3;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    //power down -> reset
-    txBuf[0]  = 0x08;
-    txBuf[1]  = 0x00;
-    txBuf[2]  = 0x00;
-    txBufLen  = 3;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    // wait
-    //#   define WAIT_UNTIL_VCC_DISCHARGED_MS     1000
-    usleep(1000);
-
-    // levelshifter 1.8V
-    txBuf[0]  = 0x08;
-    txBuf[1]  = 0x05;
-    txBuf[2]  = 0xEF;
-    nrWritten = write(axSmDevice, txBuf, txBufLen);
-    if (nrWritten < 0 || (nrWritten != txBufLen)) {
-        LOG_E("Failed writing data at line %d. (nrWritten=%d).\n", __LINE__, nrWritten);
-        return I2C_FAILED;
-    }
-
-    close(axSmDevice);
-    return I2C_OK;
-}
-#endif
 
 /**
 * Opens the communication channel to I2C device

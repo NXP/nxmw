@@ -8,9 +8,9 @@ NOTE: MCXN947 is used as an Host MCU example in the following documentation.
 
 ## Prerequisite
 
-- MCUXpresso IDE 25.6.136 (<https://www.nxp.com/support/:MCUXpresso-IDE>)
+- MCUXpresso IDE v25.6.136 (<https://www.nxp.com/support/:MCUXpresso-IDE>)
   installed. (Update the installed path in file nxmw/scripts/env_setup.bat)
-- SDKs installed for supported MCUs (V25.09.00 for MCXN947/LPC55S69/MCXA153/MCXA156) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
+- SDKs installed for supported MCUs (v25.09.00 for MCXN947/LPC55S69/MCXA153/MCXA156) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
 - Python installed (version 3.10 or above). Please follow the guideline at [Python Download](https://wiki.python.org/moin/BeginnersGuide/Download).
 - West installed (version 1.2.0 or above). Please follow [west setup](https://docs.zephyrproject.org/latest/develop/west/install.html) to install west
 - CMake installed (version 3.30.0 or above). Preferably at C:/opt/cmake/bin/cmake.exe

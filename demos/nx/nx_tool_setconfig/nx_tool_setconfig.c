@@ -126,7 +126,7 @@ static sss_status_t nx_set_configure(
                 gpioConfig.gpio1OutputCfg = Nx_GPIOPadCfg_OutputCfg_GPIO_Low_Speed_1;
             }
             else if (gpioConfig.gpio1Mode == Nx_GPIOMgmtCfg_GPIOMode_DownstreamPowerOut) {
-                gpioConfig.gpio1PowerOutDefaultTarget = Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_100uA;
+                gpioConfig.gpio1PowerOutDefaultTarget = Nx_GPIOPowerOut_1800mV_100uA;
             }
         }
         if (setConfigFlag & SET_CONFIG_CMD_FLAG_GPIO2_MODE) {

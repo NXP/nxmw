@@ -10,18 +10,18 @@
 
 /* clang-format off */
 #define NX_PKG_PROD_NAME          "NX_PKG"
-#define NX_PKG_VER_STRING_NUM     "v02.08.00_20260109"
-#define NX_PKG_PROD_NAME_VER_FULL "NX_PKG_v02.08.00_20260109"
+#define NX_PKG_VER_STRING_NUM     "v02.08.01_20260901"
+#define NX_PKG_PROD_NAME_VER_FULL "NX_PKG_v02.08.01_20260901"
 #define NX_PKG_VER_MAJOR          (2u)
 #define NX_PKG_VER_MINOR          (8u)
-#define NX_PKG_VER_DEV            (0u)
+#define NX_PKG_VER_DEV            (1u)
 
 /* v02.08 = 20008u */
 #define NX_PKG_VER_MAJOR_MINOR ( 0 \
     | (NX_PKG_VER_MAJOR * 10000u)    \
     | (NX_PKG_VER_MINOR))
 
-/* v02.08.00 = 200080000ULL */
+/* v02.08.01 = 200080001ULL */
 #define NX_PKG_VER_MAJOR_MINOR_DEV ( 0 \
     | (NX_PKG_VER_MAJOR * 10000*10000u)    \
     | (NX_PKG_VER_MINOR * 10000u)    \

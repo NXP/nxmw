@@ -1,6 +1,6 @@
 /*
 *
-* Copyright 2022-2024 NXP
+* Copyright 2022-2024,2026 NXP
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
@@ -245,8 +245,8 @@ typedef struct
     Nx_GPIOPadCfg_OutputCfg_t gpio1OutputCfg;
     bool gpio1Supply1v1n1v2;
     Nx_GPIOMgmtCfg_GPIONotif_t gpio1OutputNotif;
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_t gpio1PowerOutDefaultTarget; // Targeted voltage/current level
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_t
+    Nx_GPIO_PowerOut_Vol_t gpio1PowerOutDefaultTarget; // Targeted voltage/current level
+    Nx_GPIO_PowerOut_Vol_t
         gpio1PowerOutInRushTarget;        // Initial current limit to handle the in rush of current
     uint16_t gpio1PowerOutInRushDuration; // The duration to apply the InRushTarget
     uint8_t

@@ -3,8 +3,8 @@
 ## Prerequisites
 
 1) Secure Authentication MW source is cloned from github. (Refer: [**Getting the NX Middleware Source**](../../doc/windows/readme.md)).
-2) MCUXpresso IDE v24.12.148 or above is installed (To download the IDE and user guide, refer: [**MCUXpresso IDE**](https://www.nxp.com/design/design-center/software/development-software/mcuxpresso-software-and-tools-/mcuxpresso-integrated-development-environment-ide:MCUXpresso-IDE)).
-3) SDK installed for supported MCUs (V24.12.00 for MCXN947/LPC55S69/MCXA153) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
+2) MCUXpresso IDE v25.6.136 or above is installed (To download the IDE and user guide, refer: [**MCUXpresso IDE**](https://www.nxp.com/design/design-center/software/development-software/mcuxpresso-software-and-tools-/mcuxpresso-integrated-development-environment-ide:MCUXpresso-IDE)).
+3) SDK installed for supported MCUs (v25.09.00 for MCXN947/LPC55S69/MCXA153) (To download SDK, refer [**MCUXpresso SDK Dashboard**](https://mcuxpresso.nxp.com/en/select))
 4) Secure Authenticator connected to Host MCU (Refer: [**MCU Pin Diagram**](../../boards/README.md)).
 5) The overall set up will look as shown below.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## \[v02.08.01\]
+- New MCUXpresso standalone projects added for FRDM-MCXA153 platform:
+	- NTAG X DNA AUTH-ARD Shield Trusted Sensor Demo. Refer [**ntag_x_dna_auth_ard_sensor_demo**](mcux_project/mcxa/ntag_x_dna_auth_ard_sensor_demo/doc/readme.md)
+	- NTAG X DNA AUTH-ARD Shield Trusted Sensor Provisioning Demo. Refer [**ntag_x_dna_auth_ard_sensor_provision**](mcux_project/mcxa/ntag_x_dna_auth_ard_sensor_provision/doc/readme.md)
+- Removed level shifter code from Linux I2C file (`boards\linux\i2c_a7.c`).
+
 ## \[v02.08.00\]
 - MCU SDK Integration updated to MCU SDK version v25.09.00
 	- MbedTLS (part of MCU SDK) is updated to v3.6.3.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2024,2026 NXP
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -388,30 +388,6 @@ typedef enum
     Nx_GPIOMgmtCfg_GPIONotif_Auth     = 0x01,
     Nx_GPIOMgmtCfg_GPIONotif_NFC      = 0x02,
 } Nx_GPIOMgmtCfg_GPIONotif_t;
-
-/** GPIO default targeted current/voltage */
-typedef enum
-{
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_Disabled       = 0x00,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_100uA   = 0x01,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_300uA   = 0x02,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_500uA   = 0x03,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_1000uA  = 0x04,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_2000uA  = 0x05,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_3000uA  = 0x06,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_5000uA  = 0x07,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_7000uA  = 0x08,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_1800mV_10000uA = 0x09,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_100uA   = 0x11,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_300uA   = 0x12,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_500uA   = 0x13,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_1000uA  = 0x14,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_2000uA  = 0x15,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_3000uA  = 0x16,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_5000uA  = 0x17,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_7000uA  = 0x18,
-    Nx_GPIOMgmtCfg_VoltageCurrentLevel_2000mV_10000uA = 0x19,
-} Nx_GPIOMgmtCfg_VoltageCurrentLevel_t;
 
 /** GPIO in rush of current */
 typedef enum
