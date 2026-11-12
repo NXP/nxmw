@@ -10,6 +10,8 @@ Common Criteria EAL 6+ security certified with AVA_VAN.5 on product level and su
 <img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="left"/>
 <img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="300"p align="middle"/>
 </p>
+<img src="doc/img/auth_ard_shield.jpeg" alt="NTAG-X-DNA" width="431" height="232"p align="middle"/>
+</p>
 
 
 Crypto API providing AES, ECDSA, ECDH, SHA, HMAC and HKDF cryptographic functionality.
@@ -89,3 +91,11 @@ Platform Security Architecture - [**Platform Security Architecture**](plugin/psa
 Access Manager for Linux - [**Access Manager**](demos/linux/nx_access_manager/readme.md)
 
 Command line tool - [**NX CLI Tool**](demos/nx/nx_cli_tool/readme.md)
+
+AUTH-ARD - [**AUTH-ARD Shield for EdgeLock® A30 and NTAG® X DNA**](https://www.nxp.com/part/AUTH-ARD)
+
+Sensor Demo - [**ntag_x_dna_auth_ard_sensor_demo**](https://github.com/NXP/nxmw/blob/main/mcux_project/mcxa/ntag_x_dna_auth_ard_sensor_demo/doc/readme.md)
+
+Sensor Provisioning - [**ntag_x_dna_auth_ard_sensor_provision**](https://github.com/NXP/nxmw/blob/main/mcux_project/mcxa/ntag_x_dna_auth_ard_sensor_provision/doc/readme.md)
+
+
