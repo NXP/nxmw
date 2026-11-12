@@ -9,7 +9,6 @@ Common Criteria EAL 6+ security certified with AVA_VAN.5 on product level and su
 <p align=left>
 <img src="doc/img/a30_board.jpeg" alt="a30" width="300" height="250"p align="left"/>
 <img src="doc/img/NTAG-X-DNA_board.jpeg" alt="NTAG-X-DNA" width="350" height="300"p align="middle"/>
-</p>
 <img src="doc/img/auth_ard_shield.jpeg" alt="NTAG-X-DNA" width="431" height="232"p align="middle"/>
 </p>
 
